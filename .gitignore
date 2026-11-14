@@ -1,0 +1,16 @@
+/*
+!/.gitignore
+!/build.mjs
+!/docs/
+/docs/**
+!/docs/**/
+!/docs/.nojekyll
+!/docs/**/index.html
+!/docs/assets/site.css
+!/docs/assets/pip-popper-logo.png
+!/docs/assets/covers/*.png
+!/tracks/
+/tracks/**
+!/tracks/*/
+!/tracks/*/track.json
+!/tracks/*/*.png
