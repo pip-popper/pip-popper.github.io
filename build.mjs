@@ -55,7 +55,8 @@ function artwork(track, base) {
 
 function details(track) {
   const date = track.releaseDate ? `<time datetime="${track.releaseDate}">${track.releaseDate}</time>` : '';
-  return `${date}<p class="description">${escapeHtml(track.summary)}</p>`;
+  const summary = track.summary ? `<p class="description">${escapeHtml(track.summary)}</p>` : '';
+  return date + summary;
 }
 
 function link(url, label) {
@@ -69,7 +70,7 @@ async function readTrack(folder) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(folder)) throw new Error(`楽曲IDが無効です: ${folder}`);
   const path = join(sources, folder);
   const data = JSON.parse(await readFile(join(path, 'track.json'), 'utf8'));
-  if (!data.title?.trim() || !data.summary?.trim()) throw new Error(`曲名と紹介文が必要です: ${folder}`);
+  if (!data.title?.trim()) throw new Error(`曲名が必要です: ${folder}`);
   if (data.releaseDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.releaseDate)) throw new Error(`公開日の形式が無効です: ${folder}`);
   if (typeof data.artwork !== 'string' || basename(data.artwork) !== data.artwork || !/\.png$/i.test(data.artwork)) {
     throw new Error(`ジャケットにPNGのファイル名が必要です: ${folder}`);
@@ -84,7 +85,8 @@ async function readTrack(folder) {
 
 const directories = await readdir(sources, { withFileTypes: true });
 const tracks = await Promise.all(directories.filter(entry => entry.isDirectory()).map(entry => readTrack(entry.name)));
-tracks.sort((a, b) => (b.releaseDate ?? '').localeCompare(a.releaseDate ?? '') || a.id.localeCompare(b.id));
+tracks.sort((a, b) => (b.releaseDate ?? '').localeCompare(a.releaseDate ?? '') ||
+  (a.listOrder ?? 0) - (b.listOrder ?? 0) || a.id.localeCompare(b.id));
 const latest = tracks[0];
 if (!latest) throw new Error('掲載する楽曲データが必要です。');
 
@@ -129,10 +131,11 @@ for (const track of tracks) {
   const background = track.background ? `<section class="reading"><h2>制作背景</h2><p class="prose">${escapeHtml(track.background)}</p></section>` : '';
   const links = track.links ? `<section class="reading"><h2>配信・ダウンロード</h2><ul>${track.links}</ul></section>` : '';
   const lyrics = track.lyrics ? `<p class="prose lyrics-text">${escapeHtml(track.lyrics)}</p>` : '<p class="description">歌詞は未掲載です。</p>';
+  const artist = track.artist ? `<p class="description">${escapeHtml(track.artist)}</p>` : '';
   await save(`tracks/${track.id}/index.html`, page(`${track.title}｜PIP POPPER`, '../../', 'tracks', `
 <article class="page">
   <a class="back" href="../index.html">← 楽曲一覧</a>
-  <div class="track-heading">${artwork(track, '../../')}<div><h1>${escapeHtml(track.title)}</h1>${details(track)}</div></div>
+  <div class="track-heading">${artwork(track, '../../')}<div><h1>${escapeHtml(track.title)}</h1>${artist}${details(track)}</div></div>
   <section class="reading lyrics"><h2>歌詞</h2>${lyrics}</section>
   ${background}${links}
 </article>`));
