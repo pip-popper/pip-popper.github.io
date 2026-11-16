@@ -18,3 +18,13 @@
 !/docs/assets/audio/
 /docs/assets/audio/*
 !/docs/assets/audio/*.mp3
+!/src/
+/src/**
+!/src/site.css
+!/src/stage.jpg
+!/tools/
+/tools/**
+!/tools/make-web-images.py
+!/tracks/*/*.jpg
+!/docs/assets/stage.jpg
+!/docs/assets/covers/*.jpg
