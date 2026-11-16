@@ -66,3 +66,5 @@ time { display: block; font-size: .85rem; }
   .track-row h2 { font-size: 19px; }
   .track-heading .cover { max-width: 285px; }
 }
+
+.listen audio { display: block; width: 100%; max-width: 560px; }

@@ -1,5 +1,5 @@
 import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
@@ -75,10 +75,15 @@ async function readTrack(folder) {
   if (typeof data.artwork !== 'string' || basename(data.artwork) !== data.artwork || !/\.png$/i.test(data.artwork)) {
     throw new Error(`ジャケットにPNGのファイル名が必要です: ${folder}`);
   }
+  if (data.audio != null && (typeof data.audio !== 'string' || basename(data.audio) !== data.audio || !/.(mp3|m4a|wav)$/i.test(data.audio))) {
+    throw new Error(`音源にはMP3・M4A・WAVのファイル名が必要です: ${folder}`);
+  }
+  const sourceAudio = data.audio ? join(path, data.audio) : null;
+  const audioFile = data.audio ? `assets/audio/${folder}${extname(data.audio).toLowerCase()}` : null;
   let sourceImage = join(path, data.artwork);
   if (folder === 'job-hunting') sourceImage = join(root, data.artwork);
   return {
-    ...data, id: folder, sourceImage, cover: `assets/covers/${folder}.png`,
+    ...data, id: folder, sourceImage, sourceAudio, audioFile, cover: `assets/covers/${folder}.png`,
     links: link(data.streamingUrl, '配信で聴く') + link(data.downloadUrl, '無料ダウンロード')
   };
 }
@@ -101,9 +106,11 @@ async function save(path, html) {
 }
 
 await mkdir(join(output, 'assets', 'covers'), { recursive: true });
+if (tracks.some(track => track.audioFile)) await mkdir(join(output, 'assets', 'audio'), { recursive: true });
 await Promise.all([
   copyArtwork(join(root, logoFile), join(output, 'assets', 'pip-popper-logo.png'), true),
-  ...tracks.map(track => copyArtwork(track.sourceImage, join(output, track.cover), track.id === 'job-hunting'))
+  ...tracks.map(track => copyArtwork(track.sourceImage, join(output, track.cover), track.id === 'job-hunting')),
+  ...tracks.filter(track => track.audioFile).map(track => copyFile(track.sourceAudio, join(output, track.audioFile)))
 ]);
 
 await save('index.html', page('PIP POPPER｜公式サイト', '', 'home', `
@@ -128,6 +135,7 @@ await save('tracks/index.html', page('楽曲一覧｜PIP POPPER', '../', 'tracks
 </section>`));
 
 for (const track of tracks) {
+  const listen = track.audioFile ? `<section class="reading listen"><h2>楽曲を聴く</h2><audio controls preload="metadata" src="../../${track.audioFile}">お使いのブラウザでは再生できません。</audio></section>` : '';
   const impression = track.aiImpression ? `<section class="reading"><h2>AIの感想</h2><p class="prose">${escapeHtml(track.aiImpression)}</p></section>` : '';
   const background = track.background ? `<section class="reading"><h2>制作背景</h2><p class="prose">${escapeHtml(track.background)}</p></section>` : '';
   const links = track.links ? `<section class="reading"><h2>配信・ダウンロード</h2><ul>${track.links}</ul></section>` : '';
@@ -137,7 +145,7 @@ for (const track of tracks) {
 <article class="page">
   <a class="back" href="../index.html">← 楽曲一覧</a>
   <div class="track-heading">${artwork(track, '../../')}<div><h1>${escapeHtml(track.title)}</h1>${artist}${details(track)}</div></div>
-  ${impression}
+  ${listen}${impression}
   <section class="reading lyrics"><h2>歌詞</h2>${lyrics}</section>
   ${background}${links}
 </article>`));
