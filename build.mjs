@@ -128,6 +128,7 @@ await save('tracks/index.html', page('楽曲一覧｜PIP POPPER', '../', 'tracks
 </section>`));
 
 for (const track of tracks) {
+  const impression = track.aiImpression ? `<section class="reading"><h2>AIの感想</h2><p class="prose">${escapeHtml(track.aiImpression)}</p></section>` : '';
   const background = track.background ? `<section class="reading"><h2>制作背景</h2><p class="prose">${escapeHtml(track.background)}</p></section>` : '';
   const links = track.links ? `<section class="reading"><h2>配信・ダウンロード</h2><ul>${track.links}</ul></section>` : '';
   const lyrics = track.lyrics ? `<p class="prose lyrics-text">${escapeHtml(track.lyrics)}</p>` : '<p class="description">歌詞は未掲載です。</p>';
@@ -136,6 +137,7 @@ for (const track of tracks) {
 <article class="page">
   <a class="back" href="../index.html">← 楽曲一覧</a>
   <div class="track-heading">${artwork(track, '../../')}<div><h1>${escapeHtml(track.title)}</h1>${artist}${details(track)}</div></div>
+  ${impression}
   <section class="reading lyrics"><h2>歌詞</h2>${lyrics}</section>
   ${background}${links}
 </article>`));
