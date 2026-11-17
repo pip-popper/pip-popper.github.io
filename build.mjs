@@ -65,12 +65,16 @@ for (const id of ids) {
   const linkInput = [...(data.links ?? [])];
   if (data.streamingUrl) linkInput.push({ url: data.streamingUrl });
   const ext = data.audio ? data.audio.slice(data.audio.lastIndexOf('.')).toLowerCase() : null;
+  // audioRelease: 'public' (default) = player/links as before; 'private' = no player or links, shows the private note.
+  const audioRelease = data.audioRelease ?? 'public';
+  if (!['public', 'private'].includes(audioRelease)) throw new Error(`audioRelease は public または private: ${id}`);
+  if (audioRelease === 'private' && (data.audio || linkInput.length)) throw new Error(`音源非公開の曲に音源・配信リンクが登録されています: ${id}`);
   const legacyAudio = ext && await exists(new URL(`assets/audio/${id}${ext}`, published)) ? `${id}${ext}` : null;
   const localAt = async () => { const t = (await stat(new URL(`${id}/track.json`, trackDir))).mtime;
     return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 19) + '+09:00'; };
   const gitAt = gitListedAt(id);
   const listedAt = data.releaseDate ?? data.listedAt ?? gitAt ?? await localAt();
-  songs.push({ ...data, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', legacyAudio, listedAt });
+  songs.push({ ...data, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', legacyAudio, listedAt, audioPrivate: audioRelease === 'private' });
 }
 // Newest listing first; listOrder breaks ties (higher = registered later).
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
@@ -119,7 +123,7 @@ const GOOGLE_SITE_VERIFICATION = 'mCrw0muFFFCwTcnqTDQPt0duAOfiu-IDxaP29p08WeU';
 const NAME_KANA = 'ピップポッパー';
 const pageUrl = path => new URL(path, SITE_URL).href;          // path: '', 'about/', 'tracks/<id>/'
 const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[0];
-const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}曲の歌詞、ジャケット、作品紹介を掲載しています。`;
+const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}作品の歌詞、ジャケット、作品紹介を掲載しています。`;
 const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の歌詞とジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
 const wordmark = (tag, attrs = '') => `<${tag} class="wordmark"${attrs}><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></${tag}>`;
 const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false } = {}) => `<!doctype html>
@@ -281,7 +285,13 @@ const lyricsHtml = text => text.trim().split(/\n\s*\n/).map(stanza => `<div clas
   return `<span class="ly-line">${parts.map(p => /^[ 　]+$/.test(p) ? `<span class="ly-gap">${p}</span>` : p ? chunks(p) : '').join('')}</span>`;
 }).join('')}</div>`).join('');
 
+// Songs whose audio is not released to the public: a light, PIP POPPER-style note instead of a player.
+const PRIVATE_NOTE = `<div class="listen-private" role="note">
+        <p class="lp-status"><span class="lp-key">音源</span><span class="lp-val">一般非公開</span></p>
+        <p class="lp-cond"><span class="lp-key">聴ける可能性がある人の条件</span><span class="lp-val lp-heart">心が広い人。</span></p>
+      </div>`;
 const listen = (r, song) => {
+  if (song.audioPrivate) return PRIVATE_NOTE;
   const links = song.links.map(l => `<a class="listen-link" data-service="${l.service}" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} <span aria-hidden="true">↗</span></a>`).join('');
   const audio = song.legacyAudio ? `<audio class="listen-audio" controls preload="metadata" src="${r}assets/audio/${esc(song.legacyAudio)}">お使いのブラウザでは再生できません。</audio>` : '';
   return links || audio ? `<div class="listen">${links}${audio}</div>` : '';
@@ -293,7 +303,7 @@ const listen = (r, song) => {
   const cards = songs.map((s, i) => `<li class="work reveal" style="--i:${i}">
       <a class="work-link" href="${trackUrl(r, s.id)}">
         <span class="work-jacket">${jacket(r, s, { eager: i < 4, small: true })}</span>
-        <span class="work-meta"><span class="work-no">${no(i)}</span>${s === latest ? '<span class="work-new">LATEST</span>' : ''}</span>
+        <span class="work-meta"><span class="work-no">${no(i)}</span>${s === latest ? '<span class="work-new">LATEST</span>' : ''}${s.audioPrivate ? '<span class="work-private">音源非公開</span>' : ''}</span>
         <span class="work-title" style="--fit:${titleParts(s.title).fit}">${titleParts(s.title).html}</span>
         ${s.aiImpression ? `<span class="work-note">${esc(s.aiImpression)}</span>` : ''}
       </a>
@@ -335,7 +345,7 @@ ${topbar(r, true)}
   <section class="works" id="works" aria-labelledby="works-title">
     <header class="works-head reveal">
       <p class="section-label"><span class="label-en">Works</span><span class="label-ja" id="works-title">楽曲一覧</span></p>
-      <p class="works-count"><span>${songs.length}</span> 曲を掲載中</p>
+      <p class="works-count"><span>${songs.length}</span> 作品を掲載中</p>
     </header>
     <ol class="work-grid">
     ${cards}
