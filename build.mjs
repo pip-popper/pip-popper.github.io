@@ -115,7 +115,7 @@ const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 // GOOGLE_SITE_VERIFICATION: paste ONLY the code Google Search Console gives the Producer
 // (the content="..." value of its HTML tag). Empty = no tag is written.
 const SITE_URL = 'https://pip-popper.github.io/';
-const GOOGLE_SITE_VERIFICATION = '';
+const GOOGLE_SITE_VERIFICATION = 'mCrw0muFFFCwTcnqTDQPt0duAOfiu-IDxaP29p08WeU';
 const NAME_KANA = 'ピップポッパー';
 const pageUrl = path => new URL(path, SITE_URL).href;          // path: '', 'about/', 'tracks/<id>/'
 const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[0];
