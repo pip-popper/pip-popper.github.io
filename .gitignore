@@ -39,3 +39,8 @@
 !/private/worker/package.json
 !/private/worker/package-lock.json
 !/private/段階2_Cloudflare設置手順.md
+!/docs/works.json
+!/private/worker/public/assets/admin.css
+!/private/worker/public/assets/admin.js
+!/private/dev/mock-env.mjs
+!/private/dev/test-admin.mjs

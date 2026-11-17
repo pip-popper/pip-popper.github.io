@@ -1,0 +1,71 @@
+/* PIP POPPER PRIVATE — administrator screen (on top of site.css + private.css, same B-3 tokens). */
+.ad-head-right { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.ad-head-right .works-count small { margin-left: .6em; font-size: 13px; color: var(--muted); letter-spacing: .06em; }
+.ad-add { min-height: 46px; padding: 0 22px; }
+.ad-status { min-height: 1.6em; margin: 16px 0 0; font-size: 14px; }
+.ad-status.is-done { color: #b9f0c4; }
+.ad-status.is-error { color: #ff9a9e; }
+.is-busy .ad-item button, .is-busy .ad-add { pointer-events: none; opacity: .5; }
+
+.ad-item { cursor: default; }
+.ad-item.is-dragging { opacity: .4; }
+.ad-meta { margin: 0; font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+.ad-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.ad-actions button, .ad-restore, .ad-cancel, .ad-remove-go { font: 500 14px/1 var(--f-body); letter-spacing: .08em; color: var(--ink); cursor: pointer; min-height: 44px; }
+.ad-replace { padding: 0 22px; background: var(--ink); color: #0b0b0c !important; border: 1px solid var(--ink); font-weight: 700 !important; }
+.ad-replace:hover { background: transparent; color: var(--ink) !important; }
+.ad-order { display: inline-flex; gap: 6px; }
+.ad-move { width: 44px; padding: 0; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.4); }
+.ad-move:disabled { opacity: .3; cursor: default; }
+.ad-move:not(:disabled):hover { border-color: var(--ink); }
+.ad-remove { margin-left: auto; padding: 0 12px; background: none; border: 1px solid transparent; color: #ffb3b6 !important; text-decoration: underline; text-underline-offset: 4px; }
+.ad-remove:hover { border-color: rgba(240,68,75,.6); }
+
+.ad-removed { margin: 8px 0 32px; padding: 20px 24px; border: 1px dashed rgba(255,255,255,.25); }
+.ad-removed h2 { margin: 0 0 12px; font: 700 16px/1.5 var(--f-head); letter-spacing: .08em; }
+.ad-removed h2 small { display: block; font: 400 12px/1.6 var(--f-body); color: var(--muted); letter-spacing: .04em; }
+.ad-removed ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ad-removed li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.ad-removed-title { font-weight: 700; }
+.ad-removed-until { font-size: 12px; color: var(--muted); }
+.ad-restore { margin-left: auto; padding: 0 16px; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.5); }
+.ad-note { margin: 0 0 40px; font-size: 13px; color: var(--muted); }
+
+/* Dialogs */
+.ad-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100svh - 32px); padding: 0; color: var(--ink); background: #121214; border: 1px solid rgba(255,255,255,.2); box-shadow: 0 40px 120px rgba(0,0,0,.8); }
+.ad-dialog::backdrop { background: rgba(0,0,0,.72); }
+.ad-dialog form { display: grid; gap: 14px; padding: 26px 26px 22px; }
+.ad-dialog h2 { margin: 0; font: 800 22px/1.4 var(--f-head); letter-spacing: .06em; }
+.ad-dlg-song { margin: -6px 0 0; font: 700 17px/1.5 var(--f-head); }
+.ad-compare { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ad-compare th, .ad-compare td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.ad-compare thead th { font-size: 12px; color: var(--muted); font-weight: 500; }
+.ad-compare tbody th { width: 4.5em; font-weight: 500; color: var(--muted); }
+.ad-compare td:last-child { color: #fff; font-weight: 700; }
+.ad-file { word-break: break-all; font-weight: 500 !important; font-size: 12px; }
+.ad-label { margin: 0; font-size: 13px; color: var(--muted); }
+.ad-dialog audio { width: 100%; height: 44px; color-scheme: dark; }
+.ad-safe { margin: 0; padding: 10px 12px; font-size: 13px; border-left: 2px solid #6fd28a; background: rgba(111,210,138,.08); }
+.ad-dialog progress { width: 100%; height: 8px; accent-color: var(--red); }
+.ad-msg { margin: 0; min-height: 1.2em; font-size: 14px; color: #ff9a9e; }
+.ad-buttons { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.ad-cancel { padding: 0 20px; background: none; border: 1px solid rgba(255,255,255,.4); }
+.ad-go { min-height: 48px; }
+.ad-go:disabled, .ad-remove-go:disabled, .ad-cancel:disabled { opacity: .45; cursor: not-allowed; }
+.ad-dialog select, .ad-dialog input[type="text"] { width: 100%; min-height: 46px; font: 400 16px/1.4 var(--f-body); color: var(--ink); background: rgba(8,8,10,.8); border: 1px solid rgba(255,255,255,.3); padding: 8px 12px; }
+.ad-dialog input[type="file"] { font-size: 14px; color: var(--ink); }
+.ad-remove-song { display: flex; align-items: center; gap: 16px; }
+.ad-remove-song p { margin: 0; font: 700 18px/1.5 var(--f-head); }
+.ad-thumb .pv-jacket { width: 72px; }
+.ad-remove-notes { margin: 0; padding-left: 1.2em; font-size: 14px; display: grid; gap: 4px; }
+.ad-remove-go { padding: 0 22px; background: #b3262c; border: 1px solid #b3262c; font-weight: 700; }
+.ad-remove-go:hover { background: #d0333a; }
+
+@media (max-width: 760px) {
+  .ad-actions { grid-column: 1 / -1; }
+  .ad-meta { grid-column: 1 / -1; }
+  .ad-replace { flex: 1 1 100%; }
+  .ad-remove { margin-left: auto; }
+  .ad-dialog form { padding: 20px 18px 18px; }
+  .ad-buttons > * { flex: 1 1 auto; justify-content: center; }
+}

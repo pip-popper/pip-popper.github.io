@@ -467,6 +467,8 @@ await write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 ${SITEMAP_PATHS.map(p => `  <url><loc>${esc(pageUrl(p))}</loc></url>`).join('\n')}
 </urlset>
 `);
+// works.json: the list the PRIVATE admin screen offers when adding a song (only already-public facts).
+await write('works.json', JSON.stringify(songs.map(s => ({ id: s.id, title: s.title, cover: pageUrl(`assets/covers/${s.id}-640.jpg`) })), null, 1) + '\n');
 await write('robots.txt', `User-agent: *
 Allow: /
 
