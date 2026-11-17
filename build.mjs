@@ -110,16 +110,27 @@ const no = i => String(i + 1).padStart(2, '0');
 const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">`;
-const DESCRIPTION = 'PIP POPPER 公式サイト。楽曲と歌詞、作品紹介を掲載しています。';
+// ── Search engines ───────────────────────────────────────────────────
+// SITE_URL: the official address. Canonical URLs, sitemap.xml and robots.txt are built from it.
+// GOOGLE_SITE_VERIFICATION: paste ONLY the code Google Search Console gives the Producer
+// (the content="..." value of its HTML tag). Empty = no tag is written.
+const SITE_URL = 'https://pip-popper.github.io/';
+const GOOGLE_SITE_VERIFICATION = '';
+const NAME_KANA = 'ピップポッパー';
+const pageUrl = path => new URL(path, SITE_URL).href;          // path: '', 'about/', 'tracks/<id>/'
+const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[0];
+const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}曲の歌詞、ジャケット、作品紹介を掲載しています。`;
+const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の歌詞とジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
 const wordmark = (tag, attrs = '') => `<${tag} class="wordmark"${attrs}><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></${tag}>`;
-const head = (r, title, extraClass = '') => `<!doctype html>
+const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false } = {}) => `<!doctype html>
 <html lang="ja" class="no-js${extraClass}" data-logo="b">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${title}</title>
-<meta name="description" content="${esc(DESCRIPTION)}">
-${FONTS}
+<meta name="description" content="${esc(description)}">
+<link rel="canonical" href="${esc(pageUrl(path))}">
+${verify && GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${esc(GOOGLE_SITE_VERIFICATION)}">\n` : ''}${FONTS}
 <link rel="stylesheet" href="${r}assets/site.css">
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
 </head>
@@ -287,7 +298,7 @@ const listen = (r, song) => {
         ${s.aiImpression ? `<span class="work-note">${esc(s.aiImpression)}</span>` : ''}
       </a>
     </li>`).join('\n    ');
-  await write('index.html', `${head(r, 'PIP POPPER｜OFFICIAL MUSIC SITE', ' page-home')}
+  await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true })}
 <a class="skip" href="#latest">最新楽曲へ移動</a>
 ${world(`<div class="glow" data-key="${latest.id}" style="--cover:url('${coverUrl(r, latest.id, true)}')"></div>`)}
 <p class="rail" aria-hidden="true"><span>PIP POPPER</span><span>OFFICIAL MUSIC SITE</span></p>
@@ -344,7 +355,7 @@ ${messageScript}
 for (const [i, s] of songs.entries()) {
   const r = '../../';
   const step = (other, label) => other ? `<a href="${trackUrl(r, other.id)}"><small>${label}</small><span>${esc(other.title)}</span></a>` : '<span></span>';
-  await write(`tracks/${s.id}/index.html`, `${head(r, `${esc(s.title)}｜PIP POPPER`, ' page-track')}
+  await write(`tracks/${s.id}/index.html`, `${head(r, `${esc(s.title)}｜PIP POPPER`, ' page-track', { path: `tracks/${s.id}/`, description: trackDescription(s) })}
 <a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>
 ${world(`<div class="glow on" data-key="${s.id}" style="--cover:url('${coverUrl(r, s.id, true)}')"></div>`)}
 ${topbar(r, false)}
@@ -388,7 +399,8 @@ await write('tracks/index.html', `<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>楽曲一覧｜PIP POPPER</title>
 <meta http-equiv="refresh" content="0; url=../index.html#works">
-<link rel="canonical" href="../index.html#works">
+<link rel="canonical" href="${SITE_URL}">
+<meta name="robots" content="noindex">
 <style>body{margin:0;background:#060708;color:#f4f0ea;font:16px/1.8 "Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;display:grid;place-items:center;min-height:100vh}a{color:inherit}</style>
 </head>
 <body><p>楽曲一覧はトップページに移りました。<a href="../index.html#works">楽曲一覧へ</a></p></body>
@@ -404,7 +416,7 @@ const ABOUT = [
 ];
 {
   const r = '../';
-  await write('about/index.html', `${head(r, 'アーティスト紹介｜PIP POPPER', ' page-track page-about')}
+  await write('about/index.html', `${head(r, 'アーティスト紹介｜PIP POPPER', ' page-track page-about', { path: 'about/', description: `PIP POPPER（${NAME_KANA}）のアーティスト紹介。${ABOUT[0]}` })}
 <a class="skip" href="#about">本文へ移動</a>
 ${world('')}
 ${topbar(r, false)}
@@ -440,5 +452,17 @@ for (const s of songs) {
     await copyFile(new URL(`assets/audio/${s.legacyAudio}`, published), new URL(`assets/audio/${s.legacyAudio}`, out));
   }
 }
+// ── sitemap.xml / robots.txt (rebuilt every time, so new songs are always included) ──
+const SITEMAP_PATHS = ['', 'about/', ...songs.map(s => `tracks/${s.id}/`)];
+await write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${SITEMAP_PATHS.map(p => `  <url><loc>${esc(pageUrl(p))}</loc></url>`).join('\n')}
+</urlset>
+`);
+await write('robots.txt', `User-agent: *
+Allow: /
+
+Sitemap: ${pageUrl('sitemap.xml')}
+`);
 if (!await exists(new URL('.nojekyll', out))) await writeFile(new URL('.nojekyll', out), '');
 console.log(`Built ${songs.length} songs into ${fileURLToPath(out)} — latest: ${latest.title}; audio kept: ${songs.filter(s => s.legacyAudio).map(s => s.id).join(', ') || 'none'}`);
