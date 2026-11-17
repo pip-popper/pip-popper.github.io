@@ -137,7 +137,10 @@ const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION,
 <title>${title}</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${esc(pageUrl(path))}">
-${verify && GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${esc(GOOGLE_SITE_VERIFICATION)}">\n` : ''}${FONTS}
+${verify && GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${esc(GOOGLE_SITE_VERIFICATION)}">\n` : ''}<link rel="icon" href="${r}favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="${r}assets/favicon-32.png">
+<link rel="apple-touch-icon" href="${r}assets/apple-touch-icon.png">
+${FONTS}
 <link rel="stylesheet" href="${r}assets/site.css">
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
 </head>
@@ -456,6 +459,10 @@ ${sharedScript}
 await mkdir(new URL('assets/covers/', out), { recursive: true });
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));
 await copyFile(new URL('src/stage.jpg', root), new URL('assets/stage.jpg', out));
+// Browser / bookmark icons (made by python tools/make-icons.py).
+await copyFile(new URL('src/icons/favicon.ico', root), new URL('favicon.ico', out));
+for (const f of ['favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'])
+  await copyFile(new URL(`src/icons/assets/${f}`, root), new URL(`assets/${f}`, out));
 for (const s of songs) {
   await copyFile(new URL(`${s.id}/cover-web.jpg`, trackDir), new URL(`assets/covers/${s.id}.jpg`, out));
   await copyFile(new URL(`${s.id}/cover-640.jpg`, trackDir), new URL(`assets/covers/${s.id}-640.jpg`, out));

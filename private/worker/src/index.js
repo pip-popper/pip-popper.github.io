@@ -31,7 +31,7 @@ async function route(request, env, url) {
   const { pathname } = url;
   const method = request.method;
   if (pathname === '/robots.txt') return text(200, 'User-agent: *\nDisallow: /\n');
-  if (pathname.startsWith('/assets/') && (method === 'GET' || method === 'HEAD')) return env.ASSETS.fetch(request);
+  if ((pathname.startsWith('/assets/') || pathname === '/favicon.ico') && (method === 'GET' || method === 'HEAD')) return env.ASSETS.fetch(request);
   // Fail closed: without both secrets nobody can enter.
   if (!env.PRIVATE_PASSWORD || !env.SESSION_KEY || env.SESSION_KEY.length < 32 || !env.LOGIN_GUARD) return html(503, messagePage('準備中です。しばらくしてからお越しください。'));
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return adminRoute(request, env, url);

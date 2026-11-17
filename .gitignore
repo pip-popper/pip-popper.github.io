@@ -44,3 +44,16 @@
 !/private/worker/public/assets/admin.js
 !/private/dev/mock-env.mjs
 !/private/dev/test-admin.mjs
+!/tools/make-icons.py
+!/src/icons/
+!/src/icons/**
+!/docs/favicon.ico
+!/docs/assets/favicon-32.png
+!/docs/assets/apple-touch-icon.png
+!/docs/assets/icon-192.png
+!/docs/assets/icon-512.png
+!/private/worker/public/favicon.ico
+!/private/worker/public/assets/favicon-32.png
+!/private/worker/public/assets/apple-touch-icon.png
+!/private/worker/public/assets/icon-192.png
+!/private/worker/public/assets/icon-512.png
