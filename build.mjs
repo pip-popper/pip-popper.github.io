@@ -216,7 +216,7 @@ const messageSection = `<section class="message" id="message" aria-labelledby="m
       </div>
       <div class="field">
         <label for="m-body">メッセージ<span class="req">必須</span></label>
-        <textarea id="m-body" name="message" rows="7" maxlength="3000" required aria-describedby="m-body-err m-body-count" placeholder="ご自由にどうぞ"></textarea>
+        <textarea id="m-body" name="message" rows="7" maxlength="3000" required aria-describedby="m-body-err m-body-count" placeholder="ご感想、ご意見、応援、苦情、何でも歓迎。&#10;悪口を書くなら、徹底的にお願いします。"></textarea>
         <div class="field-foot"><p class="field-error" id="m-body-err" aria-live="polite"></p><p class="count" id="m-body-count">0 / 3000</p></div>
       </div>
       <div class="field">
@@ -228,7 +228,6 @@ const messageSection = `<section class="message" id="message" aria-labelledby="m
         <button class="send" type="submit"><span class="send-label">送信する</span> <span aria-hidden="true">→</span></button>
         <p class="message-status" id="message-status" role="status" aria-live="polite"></p>
       </div>
-      <p class="message-note">ご感想、ご意見、応援、苦情、何でも歓迎。<br>悪口を書くなら、徹底的にお願いします。</p>
     </form>
   </section>`;
 const messageScript = `<script>

@@ -343,6 +343,8 @@ main { position: relative; z-index: 1; }
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: border-color .2s, background .2s; }
 .field textarea { resize: vertical; min-height: 180px; }
 .field input::placeholder, .field textarea::placeholder { color: rgba(244,240,234,.38); }
+/* Phones: the message hint's two sentences each stay on one line. */
+@media (max-width: 420px) { .field textarea::placeholder { font-size: 14px; } }
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--ink); background: rgba(8,8,10,.8); }
 .field [aria-invalid="true"] { border-color: var(--red); }
 .field-foot { display: flex; justify-content: space-between; gap: 12px; }
