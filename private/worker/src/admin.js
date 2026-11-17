@@ -176,7 +176,10 @@ export async function adminRoute(request, env, url) {
   if (pathname.startsWith('/admin/api/')) {
     // Every API call: valid admin cookie + this site's own page + the screen's own header (blocks forged requests).
     if (!await isAdmin(request, env)) return json(401, { error: '管理画面にもう一度入室してください（12時間で自動的に退室します）。' });
-    if (!sameOrigin(request, url) || request.headers.get('X-PP-Admin') !== '1') return json(403, { error: '受け付けられないリクエストです。' });
+    // The screen's own header is required for every call except listening: an <audio> element cannot send custom
+    // headers. Listening only reads (never changes anything) and still needs the admin cookie (SameSite=Strict).
+    const listening = method === 'GET' && /^\/admin\/api\/songs\/[a-z0-9-]+\/audio$/.test(pathname);
+    if (!sameOrigin(request, url) || (!listening && request.headers.get('X-PP-Admin') !== '1')) return json(403, { error: '受け付けられないリクエストです。' });
     try { return await api(request, env, url, pathname.slice('/admin/api/'.length)); }
     catch (error) {
       if (error instanceof HttpError) return json(error.status, { error: error.message });

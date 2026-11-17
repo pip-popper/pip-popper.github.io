@@ -78,6 +78,18 @@ ok('管理API：招待者Cookieでは401', (await call('GET', '/admin/api/catalo
 ok('管理API：専用ヘッダーなしは403', (await call('GET', '/admin/api/catalog', { cookie: admin })).status === 403);
 ok('管理API：他サイトからは403', (await call('GET', '/admin/api/catalog', { cookie: admin, headers: { 'X-PP-Admin': '1', Origin: 'https://evil.example' } })).status === 403);
 ok('招待者側：管理Cookieでは音源は401', (await call('GET', '/audio/manner', { cookie: admin })).status === 401);
+{
+  // The admin page's <audio> element: admin cookie, browser fetch-metadata, Range — but no custom header.
+  const media = h => call('GET', '/admin/api/songs/manner/audio?v=x', { cookie: admin, headers: { Origin: '', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Dest': 'audio', ...h } });
+  const whole = await media({});
+  ok('管理画面の試聴：<audio>からの要求で再生できる（200・中身一致）', whole.status === 200 && sha(Buffer.from(await whole.arrayBuffer())) === sha(manner));
+  const part = await media({ Range: 'bytes=0-' });
+  ok('管理画面の試聴：シーク用の範囲要求（206）', part.status === 206 && /^bytes 0-\d+\/\d+$/.test(part.headers.get('content-range') ?? ''));
+  ok('管理画面の試聴：入室なしは401', (await call('GET', '/admin/api/songs/manner/audio', { headers: { 'Sec-Fetch-Dest': 'audio' } })).status === 401);
+  ok('管理画面の試聴：他サイトからは403', (await call('GET', '/admin/api/songs/manner/audio', { cookie: admin, headers: { Origin: '', 'Sec-Fetch-Site': 'cross-site' } })).status === 403);
+  ok('ヘッダー例外は試聴だけ：一覧取得はヘッダーなしだと403', (await call('GET', '/admin/api/catalog', { cookie: admin, headers: { Origin: '', 'Sec-Fetch-Site': 'same-origin' } })).status === 403);
+  ok('ヘッダー例外は試聴だけ：差し替え（PUT）はヘッダーなしだと403', (await call('PUT', '/admin/api/songs/manner/audio?rev=0', { cookie: admin, body: manner, headers: { 'Content-Length': String(manner.length) } })).status === 403);
+}
 
 let view = await get(admin);
 ok('移行：旧形式を rev 0 として読み込み、Mannerの音源更新日時を引き継ぐ', view.rev === 0 && view.songs[0].id === 'manner' && view.songs[0].audioUpdatedAt === '2026-11-17T14:54:09.574Z');
