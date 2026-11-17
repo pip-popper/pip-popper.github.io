@@ -121,6 +121,10 @@ const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 const SITE_URL = 'https://pip-popper.github.io/';
 const GOOGLE_SITE_VERIFICATION = 'mCrw0muFFFCwTcnqTDQPt0duAOfiu-IDxaP29p08WeU';
 const NAME_KANA = 'ピップポッパー';
+// PIP POPPER PRIVATE entrance (header, right end). Empty = no link, so the site stays exactly as it is.
+// After the Worker is deployed and the Producer approves, set its address here (e.g. 'https://pip-popper-private.＜name＞.workers.dev/').
+// --private-url <address> shows it in a checking build only.
+const PRIVATE_URL = option('--private-url') ?? 'https://pip-popper-private.pip-popper-private.workers.dev/';
 const pageUrl = path => new URL(path, SITE_URL).href;          // path: '', 'about/', 'tracks/<id>/'
 const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[0];
 const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}作品の歌詞、ジャケット、作品紹介を掲載しています。`;
@@ -154,7 +158,8 @@ const topbar = (r, onHome) => `<header class="topbar">
     <a class="nav-latest" href="${onHome ? '#latest' : sec(r, 'latest')}">最新楽曲</a>
     <a href="${onHome ? '#works' : sec(r, 'works')}">楽曲一覧</a>
     <a href="${aboutUrl(r)}">アーティスト紹介</a>
-    <a href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>
+    <a href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>${PRIVATE_URL ? `
+    <a class="nav-private" href="${esc(PRIVATE_URL)}" aria-label="PRIVATE（招待者専用の音源ライブラリ）"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg><span class="nav-private-label">PRIVATE</span></a>` : ''}
   </nav>
 </header>`;
 const footer = (r, onHome) => `<footer class="site-foot">

@@ -1,0 +1,50 @@
+/* PIP POPPER PRIVATE — additions on top of the official site.css (B-3). Same tokens, fonts and stage. */
+.page-private { --after: .85; }
+.pv-lock { flex: none; width: .8em; height: .8em; margin-right: .45em; vertical-align: -.05em; color: var(--red); }
+
+/* Entry (password) */
+.pv-gate { position: relative; z-index: 1; min-height: 100svh; display: grid; align-content: center; justify-items: center; gap: 22px;
+  max-width: 560px; margin: 0 auto; padding: 72px var(--gutter); text-align: center; }
+.pv-gate .kicker { margin-bottom: 0; font: 600 12px/1 var(--f-body); letter-spacing: .4em; color: #ffd9da; }
+.pv-title { margin: 0; display: grid; justify-items: center; gap: 14px; font-weight: 400; }
+.pv-title .wordmark { font-size: clamp(56px, 13vw, 104px); line-height: .9; }
+.pv-word { display: inline-flex; align-items: center; font: italic 500 clamp(22px, 3vw, 30px)/1 var(--f-en); letter-spacing: .32em; padding-left: .32em; color: var(--ink); }
+.pv-lead { margin: 0; color: #ddd5cf; font-size: 15px; letter-spacing: .06em; }
+.pv-form { width: 100%; display: grid; gap: 18px; margin-top: 10px; text-align: left; }
+.pv-form .send { justify-self: stretch; justify-content: space-between; }
+.pv-error:empty { display: none; }
+.pv-gate .back { margin-top: 6px; }
+
+/* Library */
+.pv-logout { font: inherit; color: inherit; background: none; border: 0; padding: 0; min-height: 44px; cursor: pointer; letter-spacing: inherit; }
+.pv-logout:hover { color: var(--red); }
+.topbar form { display: contents; }
+.pv-library { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: calc(80px + 4svh) var(--gutter) 10svh; }
+.pv-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.pv-head .label-en { display: inline-flex; align-items: center; }
+.pv-list { list-style: none; margin: 0 0 48px; padding: 0; }
+.pv-item { display: grid; grid-template-columns: clamp(120px, 18vw, 200px) minmax(0, 1fr); gap: 20px clamp(20px, 3.4vw, 48px); align-items: center;
+  padding: 28px 0; border-bottom: 1px solid var(--line); }
+.pv-jacket { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: linear-gradient(140deg, #2a1215, #0e1222 70%); box-shadow: 0 30px 70px -30px rgba(0,0,0,.9); }
+.pv-jacket img { position: relative; width: 100%; height: 100%; object-fit: cover; }
+.pv-body { display: grid; gap: 12px; min-width: 0; }
+.pv-no { margin: 0; font: italic 500 22px/1 var(--f-en); color: var(--red); }
+.pv-song { margin: 0; font: 800 clamp(22px, 2.6vw, 34px)/1.25 var(--f-head); letter-spacing: .04em; word-break: keep-all; overflow-wrap: anywhere; }
+.pv-audio { width: min(100%, 520px); height: 44px; color-scheme: dark; }
+.pv-dl { justify-self: start; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 20px; border: 1px solid rgba(255,255,255,.55);
+  font: 500 14px/1 var(--f-body); letter-spacing: .1em; background: rgba(0,0,0,.3); transition: background .25s, color .25s; }
+.pv-dl span { color: var(--red); }
+.pv-dl:hover { background: var(--ink); color: #000; }
+.pv-empty { padding: 48px 0; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .pv-item { grid-template-columns: 96px minmax(0, 1fr); align-items: start; gap: 14px 16px; padding: 22px 0; }
+  .pv-audio, .pv-dl { grid-column: 1 / -1; }
+  .pv-body { display: contents; }
+  .pv-body > .pv-no, .pv-body > .pv-song { grid-column: 2; }
+  .pv-item > .pv-jacket { grid-row: span 2; }
+  .pv-no { font-size: 18px; align-self: end; }
+  .pv-song { font-size: 21px; align-self: start; }
+  .pv-audio { width: 100%; }
+  .pv-dl { justify-self: stretch; justify-content: space-between; }
+}

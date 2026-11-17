@@ -30,3 +30,16 @@
 !/docs/assets/covers/*.jpg
 !/docs/robots.txt
 !/docs/sitemap.xml
+!/private/
+/private/**
+!/private/**/
+!/private/README.md
+!/private/worker/wrangler.toml
+!/private/worker/src/*.js
+!/private/worker/public/assets/private.css
+!/private/worker/public/assets/private.js
+!/private/tools/private.mjs
+!/private/dev/serve.mjs
+!/private/worker/package.json
+!/private/worker/package-lock.json
+!/private/段階2_Cloudflare設置手順.md

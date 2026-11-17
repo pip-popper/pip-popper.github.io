@@ -1,0 +1,12 @@
+{
+  "name": "pip-popper-private",
+  "private": true,
+  "type": "module",
+  "description": "PIP POPPER PRIVATE — Cloudflare Worker (invitation-only audio library)",
+  "scripts": {
+    "deploy": "node ../tools/private.mjs assets && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.2"
+  }
+}
