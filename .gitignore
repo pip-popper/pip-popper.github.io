@@ -14,10 +14,6 @@
 !/tracks/*/
 !/tracks/*/track.json
 !/tracks/*/*.png
-!/tracks/*/*.mp3
-!/docs/assets/audio/
-/docs/assets/audio/*
-!/docs/assets/audio/*.mp3
 !/src/
 /src/**
 !/src/site.css

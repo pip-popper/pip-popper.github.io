@@ -3,8 +3,8 @@
 //   node build.mjs                 → docs/ (GitHub Pages)
 //   node build.mjs --out <folder>  → any folder, for checking before publishing
 // Before building, display images must exist: python tools/make-web-images.py
-// Audio policy: this script never copies audio from tracks/. Only audio already published in
-// docs/assets/audio/ (Manner) keeps its player. Songs are introduced; listening goes to external links.
+// Audio policy: the official site never holds or plays audio (GitHub Pages is public). Songs are introduced;
+// listening goes to external links or to PIP POPPER PRIVATE (private Cloudflare R2). track.json "audio" must be null.
 import { readFile, readdir, writeFile, access, mkdir, stat, copyFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -64,17 +64,16 @@ for (const id of ids) {
     throw new Error(`表示用ジャケットがありません: tracks/${id}/cover-${size}.jpg（python tools/make-web-images.py を実行）`);
   const linkInput = [...(data.links ?? [])];
   if (data.streamingUrl) linkInput.push({ url: data.streamingUrl });
-  const ext = data.audio ? data.audio.slice(data.audio.lastIndexOf('.')).toLowerCase() : null;
+  if (data.audio) throw new Error(`公式サイトには音源を置きません（track.json の audio は null にする）: ${id}`);
   // audioRelease: 'public' (default) = player/links as before; 'private' = no player or links, shows the private note.
   const audioRelease = data.audioRelease ?? 'public';
   if (!['public', 'private'].includes(audioRelease)) throw new Error(`audioRelease は public または private: ${id}`);
   if (audioRelease === 'private' && (data.audio || linkInput.length)) throw new Error(`音源非公開の曲に音源・配信リンクが登録されています: ${id}`);
-  const legacyAudio = ext && await exists(new URL(`assets/audio/${id}${ext}`, published)) ? `${id}${ext}` : null;
   const localAt = async () => { const t = (await stat(new URL(`${id}/track.json`, trackDir))).mtime;
     return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 19) + '+09:00'; };
   const gitAt = gitListedAt(id);
   const listedAt = data.releaseDate ?? data.listedAt ?? gitAt ?? await localAt();
-  songs.push({ ...data, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', legacyAudio, listedAt, audioPrivate: audioRelease === 'private' });
+  songs.push({ ...data, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
 }
 // Newest listing first; listOrder breaks ties (higher = registered later).
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
@@ -297,8 +296,7 @@ const PRIVATE_NOTE = `<div class="listen-private" role="note">
 const listen = (r, song) => {
   if (song.audioPrivate) return PRIVATE_NOTE;
   const links = song.links.map(l => `<a class="listen-link" data-service="${l.service}" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} <span aria-hidden="true">↗</span></a>`).join('');
-  const audio = song.legacyAudio ? `<audio class="listen-audio" controls preload="metadata" src="${r}assets/audio/${esc(song.legacyAudio)}">お使いのブラウザでは再生できません。</audio>` : '';
-  return links || audio ? `<div class="listen">${links}${audio}</div>` : '';
+  return links ? `<div class="listen">${links}</div>` : '';
 };
 
 // ── Top page ─────────────────────────────────────────────────────────
@@ -461,10 +459,6 @@ await copyFile(new URL('src/stage.jpg', root), new URL('assets/stage.jpg', out))
 for (const s of songs) {
   await copyFile(new URL(`${s.id}/cover-web.jpg`, trackDir), new URL(`assets/covers/${s.id}.jpg`, out));
   await copyFile(new URL(`${s.id}/cover-640.jpg`, trackDir), new URL(`assets/covers/${s.id}-640.jpg`, out));
-  if (s.legacyAudio && out.href !== published.href) {   // checking build: reuse the already-published file
-    await mkdir(new URL('assets/audio/', out), { recursive: true });
-    await copyFile(new URL(`assets/audio/${s.legacyAudio}`, published), new URL(`assets/audio/${s.legacyAudio}`, out));
-  }
 }
 // ── sitemap.xml / robots.txt (rebuilt every time, so new songs are always included) ──
 const SITEMAP_PATHS = ['', 'about/', ...songs.map(s => `tracks/${s.id}/`)];
@@ -479,4 +473,6 @@ Allow: /
 Sitemap: ${pageUrl('sitemap.xml')}
 `);
 if (!await exists(new URL('.nojekyll', out))) await writeFile(new URL('.nojekyll', out), '');
-console.log(`Built ${songs.length} songs into ${fileURLToPath(out)} — latest: ${latest.title}; audio kept: ${songs.filter(s => s.legacyAudio).map(s => s.id).join(', ') || 'none'}`);
+// Recurrence guard: no audio folder may remain in the published output.
+if (await exists(new URL('assets/audio/', out))) throw new Error(`公開フォルダーに音源フォルダーが残っています: ${fileURLToPath(new URL('assets/audio/', out))}`);
+console.log(`Built ${songs.length} songs into ${fileURLToPath(out)} — latest: ${latest.title}; audio: none (never on the official site)`);
