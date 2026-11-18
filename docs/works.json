@@ -1,5 +1,10 @@
 [
  {
+  "id": "lost-days",
+  "title": "Lost days",
+  "cover": "https://pip-popper.github.io/assets/covers/lost-days-640.jpg"
+ },
+ {
   "id": "sukekomashi-ai-remix",
   "title": "すけこまし -AI remix-",
   "cover": "https://pip-popper.github.io/assets/covers/sukekomashi-ai-remix-640.jpg"
