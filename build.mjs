@@ -129,7 +129,7 @@ const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[
 const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}作品の歌詞、ジャケット、作品紹介を掲載しています。`;
 const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の歌詞とジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
 const wordmark = (tag, attrs = '') => `<${tag} class="wordmark"${attrs}><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></${tag}>`;
-const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false } = {}) => `<!doctype html>
+const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false, homeOpening = false } = {}) => `<!doctype html>
 <html lang="ja" class="no-js${extraClass}" data-logo="b">
 <head>
 <meta charset="utf-8">
@@ -142,7 +142,7 @@ ${verify && GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" co
 <link rel="apple-touch-icon" href="${r}assets/apple-touch-icon.png">
 ${FONTS}
 <link rel="stylesheet" href="${r}assets/site.css">
-<script>document.documentElement.classList.replace('no-js', 'js');</script>
+${homeOpening ? `<link rel="stylesheet" href="${r}assets/home-opening.css">\n<script defer src="${r}assets/home-opening.js"></script>\n` : ''}<script>document.documentElement.classList.replace('no-js', 'js');</script>
 </head>
 <body>`;
 const world = glows => `<div class="world" aria-hidden="true">
@@ -156,7 +156,14 @@ const world = glows => `<div class="world" aria-hidden="true">
 const sec = (r, hash) => r === null ? `#${hash}` : `${homeUrl(r)}#${hash}`;
 const topbar = (r, onHome) => `<header class="topbar">
   <a class="topbar-brand" href="${onHome ? '#top' : homeUrl(r)}" aria-label="PIP POPPER トップ">${wordmark('span')}</a>
-  <nav aria-label="サイト内">
+${onHome ? `  <a class="mobile-latest" href="#latest">最新楽曲</a>
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path class="menu-open-icon" d="M1 4h14M1 8h14M1 12h14"/>
+      <path class="menu-close-icon" d="m3 3 10 10M13 3 3 13"/>
+    </svg>
+    メニュー
+  </button>\n` : ''}  <nav ${onHome ? 'id="site-navigation" ' : ''}aria-label="サイト内">
     <a class="nav-latest" href="${onHome ? '#latest' : sec(r, 'latest')}">最新楽曲</a>
     <a href="${onHome ? '#works' : sec(r, 'works')}">楽曲一覧</a>
     <a href="${aboutUrl(r)}">アーティスト紹介</a>
@@ -313,7 +320,7 @@ const listen = (r, song) => {
         ${s.aiImpression ? `<span class="work-note">${esc(s.aiImpression)}</span>` : ''}
       </a>
     </li>`).join('\n    ');
-  await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true })}
+  await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true, homeOpening: true })}
 <a class="skip" href="#latest">最新楽曲へ移動</a>
 ${world(`<div class="glow" data-key="${latest.id}" style="--cover:url('${coverUrl(r, latest.id, true)}')"></div>`)}
 <p class="rail" aria-hidden="true"><span>PIP POPPER</span><span>OFFICIAL MUSIC SITE</span></p>
@@ -321,9 +328,12 @@ ${topbar(r, true)}
 <main>
   <section class="opening" id="top" aria-labelledby="site-title">
     <div class="opening-pin">
+      <div class="concert" aria-hidden="true"></div>
+      <div class="concert-shade" aria-hidden="true"></div>
       <div class="opening-title">
         <p class="kicker">OFFICIAL MUSIC SITE</p>
-        ${wordmark('h1', ' id="site-title"')}
+        <h1 class="wordmark" id="site-title" aria-label="PIP POPPER"><span class="wm-pip">PIP</span><span class="logo-rule" aria-hidden="true"></span><span class="wm-popper">POPPER</span></h1>
+        <span class="logo-width" aria-hidden="true"></span>
       </div>
       <div class="crowd" aria-hidden="true"></div>
       <a class="cue" href="#latest"><span>SCROLL</span><i aria-hidden="true"></i></a>
@@ -459,6 +469,8 @@ ${sharedScript}
 await mkdir(new URL('assets/covers/', out), { recursive: true });
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));
 await copyFile(new URL('src/stage.jpg', root), new URL('assets/stage.jpg', out));
+for (const f of ['home-opening.css', 'home-opening.js', 'Anton-Regular.ttf', 'Anton-OFL.txt'])
+  await copyFile(new URL(`src/${f}`, root), new URL(`assets/${f}`, out));
 // Browser / bookmark icons (made by python tools/make-icons.py).
 await copyFile(new URL('src/icons/favicon.ico', root), new URL('favicon.ico', out));
 for (const f of ['favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'])

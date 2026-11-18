@@ -14,6 +14,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/home-opening.css">
+<script defer src="assets/home-opening.js"></script>
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
 </head>
 <body>
@@ -28,7 +30,15 @@
 <p class="rail" aria-hidden="true"><span>PIP POPPER</span><span>OFFICIAL MUSIC SITE</span></p>
 <header class="topbar">
   <a class="topbar-brand" href="#top" aria-label="PIP POPPER トップ"><span class="wordmark"><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></span></a>
-  <nav aria-label="サイト内">
+  <a class="mobile-latest" href="#latest">最新楽曲</a>
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path class="menu-open-icon" d="M1 4h14M1 8h14M1 12h14"/>
+      <path class="menu-close-icon" d="m3 3 10 10M13 3 3 13"/>
+    </svg>
+    メニュー
+  </button>
+  <nav id="site-navigation" aria-label="サイト内">
     <a class="nav-latest" href="#latest">最新楽曲</a>
     <a href="#works">楽曲一覧</a>
     <a href="about/index.html">アーティスト紹介</a>
@@ -39,9 +49,12 @@
 <main>
   <section class="opening" id="top" aria-labelledby="site-title">
     <div class="opening-pin">
+      <div class="concert" aria-hidden="true"></div>
+      <div class="concert-shade" aria-hidden="true"></div>
       <div class="opening-title">
         <p class="kicker">OFFICIAL MUSIC SITE</p>
-        <h1 class="wordmark" id="site-title"><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></h1>
+        <h1 class="wordmark" id="site-title" aria-label="PIP POPPER"><span class="wm-pip">PIP</span><span class="logo-rule" aria-hidden="true"></span><span class="wm-popper">POPPER</span></h1>
+        <span class="logo-width" aria-hidden="true"></span>
       </div>
       <div class="crowd" aria-hidden="true"></div>
       <a class="cue" href="#latest"><span>SCROLL</span><i aria-hidden="true"></i></a>
