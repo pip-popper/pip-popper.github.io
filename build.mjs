@@ -58,7 +58,7 @@ const songs = [];
 for (const id of ids) {
   if (!/^[a-z0-9-]+$/.test(id)) throw new Error(`曲IDは英小文字・数字・ハイフンのみ: ${id}`);
   const data = JSON.parse(await readFile(new URL(`${id}/track.json`, trackDir), 'utf8'));
-  if (!data.title || !data.lyrics) throw new Error(`曲名または歌詞がありません: ${id}`);
+  if (!data.title) throw new Error(`曲名がありません: ${id}`);
   if (data.releaseDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.releaseDate)) throw new Error(`公開日の形式が無効です: ${id}`);
   for (const size of ['web', '640']) if (!await exists(new URL(`${id}/cover-${size}.jpg`, trackDir)))
     throw new Error(`表示用ジャケットがありません: tracks/${id}/cover-${size}.jpg（python tools/make-web-images.py を実行）`);
@@ -127,7 +127,7 @@ const PRIVATE_URL = option('--private-url') ?? 'https://pip-popper-private.pip-p
 const pageUrl = path => new URL(path, SITE_URL).href;          // path: '', 'about/', 'tracks/<id>/'
 const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[0];
 const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}作品の歌詞、ジャケット、作品紹介を掲載しています。`;
-const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の歌詞とジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
+const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の${s.lyrics ? '歌詞と' : ''}ジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
 const wordmark = (tag, attrs = '') => `<${tag} class="wordmark"${attrs}><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></${tag}>`;
 const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false, homeOpening = false } = {}) => `<!doctype html>
 <html lang="ja" class="no-js${extraClass}" data-logo="b">
@@ -381,8 +381,7 @@ for (const [i, s] of songs.entries()) {
   const r = '../../';
   const step = (other, label) => other ? `<a href="${trackUrl(r, other.id)}"><small>${label}</small><span>${esc(other.title)}</span></a>` : '<span></span>';
   await write(`tracks/${s.id}/index.html`, `${head(r, `${esc(s.title)}｜PIP POPPER`, ' page-track', { path: `tracks/${s.id}/`, description: trackDescription(s) })}
-<a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>
-${world(`<div class="glow on" data-key="${s.id}" style="--cover:url('${coverUrl(r, s.id, true)}')"></div>`)}
+${s.lyrics ? `<a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>\n` : ''}${world(`<div class="glow on" data-key="${s.id}" style="--cover:url('${coverUrl(r, s.id, true)}')"></div>`)}
 ${topbar(r, false)}
 <main class="track">
   <a class="back" href="${sec(r, 'works')}">← 楽曲一覧</a>
@@ -403,10 +402,10 @@ ${topbar(r, false)}
     <h2 class="block-head" id="story-title"><span class="label-en">Background</span><span class="label-ja">制作背景</span></h2>
     <p class="story-text">${esc(s.background)}</p>
   </section>` : ''}
-  <section class="block text reveal" id="text" aria-labelledby="text-title">
+  ${s.lyrics ? `<section class="block text reveal" id="text" aria-labelledby="text-title">
     <h2 class="block-head" id="text-title"><span class="label-en">${esc(s.lyricsLabel)}</span></h2>
     <div class="lyrics-text" lang="ja">${lyricsHtml(s.lyrics)}</div>
-  </section>
+  </section>` : ''}
   <nav class="steps" aria-label="ほかの楽曲">${step(songs[i - 1], '← 新しい曲')}${step(songs[i + 1], '前の曲 →')}</nav>
 </main>
 ${footer(r, false)}
