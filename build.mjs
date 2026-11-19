@@ -79,11 +79,43 @@ for (const id of ids) {
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
 const latest = songs[0];
 
+// ── HISTORY: albums/albums.json + albums/<id>/cover-*.jpg (python tools/make-album-images.py) ──
+const albumDir = new URL('albums/', root);
+const { albums } = JSON.parse(await readFile(new URL('albums.json', albumDir), 'utf8'));
+// JPEG pixel size (SOF marker), so every <img> carries width/height and the page never jumps.
+async function jpegSize(url) {
+  const b = await readFile(url);
+  for (let i = 2; i < b.length - 9;) {
+    if (b[i] !== 0xff) { i++; continue; }
+    const m = b[i + 1], len = b.readUInt16BE(i + 2);
+    if (m >= 0xc0 && m <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(m)) return { w: b.readUInt16BE(i + 7), h: b.readUInt16BE(i + 5) };
+    i += 2 + len;
+  }
+  throw new Error(`JPEGの大きさを読めません: ${fileURLToPath(url)}`);
+}
+const songById = new Map(songs.map(s => [s.id, s]));
+const originOf = new Map();          // song id → album (only confirmed same songs)
+for (const a of albums) {
+  if (!/^[a-z0-9-]+$/.test(a.id)) throw new Error(`アルバムIDは英小文字・数字・ハイフンのみ: ${a.id}`);
+  if (!a.title || !a.tracks?.length) throw new Error(`アルバムの曲名・収録曲がありません: ${a.id}`);
+  for (const size of ['web', '480']) {
+    const u = new URL(`${a.id}/cover-${size}.jpg`, albumDir);
+    if (!await exists(u)) throw new Error(`HISTORYのジャケットがありません: albums/${a.id}/cover-${size}.jpg（python tools/make-album-images.py を実行）`);
+    a[`size${size}`] = await jpegSize(u);
+  }
+  for (const t of a.tracks) if (t.music) {
+    if (!songById.has(t.music)) throw new Error(`HISTORYのMUSICリンク先がありません: ${a.id} → ${t.music}`);
+    originOf.set(t.music, a);
+  }
+}
+
 // ── Paths (r = relative path from the current page to the site root) ──
 const esc = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const trackUrl = (r, id) => `${r}tracks/${id}/index.html`;
 const homeUrl = r => `${r}index.html`;
 const aboutUrl = r => `${r}about/index.html`;
+const historyUrl = (r, id) => `${r}history/index.html${id ? `#${id}` : ''}`;
+const albumCover = (r, id, small) => `${r}assets/history/${id}${small ? '-480' : ''}.jpg`;
 const coverUrl = (r, id, small) => `${r}assets/covers/${id}${small ? '-640' : ''}.jpg`;
 
 // ── Titles: break only between phrases, never inside a word ─────────
@@ -129,7 +161,8 @@ const firstSentence = text => (String(text ?? '').match(/^[^。]*。/) ?? [''])[
 const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs.length}作品の歌詞、ジャケット、作品紹介を掲載しています。`;
 const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の${s.lyrics ? '歌詞と' : ''}ジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
 const wordmark = (tag, attrs = '') => `<${tag} class="wordmark"${attrs}><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></${tag}>`;
-const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false, homeOpening = false } = {}) => `<!doctype html>
+// third: the 3rd-design "finish" layer (top page and About). page-fade + history.css: every page.
+const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false, homeOpening = false, third = false } = {}) => `<!doctype html>
 <html lang="ja" class="no-js${extraClass}" data-logo="b">
 <head>
 <meta charset="utf-8">
@@ -142,9 +175,15 @@ ${verify && GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" co
 <link rel="apple-touch-icon" href="${r}assets/apple-touch-icon.png">
 ${FONTS}
 <link rel="stylesheet" href="${r}assets/site.css">
-${homeOpening ? `<link rel="stylesheet" href="${r}assets/home-opening.css">\n<script defer src="${r}assets/home-opening.js"></script>\n` : ''}<script>document.documentElement.classList.replace('no-js', 'js');</script>
+${homeOpening ? `<link rel="stylesheet" href="${r}assets/home-opening.css">\n<script defer src="${r}assets/home-opening.js"></script>\n` : ''}${third ? `<link rel="stylesheet" href="${r}assets/third-design.css">\n` : ''}<link rel="stylesheet" href="${r}assets/history.css">
+<link rel="stylesheet" href="${r}assets/page-fade.css">
+<script src="${r}assets/page-fade.js"></script>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
 </head>
 <body>`;
+// Ambient light image. A url() inside the --cover custom property is resolved against site.css by some
+// browsers (top page: assets/assets/… → 404), so the image is also set directly, which resolves from the page.
+const glowStyle = u => `--cover:url('${u}');background-image:url('${u}')`;
 const world = glows => `<div class="world" aria-hidden="true">
   <div class="world-stage"><div class="stage-plate"></div><div class="beams"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
   <div class="world-haze"></div>
@@ -166,15 +205,21 @@ ${onHome ? `  <a class="mobile-latest" href="#latest">最新楽曲</a>
   </button>\n` : ''}  <nav ${onHome ? 'id="site-navigation" ' : ''}aria-label="サイト内">
     <a class="nav-latest" href="${onHome ? '#latest' : sec(r, 'latest')}">最新楽曲</a>
     <a href="${onHome ? '#works' : sec(r, 'works')}">楽曲一覧</a>
-    <a href="${aboutUrl(r)}">アーティスト紹介</a>
-    <a href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>${PRIVATE_URL ? `
+    <a class="nav-history" href="${historyUrl(r)}">ヒストリー</a>
+    <a class="nav-about" href="${aboutUrl(r)}">アーティスト紹介</a>
+    <a class="nav-message" href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>${PRIVATE_URL ? `
     <a class="nav-private" href="${esc(PRIVATE_URL)}" aria-label="PRIVATE（招待者専用の音源ライブラリ）"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg><span class="nav-private-label">PRIVATE</span></a>` : ''}
   </nav>
 </header>`;
+// Top page: the "finish" sign-off (brand + OFFICIAL MUSIC SITE) and a link back to the latest release.
 const footer = (r, onHome) => `<footer class="site-foot">
-  <a class="foot-brand" href="${onHome ? '#top' : homeUrl(r)}">${wordmark('span')}</a>
+${onHome ? `  <div class="foot-sign">
+    <a class="foot-brand" href="#top">${wordmark('span')}</a>
+    <p class="foot-tag">OFFICIAL MUSIC SITE</p>
+  </div>` : `  <a class="foot-brand" href="${homeUrl(r)}">${wordmark('span')}</a>`}
   <nav aria-label="フッター">
-    <a href="${onHome ? '#works' : sec(r, 'works')}">楽曲一覧</a>
+${onHome ? '    <a href="#latest">最新楽曲</a>\n' : ''}    <a href="${onHome ? '#works' : sec(r, 'works')}">楽曲一覧</a>
+    <a href="${historyUrl(r)}">ヒストリー</a>
     <a href="${aboutUrl(r)}">アーティスト紹介</a>
     <a href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>
   </nav>
@@ -320,9 +365,18 @@ const listen = (r, song) => {
         ${s.aiImpression ? `<span class="work-note">${esc(s.aiImpression)}</span>` : ''}
       </a>
     </li>`).join('\n    ');
-  await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true, homeOpening: true })}
+  // Latest title (finish layout): main title large, a "-subtitle-" or "feat." part on its own line.
+  const rel = (m => m ? { main: m[1], sub: m[2] } : { main: latest.title, sub: null })(latest.title.match(/^(.+?)\s+((?:-|feat\.|～|~).+)$/));
+  const relMain = titleParts(rel.main);
+  const relJa = /[぀-ヿ㐀-鿿]/.test(rel.main);
+  const latestTitle = `<span class="release-title${relJa ? ' is-ja' : ''}">${relMain.html}</span>${rel.sub ? ` <span class="release-subtitle">${esc(rel.sub)}</span>` : ''}`;
+  const historyStrip = albums.map(a => `<li><a href="${historyUrl(r, a.id)}">
+          <span class="ht-jacket"><img src="${albumCover(r, a.id, true)}" width="${a.size480.w}" height="${a.size480.h}" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">${esc(a.year)}</span><span class="ht-title">${esc(a.title)}</span>
+        </a></li>`).join('\n        ');
+  await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true, homeOpening: true, third: true })}
 <a class="skip" href="#latest">最新楽曲へ移動</a>
-${world(`<div class="glow" data-key="${latest.id}" style="--cover:url('${coverUrl(r, latest.id, true)}')"></div>`)}
+${world(`<div class="glow" data-key="${latest.id}" style="${glowStyle(coverUrl(r, latest.id, true))}"></div>`)}
 <p class="rail" aria-hidden="true"><span>PIP POPPER</span><span>OFFICIAL MUSIC SITE</span></p>
 ${topbar(r, true)}
 <main>
@@ -349,7 +403,7 @@ ${topbar(r, true)}
     <div class="latest-body">
       <a class="latest-jacket reveal" href="${trackUrl(r, latest.id)}" tabindex="-1" aria-hidden="true">${jacket(r, latest, { eager: true })}</a>
       <div class="latest-info reveal">
-        <h2 id="latest-title" style="--fit:${titleParts(latest.title).fit}"><a href="${trackUrl(r, latest.id)}">${titleParts(latest.title).html}</a></h2>
+        <h2 id="latest-title" style="--fit:${relMain.fit}"><a href="${trackUrl(r, latest.id)}">${latestTitle}</a></h2>
         ${latest.artist ? `<p class="latest-artist">${esc(latest.artist)}</p>` : ''}
         ${latest.aiImpression ? `<p class="latest-note"><span class="note-label">AIの感想</span>${esc(latest.aiImpression)}</p>` : ''}
         <a class="more" href="${trackUrl(r, latest.id)}">作品ページへ <span aria-hidden="true">→</span></a>
@@ -364,6 +418,17 @@ ${topbar(r, true)}
     </header>
     <ol class="work-grid">
     ${cards}
+    </ol>
+  </section>
+
+  <section class="history-teaser" aria-labelledby="history-teaser-title">
+    <div class="ht-head reveal">
+      <p class="section-label"><span class="label-en">History</span><span class="label-ja" id="history-teaser-title">ヒストリー</span></p>
+      <p class="ht-lead">1999年から2001年へ。仲間と遊びながら作ったアルバムで、PIP POPPERの歴史をたどる。</p>
+      <a class="more" href="${historyUrl(r)}">アルバムの歴史を見る <span aria-hidden="true">→</span></a>
+    </div>
+    <ol class="ht-strip reveal" aria-label="HISTORYのアルバム">
+        ${historyStrip}
     </ol>
   </section>
   ${messageSection}
@@ -381,7 +446,7 @@ for (const [i, s] of songs.entries()) {
   const r = '../../';
   const step = (other, label) => other ? `<a href="${trackUrl(r, other.id)}"><small>${label}</small><span>${esc(other.title)}</span></a>` : '<span></span>';
   await write(`tracks/${s.id}/index.html`, `${head(r, `${esc(s.title)}｜PIP POPPER`, ' page-track', { path: `tracks/${s.id}/`, description: trackDescription(s) })}
-${s.lyrics ? `<a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>\n` : ''}${world(`<div class="glow on" data-key="${s.id}" style="--cover:url('${coverUrl(r, s.id, true)}')"></div>`)}
+${s.lyrics ? `<a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>\n` : ''}${world(`<div class="glow on" data-key="${s.id}" style="${glowStyle(coverUrl(r, s.id, true))}"></div>`)}
 ${topbar(r, false)}
 <main class="track">
   <a class="back" href="${sec(r, 'works')}">← 楽曲一覧</a>
@@ -390,7 +455,7 @@ ${topbar(r, false)}
     <div class="track-head">
       <p class="track-no"><span>${no(i)}</span>${s === latest ? ' LATEST' : ''}</p>
       ${titleTag('h1', s.title, ' id="track-title"')}
-      ${s.artist ? `<p class="track-artist">${esc(s.artist)}</p>` : ''}
+      ${s.artist ? `<p class="track-artist">${esc(s.artist)}</p>` : ''}${originOf.has(s.id) ? (a => `\n      <p class="track-origin"><span class="to-key">HISTORY</span><a href="${historyUrl(r, a.id)}">${a.year}年『${esc(a.title)}』収録 <span aria-hidden="true">→</span></a></p>`)(originOf.get(s.id)) : ''}
       ${listen(r, s)}
     </div>
   </section>
@@ -440,7 +505,7 @@ const ABOUT = [
 ];
 {
   const r = '../';
-  await write('about/index.html', `${head(r, 'アーティスト紹介｜PIP POPPER', ' page-track page-about', { path: 'about/', description: `PIP POPPER（${NAME_KANA}）のアーティスト紹介。${ABOUT[0]}` })}
+  await write('about/index.html', `${head(r, 'アーティスト紹介｜PIP POPPER', ' page-track page-about', { path: 'about/', description: `PIP POPPER（${NAME_KANA}）のアーティスト紹介。${ABOUT[0]}`, third: true })}
 <a class="skip" href="#about">本文へ移動</a>
 ${world('')}
 ${topbar(r, false)}
@@ -453,6 +518,7 @@ ${topbar(r, false)}
     ${ABOUT.map((t, i) => `<p class="${i === 0 ? 'about-lead' : 'about-text'}">${esc(t)}</p>`).join('\n    ')}
     <div class="about-actions">
       <a class="more" href="${sec(r, 'works')}">楽曲一覧を見る <span aria-hidden="true">→</span></a>
+      <a class="more" href="${historyUrl(r)}">アルバムの歴史を見る <span aria-hidden="true">→</span></a>
       <a class="more" href="${sec(r, 'message')}">メッセージを送る <span aria-hidden="true">→</span></a>
     </div>
   </section>
@@ -464,8 +530,72 @@ ${sharedScript}
 `);
 }
 
+// ── HISTORY page: history/index.html ─────────────────────────────────
+// "The site is the real thing; the content is PIP POPPER." Only confirmed facts from albums.json.
+{
+  const r = '../';
+  const p = text => `<p>${esc(text)}</p>`;
+  const chapter = (a, i) => {
+    const facts = [
+      a.dateLabel ? `<div><dt>発表</dt><dd>${esc(a.dateLabel)}</dd></div>` : '',
+      a.members?.length ? `<div><dt>${esc(a.membersLabel ?? '参加メンバー')}</dt><dd class="ch-members">${a.members.map(m => `<span class="ch-member">${esc(m.name)}${m.note ? `<small>${esc(m.note)}</small>` : ''}</span>`).join('')}</dd></div>` : '',
+      `<div><dt>収録</dt><dd>全${a.tracks.length}曲</dd></div>`,
+    ].join('');
+    const tracks = a.tracks.map(t => `<li><span class="tr-title">${esc(t.title)}</span>${t.note ? `<small class="tr-note">${esc(t.note)}</small>` : ''}${t.music ? `<a class="tr-music" href="${trackUrl(r, t.music)}">MUSIC「${esc(songById.get(t.music).title)}」 <span aria-hidden="true">→</span></a>` : ''}</li>`).join('');
+    return `<li class="chapter" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
+      <p class="ch-rail" aria-hidden="true"><span class="ch-year">${esc(a.year)}</span><span class="ch-count">${String(i + 1).padStart(2, '0')} / ${String(albums.length).padStart(2, '0')}</span></p>
+      <figure class="ch-jacket reveal">
+        <img src="${albumCover(r, a.id)}" width="${a.sizeweb.w}" height="${a.sizeweb.h}" alt="『${esc(a.title)}』のCDジャケット" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async">
+      </figure>
+      <div class="ch-body reveal">
+        <p class="ch-kind">${esc(a.kind)}</p>
+        <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}${a.subtitle ? ` <span class="ch-sub">${esc(a.subtitle)}</span>` : ''}</h2>
+        <dl class="ch-facts">${facts}</dl>
+        <div class="ch-story">${a.story.map(p).join('')}</div>
+        ${a.episode ? `<section class="ch-episode" aria-label="${esc(a.episode.title)}"><h3>${esc(a.episode.title)}</h3>${a.episode.text.map(p).join('')}</section>` : ''}
+        ${a.audioNote ? `<p class="ch-audio-note" role="note">${esc(a.audioNote)}</p>` : ''}
+        <div class="ch-tracks"><h3>収録曲</h3><ol>${tracks}</ol></div>
+      </div>
+    </li>`;
+  };
+  const glows = albums.map((a, i) => `<div class="glow${i === 0 ? ' on' : ''}" data-key="${a.id}" style="${glowStyle(albumCover(r, a.id, true))}"></div>`).join('');
+  await write('history/index.html', `${head(r, 'ヒストリー｜PIP POPPER', ' page-track page-history', { path: 'history/', description: `PIP POPPER（${NAME_KANA}）のヒストリー。1999年の1stアルバム『PIP POPPER』から2001年の『PROFESSIONAL』まで、当時のジャケットと収録曲、制作のエピソードでたどります。` })}
+<a class="skip" href="#chapters">本文へ移動</a>
+${world(glows)}
+${topbar(r, false)}
+<main class="history">
+  <header class="hist-hero">
+    <p class="section-label reveal"><span class="label-en">History</span><span class="label-ja">ヒストリー</span></p>
+    <h1 class="hist-title reveal"><span class="tw">アルバムでたどる</span><wbr><span class="tw">PIP POPPER</span></h1>
+    <p class="hist-lead reveal">1999年から2001年へ。仲間と遊びながら作ったアルバムを、当時のCDジャケットと一緒に振り返ります。</p>
+    <nav class="hist-index reveal" aria-label="アルバム">
+      ${albums.map(a => `<a href="#${a.id}"><span class="hi-year">${esc(a.year)}</span><span class="hi-title">${esc(a.title)}</span></a>`).join('\n      ')}
+    </nav>
+  </header>
+  <ol class="chapters" id="chapters">
+    ${albums.map(chapter).join('\n    ')}
+  </ol>
+  <section class="hist-end reveal" aria-label="楽曲一覧へ">
+    <p>過去の曲は、いまの制作手段で再制作しながら、楽曲一覧で公開しています。</p>
+    <a class="more" href="${sec(r, 'works')}">楽曲一覧を見る <span aria-hidden="true">→</span></a>
+  </section>
+</main>
+${footer(r, false)}
+${sharedScript}
+</body>
+</html>
+`);
+}
+
 // ── Assets ───────────────────────────────────────────────────────────
 await mkdir(new URL('assets/covers/', out), { recursive: true });
+await mkdir(new URL('assets/history/', out), { recursive: true });
+for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.js'])
+  await copyFile(new URL(`src/${f}`, root), new URL(`assets/${f}`, out));
+for (const a of albums) {
+  await copyFile(new URL(`${a.id}/cover-web.jpg`, albumDir), new URL(`assets/history/${a.id}.jpg`, out));
+  await copyFile(new URL(`${a.id}/cover-480.jpg`, albumDir), new URL(`assets/history/${a.id}-480.jpg`, out));
+}
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));
 await copyFile(new URL('src/stage.jpg', root), new URL('assets/stage.jpg', out));
 for (const f of ['home-opening.css', 'home-opening.js', 'Anton-Regular.ttf', 'Anton-OFL.txt'])
@@ -479,7 +609,7 @@ for (const s of songs) {
   await copyFile(new URL(`${s.id}/cover-640.jpg`, trackDir), new URL(`assets/covers/${s.id}-640.jpg`, out));
 }
 // ── sitemap.xml / robots.txt (rebuilt every time, so new songs are always included) ──
-const SITEMAP_PATHS = ['', 'about/', ...songs.map(s => `tracks/${s.id}/`)];
+const SITEMAP_PATHS = ['', 'about/', 'history/', ...songs.map(s => `tracks/${s.id}/`)];
 await write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${SITEMAP_PATHS.map(p => `  <url><loc>${esc(pageUrl(p))}</loc></url>`).join('\n')}

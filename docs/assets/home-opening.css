@@ -130,7 +130,9 @@
     --logo-lift: 63%;
     --logo-preferred: 26vw;
     --logo-max: calc(100vw - 32px);
-    --stage-focus: 56%;
+    /* 4th brush-up: the crop centres on the vocalist (about 37% of the photo) while the
+       drum cymbals stay at the right edge, so the stage still reads as a full band. */
+    --stage-focus: 40%;
     --stage-height: 58%;
     --stage-width: 215svh;
     --stage-shade: linear-gradient(0deg, #08090f 3%, #08090fa8 19%, #08090f15 57%, transparent 76%);

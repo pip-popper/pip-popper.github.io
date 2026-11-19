@@ -1,0 +1,18 @@
+/* Page transition curtain (3rd-design "finish"). It shares the opening scene's near-black tone. */
+html::after {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.page-leaving::after,
+  html.page-arriving::after {
+    content: "";
+    background: #08090f;
+  }
+  html.page-leaving::after { animation: page-darken 140ms ease-in both; }
+  html.page-arriving::after { animation: page-reveal 150ms ease-out both; }
+}
+@keyframes page-darken { from { opacity: 0; } to { opacity: 1; } }
+@keyframes page-reveal { from { opacity: 1; } to { opacity: 0; } }

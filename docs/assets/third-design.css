@@ -1,0 +1,202 @@
+/* B2 opening: preserve the approved composition at scroll progress 0. */
+@media (prefers-reduced-motion: no-preference) {
+  .js.page-home .opening { height: calc(max(580px, 100svh) + 85svh); }
+  .js.page-home .opening-pin { position: sticky; top: 0; background: transparent; }
+  .js.page-home .opening-pin::before {
+    content: ""; position: absolute; inset: 0; background: #08090f;
+    opacity: clamp(0, calc(1 - var(--open) * 1.65), 1);
+  }
+  .js.page-home .concert {
+    transform-origin: 50% 0;
+    transform: translateY(calc(var(--open) * -5vh)) scale(calc(1 + var(--open) * .08));
+    opacity: calc(1 - var(--open));
+  }
+  .js.page-home .concert-shade { opacity: calc(1 - var(--open)); }
+  /* One stage image leads the opening. The old fixed plate returns below it. */
+  .js.page-home .world .stage-plate { opacity: var(--after); }
+  .js.page-home .opening-title {
+    transform: translate3d(0, calc(-50% - var(--open) * 24vh), 0) scale(calc(1 + var(--open) * .08));
+    transform-origin: left center;
+    opacity: clamp(0, calc(1 - (var(--open) - .22) * 3.2), 1);
+  }
+  .js.page-home .crowd {
+    transform: translate3d(0, calc(var(--open) * -6vh), 0) scale(calc(1 + var(--open) * .22));
+    opacity: calc(.68 * (1 - var(--open) * .45));
+  }
+  .js.page-home .cue { opacity: clamp(0, calc(1 - var(--open) * 4), 1); }
+  .js.page-home .cue:focus-visible { opacity: 1; }
+  /* 4th brush-up: the opening dissolves into the venue instead of passing through black.
+     The background stage starts to appear while the concert image fades, the veil stops
+     short of black, and a faint warm haze lingers on the way to the latest release.
+     Scroll distances are unchanged. */
+  .js.page-home .world .stage-plate { opacity: clamp(0, calc((var(--open) - .4) * 1.4 + var(--after)), 1); }
+  .js.page-home .world-veil { opacity: min(.74, calc(var(--open) * .22 + var(--after) * .62)); }
+  .js.page-home .world-haze { opacity: calc(1 - var(--after) * .4); }
+  .js.page-home .world-haze::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(70% 34% at 50% 30%, rgba(255, 150, 80, .2), transparent 72%),
+      radial-gradient(90% 40% at 50% 62%, rgba(120, 150, 255, .12), transparent 75%);
+    opacity: clamp(0, min(calc(var(--open) * 1.6 - .6), calc(1.15 - var(--after) * .8)), 1);
+  }
+  @media (max-width: 760px) {
+    .js.page-home { --stage-x: 41%; }
+    .js.page-home .opening { height: calc(max(540px, 100svh) + 60svh); }
+    .js.page-home .crowd { opacity: calc(.55 * (1 - var(--open) * .45)); }
+  }
+  @media (max-width: 850px) and (max-height: 480px) and (orientation: landscape) {
+    .js.page-home .opening { height: 160svh; }
+  }
+}
+
+/* The statement bridges the concert atmosphere and the artwork. */
+.page-home .statement {
+  min-height: auto;
+  padding: clamp(68px, 11vw, 172px) var(--gutter) clamp(62px, 9vw, 132px);
+}
+.page-home .statement p { gap: .48em; font-size: clamp(25px, 3.6vw, 52px); line-height: 1.45; }
+.page-home .statement span:last-child { font-size: .54em; letter-spacing: .16em; }
+
+.page-home .latest, .page-home .works, .page-home .message {
+  max-width: 1480px;
+  padding-inline: clamp(16px, 6vw, 100px);
+}
+.page-home .latest {
+  min-height: 0;
+  gap: clamp(24px, 4vw, 54px);
+  padding-block: clamp(34px, 6vw, 92px) clamp(54px, 9vw, 140px);
+}
+.page-home .latest > .section-label { padding-top: 22px; border-top: 1px solid #ffffff40; }
+.page-home .latest-body { grid-template-columns: minmax(0, 1.03fr) minmax(0, .97fr); align-items: center; gap: clamp(32px, 6vw, 94px); }
+.page-home .latest-jacket { width: 100%; max-width: 560px; box-shadow: 0 28px 65px #0008; }
+.page-home .latest-info { gap: clamp(13px, 1.65vw, 24px); padding-bottom: 0; }
+.page-home .latest h2 {
+  font: 800 clamp(35px, 5vw, 83px)/1.04 var(--f-head);
+  letter-spacing: .01em;
+  text-wrap: initial;
+}
+.page-home .latest h2 a { display: block; }
+.page-home .latest h2 .release-title {
+  display: block;
+  font: 400 clamp(48px, 7vw, 106px)/1.08 HomeAnton, Anton, Impact, sans-serif;
+  letter-spacing: .025em;
+}
+.page-home .latest h2 .release-subtitle {
+  display: block;
+  font: 700 clamp(18px, 2.15vw, 32px)/1.45 var(--f-head);
+  letter-spacing: .09em;
+  white-space: nowrap;
+  margin-top: .3em;
+}
+.page-home .latest-note { order: 1; max-width: 44em; font-size: 15px; line-height: 1.95; text-shadow: none; }
+.page-home .latest .more, .page-about .about-actions .more {
+  min-height: 48px; padding-inline: 16px; border: 1px solid #ffffff48; border-left: 2px solid var(--red);
+  background: #11131bc7; letter-spacing: .05em;
+}
+.page-home .latest .more:hover, .page-about .about-actions .more:hover { background: #27202a; }
+
+.page-home .works { padding-block: clamp(45px, 7vw, 106px); }
+.page-home .works-head { align-items: end; margin-bottom: clamp(22px, 3.5vw, 52px); }
+.page-home .work-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(24px, 4vw, 56px) clamp(12px, 2vw, 28px); }
+.page-home .work { min-width: 0; }
+.page-home .work-link { display: grid; align-content: start; gap: 7px; height: 100%; padding-bottom: 13px; border-bottom: 1px solid #ffffff28; }
+.page-home .work-jacket { box-shadow: 0 12px 28px #0005; }
+.page-home .work-meta { margin-top: 3px; gap: 6px; min-height: 22px; }
+.page-home .work-title { font: 700 clamp(15px, 1.3vw, 21px)/1.45 var(--f-head); min-height: 2.9em; word-break: normal; overflow-wrap: anywhere; text-wrap: initial; }
+.page-home .work-title .tw { white-space: normal; }
+.page-home .work-note { -webkit-line-clamp: 2; }
+.page-home .work-link:focus-visible { outline-offset: 4px; }
+.page-home .work-link:active img { filter: brightness(.84); }
+
+.page-home .message {
+  display: grid; grid-template-columns: minmax(0, .68fr) minmax(0, 1fr); align-items: start;
+  gap: clamp(26px, 6vw, 94px);
+  padding-block: clamp(56px, 9vw, 126px);
+}
+.page-home .message-head { border: 0; margin: 0; padding: 0; }
+.page-home .message-form { margin: 0; max-width: none; min-width: 0; padding: clamp(17px, 3.4vw, 42px); border: 1px solid #ffffff38; background: #0c0d14db; }
+.page-home .message-form input, .page-home .message-form textarea { background: #181b26; font-size: 16px; }
+.page-home .message-form .send { min-height: 48px; }
+.page-home .message-lead { text-wrap: pretty; }
+.page-home .message-lead br { display: none; }
+
+.page-home .site-foot, .page-about .site-foot {
+  gap: 18px 34px; padding: clamp(26px, 5vw, 70px) clamp(16px, 6vw, 100px);
+  border-top: 1px solid #ffffff38; background: #090a11;
+}
+.page-home .foot-brand, .page-about .foot-brand { font-size: clamp(25px, 3.5vw, 47px); }
+
+@font-face {
+  font-family: ReviewAnton;
+  src: url("Anton-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+.page-about .about-mark .wordmark,
+.page-about .topbar-brand .wordmark,
+.page-about .foot-brand .wordmark { font-family: ReviewAnton, Anton, Impact, sans-serif; }
+.page-about .topbar-brand { opacity: 1; }
+.page-about .world-stage { display: none; }
+.page-about .about-page { max-width: 1480px; padding-inline: clamp(16px, 6vw, 100px); }
+.page-about .about-hero {
+  position: relative; isolation: isolate; min-height: clamp(300px, 38vw, 475px);
+  overflow: hidden; align-content: end; gap: clamp(16px, 3vw, 38px);
+  padding: clamp(22px, 5vw, 70px); background: #10111c;
+}
+.page-about .about-hero::before {
+  content: ""; position: absolute; z-index: -1; inset: 0;
+  background: linear-gradient(0deg, #0a0b13 5%, #0a0b13e8 21%, #0a0b1348 62%, #0a0b1310 100%),
+    url("stage.jpg") center top / max(100%, 1680px) auto no-repeat;
+}
+.page-about .about-mark { font-size: clamp(44px, 10vw, 164px); }
+.page-about .about-body {
+  margin: 0 auto; padding-top: clamp(42px, 8vw, 110px);
+  max-width: 44rem; gap: 24px;
+}
+.page-about .about-lead { line-height: 1.6; border-left: 2px solid var(--red); padding-left: clamp(14px, 2.5vw, 30px); }
+.page-about .about-text { line-height: 2.05; }
+
+@media (max-width: 1000px) { .page-home .work-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .page-home .latest-body, .page-home .message { grid-template-columns: minmax(0, 1fr); gap: 27px; }
+  .page-home .latest-jacket { max-width: none; }
+  .page-home .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-home .work-note { display: none; }
+  .page-home .work-title { min-height: 0; }
+  .page-home .work-meta { margin-top: 1px; }
+  .page-home .work-no { font-size: 17px; }
+  .page-home .work-new, .page-home .work-private { letter-spacing: .02em; }
+  .page-home .site-foot nav, .page-about .site-foot nav { flex-wrap: wrap; }
+  .page-about .about-hero { min-height: 290px; }
+  .page-about .about-hero::before { background-position: 55% top; background-size: auto, 1150px auto; }
+}
+
+
+/* ── Final finish (2026-11-19): MESSAGE and footer, home page only ─────────────── */
+/* The form reads as part of the venue: a softer frame with a faint stage-light spill. */
+.page-home .message-form {
+  border-color: #ffffff26;
+  background:
+    radial-gradient(120% 55% at 50% 0%, rgba(255, 150, 80, .07), transparent 70%),
+    linear-gradient(#0d0e16e0, #0a0b12ee);
+  box-shadow: 0 30px 70px #0007;
+}
+/* PC: the heading stays beside the form while it passes, instead of leaving an empty column. */
+@media (min-width: 761px) { .page-home .message-head { position: sticky; top: 112px; } }
+/* Phones: a slimmer frame gives the fields more width; the name hint fits on one line. */
+@media (max-width: 760px) { .page-home .message-form { padding: 22px 14px 18px; } }
+@media (max-width: 420px) { .page-home .field input::placeholder { font-size: 14px; } }
+
+/* Footer: the venue fades into darkness instead of ending on a hard line, like closing credits. */
+.page-home .site-foot {
+  align-items: end;
+  border-top: 0;
+  background: linear-gradient(180deg, transparent, #090a11 48%);
+  padding-top: clamp(80px, 11vw, 160px);
+  padding-bottom: max(clamp(40px, 6vw, 84px), env(safe-area-inset-bottom));
+}
+.page-home .foot-sign { display: grid; gap: 14px; }
+.page-home .foot-tag {
+  display: flex; align-items: center; gap: 11px;
+  font: 600 11px/1 system-ui, sans-serif; letter-spacing: .32em; color: #f6f1e88c;
+}
+.page-home .foot-tag::before { content: ""; width: 24px; height: 1px; background: var(--red); }
+@media (max-width: 760px) { .page-home .site-foot { gap: 22px; } }

@@ -16,6 +16,10 @@
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/home-opening.css">
 <script defer src="assets/home-opening.js"></script>
+<link rel="stylesheet" href="assets/third-design.css">
+<link rel="stylesheet" href="assets/history.css">
+<link rel="stylesheet" href="assets/page-fade.css">
+<script src="assets/page-fade.js"></script>
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
 </head>
 <body>
@@ -24,7 +28,7 @@
   <div class="world-stage"><div class="stage-plate"></div><div class="beams"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
   <div class="world-haze"></div>
   <div class="world-veil"></div>
-  <div class="world-ambient"><div class="glow" data-key="konna-koto-ii-na" style="--cover:url('assets/covers/konna-koto-ii-na-640.jpg')"></div></div>
+  <div class="world-ambient"><div class="glow" data-key="konna-koto-ii-na" style="--cover:url('assets/covers/konna-koto-ii-na-640.jpg');background-image:url('assets/covers/konna-koto-ii-na-640.jpg')"></div></div>
   <div class="world-grain"></div>
 </div>
 <p class="rail" aria-hidden="true"><span>PIP POPPER</span><span>OFFICIAL MUSIC SITE</span></p>
@@ -41,8 +45,9 @@
   <nav id="site-navigation" aria-label="サイト内">
     <a class="nav-latest" href="#latest">最新楽曲</a>
     <a href="#works">楽曲一覧</a>
-    <a href="about/index.html">アーティスト紹介</a>
-    <a href="#message">メッセージ</a>
+    <a class="nav-history" href="history/index.html">ヒストリー</a>
+    <a class="nav-about" href="about/index.html">アーティスト紹介</a>
+    <a class="nav-message" href="#message">メッセージ</a>
     <a class="nav-private" href="https://pip-popper-private.pip-popper-private.workers.dev/" aria-label="PRIVATE（招待者専用の音源ライブラリ）"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg><span class="nav-private-label">PRIVATE</span></a>
   </nav>
 </header>
@@ -71,7 +76,7 @@
       <a class="latest-jacket reveal" href="tracks/konna-koto-ii-na/index.html" tabindex="-1" aria-hidden="true"><span class="jacket-fallback">こんなこといいな feat.AI</span>
         <img src="assets/covers/konna-koto-ii-na.jpg" width="1254" height="1254" alt="" loading="eager" decoding="async" onerror="this.style.display='none'"></a>
       <div class="latest-info reveal">
-        <h2 id="latest-title" style="--fit:8.16"><a href="tracks/konna-koto-ii-na/index.html"><span class="tw">こんなこといいな</span><wbr> <wbr><span class="tw">feat.AI</span></a></h2>
+        <h2 id="latest-title" style="--fit:8.16"><a href="tracks/konna-koto-ii-na/index.html"><span class="release-title is-ja"><span class="tw">こんなこといいな</span></span> <span class="release-subtitle">feat.AI</span></a></h2>
         <p class="latest-artist">PIP POPPER</p>
         <p class="latest-note"><span class="note-label">AIの感想</span>もしも夢を叶える不思議な道具が手に入ったら？ 誰もが一度は夢見た未来の便利な世界を、大人になったPIP POPPERの自由すぎる発想で描くコミカルな一曲。</p>
         <a class="more" href="tracks/konna-koto-ii-na/index.html">作品ページへ <span aria-hidden="true">→</span></a>
@@ -294,6 +299,40 @@
     </li>
     </ol>
   </section>
+
+  <section class="history-teaser" aria-labelledby="history-teaser-title">
+    <div class="ht-head reveal">
+      <p class="section-label"><span class="label-en">History</span><span class="label-ja" id="history-teaser-title">ヒストリー</span></p>
+      <p class="ht-lead">1999年から2001年へ。仲間と遊びながら作ったアルバムで、PIP POPPERの歴史をたどる。</p>
+      <a class="more" href="history/index.html">アルバムの歴史を見る <span aria-hidden="true">→</span></a>
+    </div>
+    <ol class="ht-strip reveal" aria-label="HISTORYのアルバム">
+        <li><a href="history/index.html#pip-popper">
+          <span class="ht-jacket"><img src="assets/history/pip-popper-480.jpg" width="480" height="476" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">1999</span><span class="ht-title">PIP POPPER</span>
+        </a></li>
+        <li><a href="history/index.html#togetherness">
+          <span class="ht-jacket"><img src="assets/history/togetherness-480.jpg" width="343" height="340" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">SOLO</span><span class="ht-title">TOGETHERNESS</span>
+        </a></li>
+        <li><a href="history/index.html#dont-complain">
+          <span class="ht-jacket"><img src="assets/history/dont-complain-480.jpg" width="343" height="343" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">2001</span><span class="ht-title">Don&#39;t Complain</span>
+        </a></li>
+        <li><a href="history/index.html#rice">
+          <span class="ht-jacket"><img src="assets/history/rice-480.jpg" width="480" height="480" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">2001</span><span class="ht-title">RICE</span>
+        </a></li>
+        <li><a href="history/index.html#chichiband">
+          <span class="ht-jacket"><img src="assets/history/chichiband-480.jpg" width="343" height="343" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">2001</span><span class="ht-title">乳バンド</span>
+        </a></li>
+        <li><a href="history/index.html#professional">
+          <span class="ht-jacket"><img src="assets/history/professional-480.jpg" width="480" height="480" alt="" loading="lazy" decoding="async"></span>
+          <span class="ht-year">2001</span><span class="ht-title">PROFESSIONAL</span>
+        </a></li>
+    </ol>
+  </section>
   <section class="message" id="message" aria-labelledby="message-title">
     <header class="message-head reveal">
       <p class="section-label"><span class="label-en">Message</span><span class="label-ja" id="message-title"><span class="tw">PIP POPPERに</span><wbr><span class="tw">メッセージ</span></span></p>
@@ -322,9 +361,14 @@
   </section>
 </main>
 <footer class="site-foot">
-  <a class="foot-brand" href="#top"><span class="wordmark"><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></span></a>
+  <div class="foot-sign">
+    <a class="foot-brand" href="#top"><span class="wordmark"><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></span></a>
+    <p class="foot-tag">OFFICIAL MUSIC SITE</p>
+  </div>
   <nav aria-label="フッター">
+    <a href="#latest">最新楽曲</a>
     <a href="#works">楽曲一覧</a>
+    <a href="history/index.html">ヒストリー</a>
     <a href="about/index.html">アーティスト紹介</a>
     <a href="#message">メッセージ</a>
   </nav>
