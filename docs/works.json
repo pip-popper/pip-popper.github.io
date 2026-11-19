@@ -1,5 +1,10 @@
 [
  {
+  "id": "diet",
+  "title": "Diet",
+  "cover": "https://pip-popper.github.io/assets/covers/diet-640.jpg"
+ },
+ {
   "id": "lost-days",
   "title": "Lost days",
   "cover": "https://pip-popper.github.io/assets/covers/lost-days-640.jpg"
