@@ -82,3 +82,7 @@
 !/albums/*/
 !/albums/*/cover.png
 !/albums/*/*.jpg
+# PROFESSIONAL jacket shows a person: kept locally as a source, not in the public repository.
+/albums/professional/cover.png
+/albums/professional/cover-240.jpg
+!/albums/*/visual.png

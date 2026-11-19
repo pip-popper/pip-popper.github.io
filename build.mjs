@@ -79,7 +79,9 @@ for (const id of ids) {
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
 const latest = songs[0];
 
-// ── HISTORY: albums/albums.json + albums/<id>/cover-*.jpg (python tools/make-album-images.py) ──
+// ── HISTORY: albums/albums.json + albums/<id>/ images (python tools/make-album-images.py) ──
+// Main visual = visual-web.jpg (the Producer-adopted AI jacket) when present; otherwise the chapter's
+// typographic scene. The old CD front is only a small ORIGINAL ARCHIVE item (cover-240.jpg, archive: true).
 const albumDir = new URL('albums/', root);
 const { albums } = JSON.parse(await readFile(new URL('albums.json', albumDir), 'utf8'));
 // JPEG pixel size (SOF marker), so every <img> carries width/height and the page never jumps.
@@ -98,10 +100,13 @@ const originOf = new Map();          // song id → album (only confirmed same s
 for (const a of albums) {
   if (!/^[a-z0-9-]+$/.test(a.id)) throw new Error(`アルバムIDは英小文字・数字・ハイフンのみ: ${a.id}`);
   if (!a.title || !a.tracks?.length) throw new Error(`アルバムの曲名・収録曲がありません: ${a.id}`);
-  for (const size of ['web', '480']) {
-    const u = new URL(`${a.id}/cover-${size}.jpg`, albumDir);
-    if (!await exists(u)) throw new Error(`HISTORYのジャケットがありません: albums/${a.id}/cover-${size}.jpg（python tools/make-album-images.py を実行）`);
-    a[`size${size}`] = await jpegSize(u);
+  const visual = new URL(`${a.id}/visual-web.jpg`, albumDir);
+  a.visualSize = await exists(visual) ? await jpegSize(visual) : null;
+  if (a.visualSize && !await exists(new URL(`${a.id}/visual-640.jpg`, albumDir))) throw new Error(`visual-640.jpg がありません: albums/${a.id}（python tools/make-album-images.py を実行）`);
+  if (a.archive) {
+    const u = new URL(`${a.id}/cover-240.jpg`, albumDir);
+    if (!await exists(u)) throw new Error(`資料用の旧ジャケットがありません: albums/${a.id}/cover-240.jpg（python tools/make-album-images.py を実行）`);
+    a.archiveSize = await jpegSize(u);
   }
   for (const t of a.tracks) if (t.music) {
     if (!songById.has(t.music)) throw new Error(`HISTORYのMUSICリンク先がありません: ${a.id} → ${t.music}`);
@@ -115,7 +120,15 @@ const trackUrl = (r, id) => `${r}tracks/${id}/index.html`;
 const homeUrl = r => `${r}index.html`;
 const aboutUrl = r => `${r}about/index.html`;
 const historyUrl = (r, id) => `${r}history/index.html${id ? `#${id}` : ''}`;
-const albumCover = (r, id, small) => `${r}assets/history/${id}${small ? '-480' : ''}.jpg`;
+const albumVisual = (r, id, small) => `${r}assets/history/${id}-visual${small ? '-640' : ''}.jpg`;
+const albumArchive = (r, id) => `${r}assets/history/${id}-archive.jpg`;
+// Album ambient light: its AI jacket when adopted, otherwise a soft wash of the album's accent colour.
+const albumGlow = (r, a) => a.visualSize ? glowStyle(albumVisual(r, a.id, true))
+  : `background:radial-gradient(60% 55% at 50% 38%, ${a.accent}, transparent 70%) center / cover no-repeat`;
+// Small tile used on the top page: the AI jacket, or a typographic stand-in in the album's theme.
+const albumTile = (r, a) => a.visualSize
+  ? `<span class="ht-jacket"><img src="${albumVisual(r, a.id, true)}" width="640" height="640" alt="" loading="lazy" decoding="async"></span>`
+  : `<span class="ht-jacket ht-type theme-${a.id}" aria-hidden="true"><span class="ht-type-year">${esc(a.year)}</span><span class="ht-type-title">${esc(a.title)}</span></span>`;
 const coverUrl = (r, id, small) => `${r}assets/covers/${id}${small ? '-640' : ''}.jpg`;
 
 // ── Titles: break only between phrases, never inside a word ─────────
@@ -162,7 +175,7 @@ const DESCRIPTION = `PIP POPPER（${NAME_KANA}）の公式サイト。全${songs
 const trackDescription = s => `PIP POPPER（${NAME_KANA}）の楽曲「${s.title}」の${s.lyrics ? '歌詞と' : ''}ジャケット、作品紹介。${firstSentence(s.aiImpression)}`;
 const wordmark = (tag, attrs = '') => `<${tag} class="wordmark"${attrs}><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></${tag}>`;
 // third: the 3rd-design "finish" layer (top page and About). page-fade + history.css: every page.
-const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false, homeOpening = false, third = false } = {}) => `<!doctype html>
+const head = (r, title, extraClass = '', { path = '', description = DESCRIPTION, verify = false, homeOpening = false, third = false, fonts = '' } = {}) => `<!doctype html>
 <html lang="ja" class="no-js${extraClass}" data-logo="b">
 <head>
 <meta charset="utf-8">
@@ -174,7 +187,7 @@ ${verify && GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" co
 <link rel="icon" type="image/png" sizes="32x32" href="${r}assets/favicon-32.png">
 <link rel="apple-touch-icon" href="${r}assets/apple-touch-icon.png">
 ${FONTS}
-<link rel="stylesheet" href="${r}assets/site.css">
+${fonts}<link rel="stylesheet" href="${r}assets/site.css">
 ${homeOpening ? `<link rel="stylesheet" href="${r}assets/home-opening.css">\n<script defer src="${r}assets/home-opening.js"></script>\n` : ''}${third ? `<link rel="stylesheet" href="${r}assets/third-design.css">\n` : ''}<link rel="stylesheet" href="${r}assets/history.css">
 <link rel="stylesheet" href="${r}assets/page-fade.css">
 <script src="${r}assets/page-fade.js"></script>
@@ -371,7 +384,7 @@ const listen = (r, song) => {
   const relJa = /[぀-ヿ㐀-鿿]/.test(rel.main);
   const latestTitle = `<span class="release-title${relJa ? ' is-ja' : ''}">${relMain.html}</span>${rel.sub ? ` <span class="release-subtitle">${esc(rel.sub)}</span>` : ''}`;
   const historyStrip = albums.map(a => `<li><a href="${historyUrl(r, a.id)}">
-          <span class="ht-jacket"><img src="${albumCover(r, a.id, true)}" width="${a.size480.w}" height="${a.size480.h}" alt="" loading="lazy" decoding="async"></span>
+          ${albumTile(r, a)}
           <span class="ht-year">${esc(a.year)}</span><span class="ht-title">${esc(a.title)}</span>
         </a></li>`).join('\n        ');
   await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true, homeOpening: true, third: true })}
@@ -531,35 +544,94 @@ ${sharedScript}
 }
 
 // ── HISTORY page: history/index.html ─────────────────────────────────
+// Lettering of the approved chapter design: brush title, typewriter "First Album", heavy italic year.
+const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&family=Playfair+Display:ital,wght@1,700;1,800&display=swap">
+`;
 // "The site is the real thing; the content is PIP POPPER." Only confirmed facts from albums.json.
 {
   const r = '../';
   const p = text => `<p>${esc(text)}</p>`;
+  // Each chapter: a cinematic scene (the adopted AI jacket, or the album's typographic stand-in),
+  // then story + episode beside the track list / album facts / members, then a small archive note.
   const chapter = (a, i) => {
-    const facts = [
-      a.dateLabel ? `<div><dt>発表</dt><dd>${esc(a.dateLabel)}</dd></div>` : '',
-      a.members?.length ? `<div><dt>${esc(a.membersLabel ?? '参加メンバー')}</dt><dd class="ch-members">${a.members.map(m => `<span class="ch-member">${esc(m.name)}${m.note ? `<small>${esc(m.note)}</small>` : ''}</span>`).join('')}</dd></div>` : '',
-      `<div><dt>収録</dt><dd>全${a.tracks.length}曲</dd></div>`,
-    ].join('');
     const tracks = a.tracks.map(t => `<li><span class="tr-title">${esc(t.title)}</span>${t.note ? `<small class="tr-note">${esc(t.note)}</small>` : ''}${t.music ? `<a class="tr-music" href="${trackUrl(r, t.music)}">MUSIC「${esc(songById.get(t.music).title)}」 <span aria-hidden="true">→</span></a>` : ''}</li>`).join('');
-    return `<li class="chapter" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
-      <p class="ch-rail" aria-hidden="true"><span class="ch-year">${esc(a.year)}</span><span class="ch-count">${String(i + 1).padStart(2, '0')} / ${String(albums.length).padStart(2, '0')}</span></p>
-      <figure class="ch-jacket reveal">
-        <img src="${albumCover(r, a.id)}" width="${a.sizeweb.w}" height="${a.sizeweb.h}" alt="『${esc(a.title)}』のCDジャケット" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async">
-      </figure>
-      <div class="ch-body reveal">
-        <p class="ch-kind">${esc(a.kind)}</p>
-        <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}${a.subtitle ? ` <span class="ch-sub">${esc(a.subtitle)}</span>` : ''}</h2>
-        <dl class="ch-facts">${facts}</dl>
-        <div class="ch-story">${a.story.map(p).join('')}</div>
-        ${a.episode ? `<section class="ch-episode" aria-label="${esc(a.episode.title)}"><h3>${esc(a.episode.title)}</h3>${a.episode.text.map(p).join('')}</section>` : ''}
-        ${a.audioNote ? `<p class="ch-audio-note" role="note">${esc(a.audioNote)}</p>` : ''}
-        <div class="ch-tracks"><h3>収録曲</h3><ol>${tracks}</ol></div>
+    const info = [['アルバム名', a.title + (a.subtitle ? `（${a.subtitle}）` : '')], ['発表', a.dateLabel], ['区分', a.kind], ['収録', `全${a.tracks.length}曲`], ...(a.info ?? [])]
+      .filter(([, v]) => v).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+    const label = a.membersLabel ?? '参加メンバー';
+    const members = a.members?.length ? `<section class="ch-panel ch-members" aria-label="${esc(label)}">
+            <h3>${esc(label)}</h3>
+            <dl>${a.members.map(m => `<div><dt>${esc(m.name)}</dt><dd>${esc(m.role ?? m.note ?? '')}</dd></div>`).join('')}</dl>
+            ${a.membersSource ? `<p class="ch-src">${esc(a.membersSource)}</p>` : ''}
+          </section>` : '';
+    const episode = a.episode ? `<section class="ch-episode${a.episode.quote ? ' is-quote' : ''}" aria-label="${esc(a.episode.title)}">
+            <h3>${esc(a.episode.title)}</h3>
+            ${a.episode.quote ? `<blockquote>${a.episode.text.map(p).join('')}</blockquote>` : a.episode.text.map(p).join('')}
+          </section>` : '';
+    const archive = a.archive ? `<aside class="ch-archive reveal" aria-label="ORIGINAL ARCHIVE">
+        <img src="${albumArchive(r, a.id)}" width="${a.archiveSize.w}" height="${a.archiveSize.h}" alt="当時の『${esc(a.title)}』CDジャケット（資料）" loading="lazy" decoding="async">
+        <p><span class="ch-archive-key">ORIGINAL ARCHIVE</span>当時のCDジャケット（資料）</p>
+      </aside>` : a.archiveNote ? `<aside class="ch-archive is-text reveal" aria-label="ORIGINAL ARCHIVE"><p><span class="ch-archive-key">ORIGINAL ARCHIVE</span>${esc(a.archiveNote)}</p></aside>` : '';
+    // Album with its adopted AI jacket: the Producer-approved chapter design (2026-11-20, first used for
+    // 1999 PIP POPPER) — the jacket large on the left, title / year / story on the right, and
+    // ALBUM INFO, members, track list and a small ORIGINAL ARCHIVE in a row of panels below.
+    if (a.visualSize) {
+      const hl = (text, word) => word && text.includes(word) ? esc(text).replace(esc(word), `<em>${esc(word)}</em>`) : esc(text);
+      const lines = a.episode ? a.episode.text.map((t, j, all) => `<p>${hl(t, j === all.length - 1 ? a.episode.highlight : null)}</p>`).join('') : '';
+      const fInfo = [['アルバム名', a.title + (a.subtitle ? `（${a.subtitle}）` : '')], ['発表年', a.dateLabel], ['区分', a.kind], ['収録曲数', `全${a.tracks.length}曲`], ...(a.info ?? []).map(([k, v]) => [k, v.replace(/（CD記載：.*）$/, '（CD記載）')])]
+        .filter(([, v]) => v).map(([k, v]) => `<tr><th scope="row">${esc(k)}</th><td>${esc(v)}</td></tr>`).join('');
+      const fMembers = (a.members ?? []).map(m => `<tr><th scope="row">${esc(m.name)}</th><td>${esc(m.role ?? m.note ?? '')}</td></tr>`).join('');
+      return `<li class="chapter theme-${a.id} has-visual" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
+      <div class="ch-feature">
+        <img class="ch-feature-bg" src="${albumVisual(r, a.id)}" alt="" aria-hidden="true" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async">
+        <div class="ch-feature-top">
+          <figure class="ch-visual reveal"><img src="${albumVisual(r, a.id)}" width="${a.visualSize.w}" height="${a.visualSize.h}" alt="『${esc(a.title)}』のジャケット" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async"></figure>
+          <div class="ch-feature-head reveal">
+            <p class="ch-badge">${esc(a.no ?? '')}</p>
+            <div class="ch-titlerow">
+              <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}<span class="ch-kindline">${esc(a.kindLabel ?? a.kind)}</span></h2>
+              <p class="ch-year">${esc(a.year)}</p>
+            </div>
+            ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div></section>` : ''}
+          </div>
+        </div>
+        <div class="ch-feature-panels reveal">
+          <section class="fp fp-info" aria-labelledby="${a.id}-info"><h3 class="fp-head" id="${a.id}-info">ALBUM INFO</h3><table>${fInfo}</table></section>
+          ${fMembers ? `<section class="fp fp-members" aria-labelledby="${a.id}-members"><h3 class="fp-head" id="${a.id}-members">${esc(a.membersLabel ?? '参加メンバー')}</h3><table>${fMembers}</table>${a.membersSource ? `<p class="fp-src">${esc(a.membersSource)}</p>` : ''}</section>` : ''}
+          <section class="fp fp-tracks" aria-labelledby="${a.id}-tracks"><h3 class="fp-head" id="${a.id}-tracks">収録曲（全${a.tracks.length}曲）</h3><ol>${tracks}</ol></section>
+          ${a.archive ? `<aside class="fp fp-archive" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><img src="${albumArchive(r, a.id)}" width="${a.archiveSize.w}" height="${a.archiveSize.h}" alt="当時の『${esc(a.title)}』CDジャケット（資料）" loading="lazy" decoding="async"><p class="fp-archive-note">※当時の実物CDジャケット（資料）</p></aside>` : ''}
+        </div>
       </div>
     </li>`;
+    }
+    return `<li class="chapter theme-${a.id}${a.visualSize ? ' has-visual' : ''}" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
+      <div class="ch-scene">
+        <div class="ch-scene-art" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        ${a.visualSize ? `<img class="ch-visual-bg" src="${albumVisual(r, a.id, true)}" alt="" aria-hidden="true" loading="lazy" decoding="async">
+        <figure class="ch-visual reveal"><img src="${albumVisual(r, a.id)}" width="${a.visualSize.w}" height="${a.visualSize.h}" alt="『${esc(a.title)}』のジャケット" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async"></figure>` : ''}
+        <div class="ch-scene-text reveal">
+          <p class="ch-no">${esc(a.no ?? '')}<span class="ch-count">${String(i + 1).padStart(2, '0')} / ${String(albums.length).padStart(2, '0')}</span></p>
+          <p class="ch-year">${esc(a.year)}</p>
+          <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}${a.subtitle ? ` <span class="ch-sub">${esc(a.subtitle)}</span>` : ''}</h2>
+          <p class="ch-kind">${esc(a.kind)}${a.dateLabel ? `<span>${esc(a.dateLabel)}</span>` : ''}</p>
+        </div>
+      </div>
+      <div class="ch-grid">
+        <div class="ch-main reveal">
+          <div class="ch-story">${a.story.map(p).join('')}</div>
+          ${episode}
+          ${a.audioNote ? `<p class="ch-audio-note" role="note">${esc(a.audioNote)}</p>` : ''}
+        </div>
+        <div class="ch-side reveal">
+          <section class="ch-panel ch-tracks" aria-label="収録曲"><h3>収録曲<span>全${a.tracks.length}曲</span></h3><ol>${tracks}</ol></section>
+          <section class="ch-panel ch-info" aria-label="アルバム情報"><h3>アルバム情報</h3><dl>${info}</dl></section>
+          ${members}
+        </div>
+      </div>
+      ${archive}
+    </li>`;
   };
-  const glows = albums.map((a, i) => `<div class="glow${i === 0 ? ' on' : ''}" data-key="${a.id}" style="${glowStyle(albumCover(r, a.id, true))}"></div>`).join('');
-  await write('history/index.html', `${head(r, 'ヒストリー｜PIP POPPER', ' page-track page-history', { path: 'history/', description: `PIP POPPER（${NAME_KANA}）のヒストリー。1999年の1stアルバム『PIP POPPER』から2001年の『PROFESSIONAL』まで、当時のジャケットと収録曲、制作のエピソードでたどります。` })}
+  const glows = albums.map((a, i) => `<div class="glow${i === 0 ? ' on' : ''}" data-key="${a.id}" style="${albumGlow(r, a)}"></div>`).join('');
+  await write('history/index.html', `${head(r, 'ヒストリー｜PIP POPPER', ' page-track page-history', { path: 'history/', description: `PIP POPPER（${NAME_KANA}）のヒストリー。1999年の1stアルバム『PIP POPPER』から2001年の『PROFESSIONAL』まで、収録曲と参加メンバー、制作のエピソードでたどります。`, fonts: HISTORY_FONTS })}
 <a class="skip" href="#chapters">本文へ移動</a>
 ${world(glows)}
 ${topbar(r, false)}
@@ -567,7 +639,7 @@ ${topbar(r, false)}
   <header class="hist-hero">
     <p class="section-label reveal"><span class="label-en">History</span><span class="label-ja">ヒストリー</span></p>
     <h1 class="hist-title reveal"><span class="tw">アルバムでたどる</span><wbr><span class="tw">PIP POPPER</span></h1>
-    <p class="hist-lead reveal">1999年から2001年へ。仲間と遊びながら作ったアルバムを、当時のCDジャケットと一緒に振り返ります。</p>
+    <p class="hist-lead reveal">1999年から2001年へ。仲間と遊びながら作ったアルバムを、収録曲と制作のエピソードでたどります。</p>
     <nav class="hist-index reveal" aria-label="アルバム">
       ${albums.map(a => `<a href="#${a.id}"><span class="hi-year">${esc(a.year)}</span><span class="hi-title">${esc(a.title)}</span></a>`).join('\n      ')}
     </nav>
@@ -593,8 +665,9 @@ await mkdir(new URL('assets/history/', out), { recursive: true });
 for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.js'])
   await copyFile(new URL(`src/${f}`, root), new URL(`assets/${f}`, out));
 for (const a of albums) {
-  await copyFile(new URL(`${a.id}/cover-web.jpg`, albumDir), new URL(`assets/history/${a.id}.jpg`, out));
-  await copyFile(new URL(`${a.id}/cover-480.jpg`, albumDir), new URL(`assets/history/${a.id}-480.jpg`, out));
+  if (a.visualSize) for (const [src, dst] of [['visual-web', 'visual'], ['visual-640', 'visual-640']])
+    await copyFile(new URL(`${a.id}/${src}.jpg`, albumDir), new URL(`assets/history/${a.id}-${dst}.jpg`, out));
+  if (a.archive) await copyFile(new URL(`${a.id}/cover-240.jpg`, albumDir), new URL(`assets/history/${a.id}-archive.jpg`, out));
 }
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));
 await copyFile(new URL('src/stage.jpg', root), new URL('assets/stage.jpg', out));

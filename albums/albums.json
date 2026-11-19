@@ -1,8 +1,9 @@
 {
-  "_note": "HISTORY page data. Facts come from the Producer's instruction (2026-11-19) and the original CD jackets. Never fill in unknown dates, members or roles; leave them out. Track titles follow the jacket spelling. 'music' links only songs whose MUSIC page was confirmed to be the same song.",
+  "_note": "HISTORY page data. Facts come from the Producer's instructions (2026-11-19/20) and the original CD jackets. Never fill in unknown dates, members or roles. Track titles follow the jacket spelling. 'music' links only songs confirmed to be the same song. Main visual: albums/<id>/visual.png (an AI jacket the Producer has adopted; Claude never generates or picks one). Without it the chapter uses its typographic scene. The old CD front (albums/<id>/cover.png) is only a small ORIGINAL ARCHIVE item when 'archive' is true (never images with faces or real names).",
   "albums": [
     {
       "id": "pip-popper",
+      "no": "ALBUM 01",
       "kind": "1st Album",
       "year": "1999",
       "date": null,
@@ -10,38 +11,90 @@
       "title": "PIP POPPER",
       "subtitle": null,
       "accent": "#e3343c",
+      "visual": {
+        "source": "「PIP POPPER」創作スタジオ風景.png",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "役割はCDのクレジット表記より",
       "members": [
-        { "name": "HAYATO" },
-        { "name": "KAI" },
-        { "name": "NARI", "note": "「タンクトップ」に参加" }
+        {
+          "name": "HAYATO",
+          "role": "作詞・作曲・楽曲制作"
+        },
+        {
+          "name": "KAI",
+          "role": "Co-Produce & Programming"
+        },
+        {
+          "name": "NARI",
+          "role": "MC（「タンクトップ」のみ参加）"
+        }
+      ],
+      "info": [
+        [
+          "作詞・作曲",
+          "HAYATO（CD記載：ALL WORD & MUSIC BY HAYATO）"
+        ]
       ],
       "story": [
         "PIP POPPER名義で作った、最初のアルバム。HAYATOとKAIを中心に全11曲を収録し、NARIが「タンクトップ」の1曲に参加しています。"
       ],
       "episode": {
-        "title": "「PIP POP」という呼び名のはじまり",
+        "title": "PIP POPPER 誕生の経緯",
         "text": [
-          "作りたい音楽には、ラップが入っていた。でも、HIP HOPがやりたかったわけではありませんでした。",
-          "HIP HOPには敬意がある。だからこそ、自分たちの音楽をHIP HOPと呼ぶのは何か違う気がした。本格的にやっている人たちに怒られたくない、という気持ちも、正直ちょっとありました。",
-          "そこで、自分たちが自由に楽しめる新しい呼び名をつけることに。それが「PIP POP（ピップポップ）」です。"
-        ]
+          "俺たちがやっているのはラップ。でも、HIP HOPをやりたいわけじゃない。",
+          "好きなようにふざけて、掛け合いを楽しんで、面白いと思う曲を作りたい。",
+          "それをHIP HOPと名乗るのも、なんだか申し訳ない。",
+          "それに、本格的にHIP HOPをやっている人たちは怖そうだし、怒られるのもちょっと嫌だ（笑）。",
+          "だったら、もう自分たちで新しいジャンルを作ってしまおう。",
+          "HIP HOPじゃなくて、PIP POP。",
+          "こうして、PIP POPPERという名前が生まれた。"
+        ],
+        "quote": true,
+        "highlight": "PIP POPPER"
       },
       "tracks": [
-        { "title": "DEBUGON WASH" },
-        { "title": "Mean Behavior" },
-        { "title": "ZOO" },
-        { "title": "タンクトップ", "note": "NARI参加" },
-        { "title": "少年時代" },
-        { "title": "コンパ" },
-        { "title": "プロポーズ" },
-        { "title": "愛しのハニー" },
-        { "title": "世直し隊" },
-        { "title": "ナンパ" },
-        { "title": "PIP POPER" }
-      ]
+        {
+          "title": "DEBUGON WASH"
+        },
+        {
+          "title": "Mean Behavior"
+        },
+        {
+          "title": "ZOO"
+        },
+        {
+          "title": "タンクトップ",
+          "note": "NARI参加"
+        },
+        {
+          "title": "少年時代"
+        },
+        {
+          "title": "コンパ"
+        },
+        {
+          "title": "プロポーズ"
+        },
+        {
+          "title": "愛しのハニー"
+        },
+        {
+          "title": "世直し隊"
+        },
+        {
+          "title": "ナンパ"
+        },
+        {
+          "title": "PIP POPPER"
+        }
+      ],
+      "archive": true,
+      "kindLabel": "First Album"
     },
     {
       "id": "togetherness",
+      "no": "SOLO WORK",
       "kind": "NARI Solo Album",
       "year": "SOLO",
       "date": null,
@@ -49,8 +102,11 @@
       "title": "TOGETHERNESS",
       "subtitle": null,
       "accent": "#4d6bff",
+      "visual": null,
       "members": [
-        { "name": "NARI" }
+        {
+          "name": "NARI"
+        }
       ],
       "story": [
         "1stアルバム『PIP POPPER』の「タンクトップ」に参加したNARIのために制作した、全10曲のソロアルバムです。",
@@ -59,20 +115,42 @@
       ],
       "episode": null,
       "tracks": [
-        { "title": "Rain of my heart" },
-        { "title": "Be myself" },
-        { "title": "Sitsuren" },
-        { "title": "Kiiroika-ten" },
-        { "title": "Mirainikimiga" },
-        { "title": "No more tears" },
-        { "title": "Believe" },
-        { "title": "Wakarenoyokan" },
-        { "title": "Never gonna stop it" },
-        { "title": "Forever in my heart" }
-      ]
+        {
+          "title": "Rain of my heart"
+        },
+        {
+          "title": "Be myself"
+        },
+        {
+          "title": "Sitsuren"
+        },
+        {
+          "title": "Kiiroika-ten"
+        },
+        {
+          "title": "Mirainikimiga"
+        },
+        {
+          "title": "No more tears"
+        },
+        {
+          "title": "Believe"
+        },
+        {
+          "title": "Wakarenoyokan"
+        },
+        {
+          "title": "Never gonna stop it"
+        },
+        {
+          "title": "Forever in my heart"
+        }
+      ],
+      "archive": true
     },
     {
       "id": "dont-complain",
+      "no": "ALBUM 02",
       "kind": "2nd Album",
       "year": "2001",
       "date": "2001-03-01",
@@ -80,11 +158,20 @@
       "title": "Don't Complain",
       "subtitle": null,
       "accent": "#9cc3ff",
+      "visual": null,
       "members": [
-        { "name": "HAYATO" },
-        { "name": "KAI" },
-        { "name": "TATSUO" },
-        { "name": "RAKKYO" }
+        {
+          "name": "HAYATO"
+        },
+        {
+          "name": "KAI"
+        },
+        {
+          "name": "TATSUO"
+        },
+        {
+          "name": "RAKKYO"
+        }
       ],
       "story": [
         "PIP POPPER名義の2ndアルバム。このアルバムから、TATSUOとRAKKYOが加わりました。"
@@ -98,20 +185,42 @@
         ]
       },
       "tracks": [
-        { "title": "別世界" },
-        { "title": "向上心" },
-        { "title": "恋物語" },
-        { "title": "Humanity" },
-        { "title": "売春" },
-        { "title": "思い出" },
-        { "title": "Blood type" },
-        { "title": "誕生" },
-        { "title": "ドラえもん" },
-        { "title": "HIT MAN" }
-      ]
+        {
+          "title": "別世界"
+        },
+        {
+          "title": "向上心"
+        },
+        {
+          "title": "恋物語"
+        },
+        {
+          "title": "Humanity"
+        },
+        {
+          "title": "売春"
+        },
+        {
+          "title": "思い出"
+        },
+        {
+          "title": "Blood type"
+        },
+        {
+          "title": "誕生"
+        },
+        {
+          "title": "ドラえもん"
+        },
+        {
+          "title": "HIT MAN"
+        }
+      ],
+      "archive": true
     },
     {
       "id": "rice",
+      "no": "ALBUM 03",
       "kind": "3rd Album",
       "year": "2001",
       "date": "2001-07-13",
@@ -119,12 +228,21 @@
       "title": "RICE",
       "subtitle": null,
       "accent": "#ff3b30",
+      "visual": null,
       "membersLabel": "中心メンバー",
       "members": [
-        { "name": "HAYATO" },
-        { "name": "KAI" },
-        { "name": "TATSUO" },
-        { "name": "RAKKYO" }
+        {
+          "name": "HAYATO"
+        },
+        {
+          "name": "KAI"
+        },
+        {
+          "name": "TATSUO"
+        },
+        {
+          "name": "RAKKYO"
+        }
       ],
       "story": [
         "PIP POPPER名義の3rdアルバム。全14曲を収録しています。",
@@ -132,24 +250,55 @@
       ],
       "episode": null,
       "tracks": [
-        { "title": "FREE STYLE" },
-        { "title": "Pip popper ~Short Remix~" },
-        { "title": "B-Girl" },
-        { "title": "kiminokareshi" },
-        { "title": "Dansonjyohi" },
-        { "title": "Show time" },
-        { "title": "Diet" },
-        { "title": "Syusyokukatsudou", "music": "job-hunting" },
-        { "title": "O.B" },
-        { "title": "Doutei" },
-        { "title": "KARAOKE" },
-        { "title": "Why I'm Me" },
-        { "title": "Kyujitsu" },
-        { "title": "G-MANZ" }
-      ]
+        {
+          "title": "FREE STYLE"
+        },
+        {
+          "title": "Pip popper ~Short Remix~"
+        },
+        {
+          "title": "B-Girl"
+        },
+        {
+          "title": "kiminokareshi"
+        },
+        {
+          "title": "Dansonjyohi"
+        },
+        {
+          "title": "Show time"
+        },
+        {
+          "title": "Diet"
+        },
+        {
+          "title": "Syusyokukatsudou",
+          "music": "job-hunting"
+        },
+        {
+          "title": "O.B"
+        },
+        {
+          "title": "Doutei"
+        },
+        {
+          "title": "KARAOKE"
+        },
+        {
+          "title": "Why I'm Me"
+        },
+        {
+          "title": "Kyujitsu"
+        },
+        {
+          "title": "G-MANZ"
+        }
+      ],
+      "archive": true
     },
     {
       "id": "chichiband",
+      "no": "2001.09",
       "kind": "Album",
       "year": "2001",
       "date": "2001-09-30",
@@ -157,6 +306,7 @@
       "title": "乳バンド",
       "subtitle": "ChiChiBand",
       "accent": "#e7a9c8",
+      "visual": null,
       "members": [],
       "story": [
         "それまでのシンセサイザーによる打ち込み中心の制作から、生のギターサウンドを取り入れたアルバム。KAIがギターを弾けたので、打ち込みだけでなく本物のギターを入れてみよう、という発想から生まれました。"
@@ -169,24 +319,54 @@
         ]
       },
       "tracks": [
-        { "title": "NAGISA DE LOVE SONG" },
-        { "title": "Party Night" },
-        { "title": "Mr.Children" },
-        { "title": "Broken Heart" },
-        { "title": "Jinsei Game" },
-        { "title": "Free Writter" },
-        { "title": "Why I'm Me" },
-        { "title": "INAKAMUSUME" },
-        { "title": "Bye ByeKin" },
-        { "title": "Big Old Clock" },
-        { "title": "Bakeratta" },
-        { "title": "China" },
-        { "title": "Police Man" },
-        { "title": "ChiChiBand" }
-      ]
+        {
+          "title": "NAGISA DE LOVE SONG"
+        },
+        {
+          "title": "Party Night"
+        },
+        {
+          "title": "Mr.Children"
+        },
+        {
+          "title": "Broken Heart"
+        },
+        {
+          "title": "Jinsei Game"
+        },
+        {
+          "title": "Free Writter"
+        },
+        {
+          "title": "Why I'm Me"
+        },
+        {
+          "title": "INAKAMUSUME"
+        },
+        {
+          "title": "Bye ByeKin"
+        },
+        {
+          "title": "Big Old Clock"
+        },
+        {
+          "title": "Bakeratta"
+        },
+        {
+          "title": "China"
+        },
+        {
+          "title": "Police Man"
+        },
+        {
+          "title": "ChiChiBand"
+        }
+      ],
+      "archive": true
     },
     {
       "id": "professional",
+      "no": "2001.11",
       "kind": "Album",
       "year": "2001",
       "date": "2001-11-01",
@@ -194,6 +374,7 @@
       "title": "PROFESSIONAL",
       "subtitle": null,
       "accent": "#f2d12c",
+      "visual": null,
       "members": [],
       "story": [
         "『RICE』の制作が楽しくて、その勢いのままさらに曲を作り、面白くなったので短いアルバムにまとめた作品です。",
@@ -202,11 +383,21 @@
       "episode": null,
       "audioNote": "この作品の音源は、必要な権利の確認ができないため公開していません。",
       "tracks": [
-        { "title": "FUN FAN" },
-        { "title": "KUJYO" },
-        { "title": "HITMAN (Pip RANBADA Remix)" },
-        { "title": "Professional" }
-      ]
+        {
+          "title": "FUN FAN"
+        },
+        {
+          "title": "KUJYO"
+        },
+        {
+          "title": "HITMAN (Pip RANBADA Remix)"
+        },
+        {
+          "title": "Professional"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
     }
   ]
 }

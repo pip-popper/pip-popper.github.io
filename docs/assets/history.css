@@ -1,6 +1,7 @@
-/* HISTORY (2026-11-19): the albums of 1999–2001, plus the top-page entrance and the track-page link.
-   Built on the site's own tokens (--red, --f-head, --f-en, the stage "world"); each album lends
-   the room its jacket colour through the existing ambient glow and an --accent line. */
+/* HISTORY: the albums of 1999–2001, plus the top-page entrance and the track-page link.
+   2026-11-20 policy: the main visual of each album is its NEW AI jacket adopted by the Producer
+   (albums/<id>/visual.png). Until one is adopted, the chapter is a typographic scene in its own
+   colours and light. The old CD jacket is only a small ORIGINAL ARCHIVE item. */
 
 /* ── Track page: link to the album that holds the original ───────── */
 .track-origin { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 14px; letter-spacing: .06em; }
@@ -28,13 +29,18 @@
 /* Album names never break inside a word ("TOGETHERNESS", "PROFESSIONAL"): the size follows the column. */
 .ht-strip li { container-type: inline-size; min-width: 0; }
 .ht-title { font: 700 clamp(10px, 10.2cqi, 15px)/1.4 var(--f-head); letter-spacing: 0; white-space: nowrap; }
+/* Typographic stand-in tile (until the album's AI jacket is adopted): the album's scene in miniature. */
+.ht-type { position: relative; display: grid; align-content: end; gap: 2px; padding: 9cqi; color: #fff; }
+.ht-type-year { font: 400 15cqi/1 Anton, Impact, sans-serif; letter-spacing: .04em; opacity: .9; }
+.ht-type-title { font: 400 12.5cqi/1.05 Anton, "Shippori Mincho B1", serif; letter-spacing: .02em; white-space: nowrap; }
+.ht-strip a:hover .ht-type { filter: brightness(1.12); }
 
 /* ── Latest release title (finish layout) for Japanese main titles ── */
 .page-home .latest h2 .release-title.is-ja { font: 800 clamp(36px, 5.2vw, 84px)/1.15 var(--f-head); letter-spacing: .02em; }
 
 /* ── HISTORY page ───────────────────────────────────────────────── */
 .page-history { --after: .7; }
-.history { max-width: 1320px; margin: 0 auto; padding: calc(64px + 9svh) var(--gutter) 0; }
+.history { max-width: 1360px; margin: 0 auto; padding: calc(64px + 9svh) var(--gutter) 0; }
 .hist-hero { display: grid; gap: clamp(18px, 3svh, 30px); padding-bottom: clamp(36px, 8svh, 84px); }
 .hist-title { font: 800 clamp(38px, 6.6vw, 104px)/1.12 var(--f-head); letter-spacing: .03em; text-shadow: 0 .05em .4em #0009; }
 .hist-title .tw:last-child { font: 400 1.04em/1 Anton, Impact, sans-serif; letter-spacing: .03em; }
@@ -46,64 +52,192 @@
 .hi-title { font: 700 14px/1.4 var(--f-head); letter-spacing: .03em; overflow-wrap: anywhere; }
 .hist-index a:hover .hi-title { text-decoration: underline; text-decoration-color: var(--red); text-underline-offset: .25em; }
 
-.chapters { list-style: none; padding: 0; margin: 0; }
-.chapter {
-  --accent: var(--red);
-  position: relative; scroll-margin-top: 70px;
-  display: grid; grid-template-columns: clamp(56px, 7vw, 110px) minmax(0, .92fr) minmax(0, 1.08fr);
-  align-items: start; gap: clamp(22px, 4vw, 64px);
-  padding: clamp(56px, 12svh, 130px) 0;
-  border-top: 1px solid var(--line);
+.chapters { list-style: none; padding: 0; margin: 0; display: grid; gap: clamp(90px, 16svh, 190px); padding-bottom: clamp(70px, 12svh, 140px); }
+.chapter { --accent: var(--red); --ink-scene: #fff; position: relative; scroll-margin-top: 64px; display: grid; gap: clamp(30px, 5svh, 56px); }
+
+/* Scene: one wide, cinematic frame per album. */
+.ch-scene {
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: clamp(380px, 62svh, 680px);
+  display: grid; align-items: end;
+  padding: clamp(24px, 4.6vw, 72px);
+  border-radius: 4px;
+  box-shadow: 0 50px 120px -50px #000, inset 0 0 0 1px #ffffff14;
+  color: var(--ink-scene);
 }
-.chapter::before { content: ""; position: absolute; top: -1px; left: 0; width: clamp(56px, 9vw, 140px); height: 2px; background: var(--accent); }
-.ch-rail { position: sticky; top: 96px; display: grid; justify-items: start; gap: 18px; }
-.ch-year {
-  writing-mode: vertical-rl; transform: rotate(180deg);
-  font: 400 clamp(48px, 6.4vw, 104px)/.9 Anton, Impact, sans-serif; letter-spacing: .04em;
-  color: transparent; -webkit-text-stroke: 1px var(--accent); text-stroke: 1px var(--accent);
+.ch-scene-art, .ch-scene-art i { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.ch-scene-art i { display: block; }
+.ch-scene::after { /* film grain + vignette common to every scene */
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 40%, transparent 50%, rgba(0,0,0,.55) 100%);
 }
-.ch-count { font: 600 11px/1 var(--f-body); letter-spacing: .18em; color: var(--muted); white-space: nowrap; }
-.ch-jacket { position: sticky; top: 96px; margin: 0; }
-.ch-jacket::before {
-  content: ""; position: absolute; inset: 8% -6% -8% 6%; z-index: -1;
-  background: var(--accent); opacity: .16; filter: blur(46px);
-}
-.ch-jacket img { width: 100%; aspect-ratio: 1; object-fit: cover; box-shadow: 0 40px 90px -30px #000e; outline: 1px solid #ffffff1c; outline-offset: -1px; }
-.ch-body { display: grid; gap: clamp(18px, 2.6svh, 26px); min-width: 0; }
-.ch-kind { font: 600 12px/1 var(--f-body); letter-spacing: .3em; color: var(--accent); text-transform: uppercase; }
-.ch-title { font: 400 clamp(46px, 6vw, 92px)/1 Anton, "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .02em; overflow-wrap: anywhere; }
-.ch-sub { display: block; margin-top: .35em; font: italic 500 .32em/1 var(--f-en); letter-spacing: .06em; color: var(--muted); }
-.ch-facts { display: grid; gap: 10px; margin: 0; padding: 16px 0; border-block: 1px solid var(--line); }
-.ch-facts div { display: grid; grid-template-columns: 8.5em minmax(0, 1fr); gap: 12px; align-items: baseline; }
-.ch-facts dt { font: 600 12px/1.6 var(--f-body); letter-spacing: .16em; color: var(--muted); }
-.ch-facts dd { margin: 0; font-size: 15px; line-height: 1.7; }
-.ch-members { display: flex; flex-wrap: wrap; gap: 8px; }
-.ch-member { display: inline-flex; align-items: baseline; gap: 8px; padding: 4px 10px 3px; border: 1px solid #ffffff38; font: 600 13px/1.5 var(--f-body); letter-spacing: .12em; }
-.ch-member small { font-size: 11px; letter-spacing: .04em; color: var(--muted); }
-.ch-story { display: grid; gap: .9em; color: #e8e2dc; line-height: 2.05; line-break: strict; }
-.ch-episode { display: grid; gap: .8em; padding: clamp(16px, 2.4vw, 26px) clamp(16px, 2.4vw, 28px); border-left: 2px solid var(--accent); background: linear-gradient(90deg, #ffffff0d, transparent 80%); line-height: 2; line-break: strict; }
-.ch-episode h3 { font: 700 clamp(17px, 1.5vw, 21px)/1.5 var(--f-head); letter-spacing: .06em; }
+.ch-scene-text { position: relative; display: grid; justify-items: start; gap: clamp(6px, 1.2svh, 12px); max-width: 100%; }
+.ch-no { display: flex; align-items: center; gap: 14px; font: 600 12px/1 var(--f-body); letter-spacing: .3em; }
+.ch-no::before { content: ""; width: 34px; height: 2px; background: var(--accent); }
+.ch-count { font-weight: 500; letter-spacing: .16em; opacity: .62; }
+.ch-year { font: 400 clamp(84px, 15vw, 220px)/.86 Anton, Impact, sans-serif; letter-spacing: .01em; }
+.ch-title { font: 400 clamp(44px, 7vw, 112px)/1 Anton, "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .02em; overflow-wrap: anywhere; }
+.ch-sub { display: block; margin-top: .3em; font: italic 500 .36em/1 var(--f-en); letter-spacing: .06em; opacity: .82; }
+.ch-kind { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; font: italic 500 clamp(19px, 1.9vw, 28px)/1.2 var(--f-en); letter-spacing: .04em; }
+.ch-kind span { font: 600 13px/1 var(--f-body); font-style: normal; letter-spacing: .14em; opacity: .78; }
+
+/* Story and facts */
+.ch-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: clamp(28px, 5vw, 80px); align-items: start; }
+.ch-main { display: grid; gap: clamp(22px, 3svh, 32px); min-width: 0; }
+.ch-story { display: grid; gap: .9em; color: #e8e2dc; font-size: clamp(15px, 1.15vw, 17px); line-height: 2.1; line-break: strict; }
+.ch-episode { display: grid; gap: 1em; padding: clamp(18px, 2.6vw, 30px) clamp(18px, 2.6vw, 34px); border-left: 2px solid var(--accent); background: linear-gradient(90deg, #ffffff0f, transparent 85%); line-height: 2; line-break: strict; }
+.ch-episode h3 { font: 700 clamp(19px, 1.8vw, 26px)/1.45 var(--f-head); letter-spacing: .06em; }
+.ch-episode blockquote { margin: 0; display: grid; gap: .55em; font: 500 clamp(16px, 1.35vw, 19px)/1.9 var(--f-head); letter-spacing: .04em; }
+.ch-episode blockquote p:nth-last-child(-n+2) { color: color-mix(in srgb, var(--accent) 55%, #fff); font-weight: 700; }
+.ch-episode blockquote p:nth-last-child(2) { font-size: 1.22em; margin-top: .4em; }
 .ch-audio-note { padding: 12px 14px; border: 1px dashed #ffffff45; color: #ddd5cf; font-size: 14px; line-height: 1.8; }
-.ch-tracks h3 { font: 600 12px/1 var(--f-body); letter-spacing: .26em; color: var(--muted); margin-bottom: 12px; }
-.ch-tracks ol { list-style: none; padding: 0; margin: 0; counter-reset: tr; columns: 2; column-gap: clamp(18px, 3vw, 40px); }
-.ch-tracks li {
-  counter-increment: tr; break-inside: avoid;
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px;
-  padding: 7px 0; border-bottom: 1px solid #ffffff14; font-size: 15px; line-height: 1.55;
-}
-.ch-tracks li::before { content: counter(tr, decimal-leading-zero); flex: none; width: 1.8em; font: 400 13px/1 Anton, Impact, sans-serif; letter-spacing: .04em; color: var(--accent); }
+.ch-side { display: grid; gap: 18px; min-width: 0; }
+.ch-panel { padding: clamp(16px, 2vw, 24px); border: 1px solid color-mix(in srgb, var(--accent) 34%, #ffffff1f); border-radius: 8px; background: #0b0c12cc; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.ch-panel h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; font: 700 15px/1.4 var(--f-head); letter-spacing: .14em; }
+.ch-panel h3 span { font: 600 11px/1 var(--f-body); letter-spacing: .16em; color: var(--muted); }
+.ch-panel dl { display: grid; margin: 0; }
+.ch-panel dl div { display: grid; grid-template-columns: 7.2em minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid #ffffff14; }
+.ch-panel dt { font: 600 12px/1.6 var(--f-body); letter-spacing: .1em; color: var(--muted); }
+.ch-panel dd { margin: 0; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.ch-members dt { font: 400 17px/1.3 Anton, Impact, sans-serif; letter-spacing: .06em; color: var(--ink); }
+.ch-src { margin-top: 8px; font-size: 11px; letter-spacing: .06em; color: var(--muted); }
+.ch-tracks ol { list-style: none; padding: 0; margin: 0; counter-reset: tr; }
+.ch-tracks li { counter-increment: tr; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 6px 0; border-top: 1px solid #ffffff12; font-size: 14px; line-height: 1.55; }
+.ch-tracks li::before { content: counter(tr, decimal-leading-zero); flex: none; width: 1.9em; font: 400 13px/1 Anton, Impact, sans-serif; letter-spacing: .04em; color: var(--accent); }
 .tr-title { min-width: 0; overflow-wrap: anywhere; }
 .tr-note { font-size: 11px; letter-spacing: .06em; color: var(--muted); }
-.tr-music { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin-left: 2.4em; font-size: 12px; letter-spacing: .08em; color: #ffd9da; border-bottom: 1px solid var(--accent); }
+.tr-music { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin-left: 2.5em; font-size: 12px; letter-spacing: .08em; color: #ffd9da; border-bottom: 1px solid var(--accent); }
 .tr-music:hover { color: var(--ink); }
-.hist-end { display: grid; justify-items: center; gap: 18px; padding: clamp(56px, 12svh, 130px) 0 clamp(70px, 14svh, 150px); border-top: 1px solid var(--line); text-align: center; color: #e2dcd7; line-height: 2; }
+
+/* ORIGINAL ARCHIVE: the real CD, small, as a record — never the main picture. */
+.ch-archive { display: flex; align-items: center; gap: 14px; justify-self: end; max-width: 420px; padding: 10px 14px 10px 10px; border: 1px solid #ffffff1c; background: #08090dcc; }
+.ch-archive img { width: 72px; height: 72px; object-fit: cover; filter: saturate(.85); outline: 1px solid #ffffff22; }
+.ch-archive p { display: grid; gap: 4px; font-size: 12px; line-height: 1.6; color: #cfc8c2; }
+.ch-archive-key { font: 600 10px/1 var(--f-body); letter-spacing: .26em; color: var(--accent); }
+.ch-archive.is-text { padding: 12px 16px; }
+
+.hist-end { display: grid; justify-items: center; gap: 18px; padding: clamp(40px, 8svh, 90px) 0 clamp(70px, 14svh, 150px); border-top: 1px solid var(--line); text-align: center; color: #e2dcd7; line-height: 2; }
+
+/* ── Album scenes (typographic stand-ins until each AI jacket is adopted) ──
+   Every album has its own light, colour and lettering; nothing is shared but the frame. */
+
+/* 1999 PIP POPPER — a warm desk lamp over a home recording desk at night. */
+.theme-pip-popper .ch-scene-art, .ht-type.theme-pip-popper {
+  background:
+    radial-gradient(42% 60% at 24% 4%, rgba(255, 186, 102, .62), transparent 70%),
+    radial-gradient(70% 50% at 70% 0%, rgba(255, 120, 40, .16), transparent 70%),
+    linear-gradient(180deg, #24140b 0%, #140b06 55%, #0a0604 100%);
+}
+.theme-pip-popper .ch-scene-art i:nth-child(1) { /* the desk lamp's pool of light */
+  inset: 0 auto auto 6%; width: clamp(240px, 36vw, 520px); height: 78%;
+  background: radial-gradient(50% 60% at 50% 0%, rgba(255, 214, 150, .5), rgba(255, 170, 80, .14) 55%, transparent 75%);
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+}
+.theme-pip-popper .ch-scene-art i:nth-child(2) { /* desk edge */
+  inset: auto 0 0 0; height: 30%;
+  background: linear-gradient(180deg, rgba(120, 66, 28, .55), rgba(40, 20, 8, .95) 40%), repeating-linear-gradient(90deg, transparent 0 120px, rgba(0, 0, 0, .12) 120px 122px);
+  border-top: 1px solid rgba(255, 190, 120, .28);
+}
+.theme-pip-popper .ch-scene-art i:nth-child(3) { /* cassette */
+  inset: auto 7% 22% auto; width: clamp(130px, 15vw, 210px); aspect-ratio: 1.6; border: 2px solid rgba(255, 206, 150, .5); border-radius: 8px;
+  background: radial-gradient(circle at 30% 50%, transparent 13%, rgba(255, 206, 150, .5) 14% 16%, transparent 17%), radial-gradient(circle at 70% 50%, transparent 13%, rgba(255, 206, 150, .5) 14% 16%, transparent 17%), rgba(20, 12, 8, .6);
+  transform: rotate(-8deg);
+}
+.theme-pip-popper .ch-scene-art i:nth-child(4) { /* mixer faders */
+  inset: auto 34% 24% auto; width: clamp(120px, 14vw, 200px); height: clamp(36px, 4vw, 56px); opacity: .55;
+  background: repeating-linear-gradient(90deg, rgba(255, 210, 160, .55) 0 2px, transparent 2px 18px);
+  -webkit-mask: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+          mask: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+}
+.theme-pip-popper .ch-year { font: italic 600 clamp(84px, 14vw, 210px)/.9 var(--f-en); color: #f7ecdf; }
+.theme-pip-popper .ch-title { font: 400 clamp(54px, 8.4vw, 132px)/.95 Anton, Impact, sans-serif; transform: skewX(-8deg); text-shadow: 0 .04em 0 #000, 0 0 .5em rgba(255, 120, 60, .25); }
+.theme-pip-popper .ch-title::after { content: ""; display: block; height: .1em; margin-top: .08em; width: 108%; background: linear-gradient(90deg, #d7262c, #d7262c 70%, transparent); clip-path: polygon(0 30%, 100% 0, 96% 100%, 2% 80%); }
+
+/* TOGETHERNESS — city lights across the water at night. */
+.theme-togetherness .ch-scene-art, .ht-type.theme-togetherness {
+  background:
+    radial-gradient(3px 3px at 12% 70%, #ffd38a, transparent), radial-gradient(4px 4px at 22% 64%, #9cc0ff, transparent),
+    radial-gradient(3px 3px at 35% 68%, #ffe6b0, transparent), radial-gradient(5px 5px at 48% 60%, #ff8fb1, transparent),
+    radial-gradient(3px 3px at 61% 66%, #b9d2ff, transparent), radial-gradient(4px 4px at 74% 62%, #ffd38a, transparent),
+    radial-gradient(3px 3px at 86% 69%, #9cc0ff, transparent),
+    linear-gradient(180deg, #030617 0%, #0b1a4a 52%, #1b2f7a 64%, #050818 66%, #02030a 100%);
+}
+.theme-togetherness .ch-scene-art i:nth-child(1) { /* skyline */
+  inset: auto 0 34% 0; height: 26%; background: #050818;
+  clip-path: polygon(0 100%, 0 60%, 6% 60%, 6% 40%, 10% 40%, 10% 70%, 16% 70%, 16% 30%, 19% 30%, 19% 10%, 21% 0, 23% 10%, 23% 30%, 26% 30%, 26% 62%, 33% 62%, 33% 44%, 39% 44%, 39% 72%, 47% 72%, 47% 36%, 52% 36%, 52% 56%, 58% 56%, 58% 22%, 61% 22%, 61% 64%, 69% 64%, 69% 48%, 76% 48%, 76% 74%, 84% 74%, 84% 40%, 90% 40%, 90% 66%, 100% 66%, 100% 100%);
+}
+.theme-togetherness .ch-scene-art i:nth-child(2) { /* reflections on the water */
+  inset: 66% 0 0 0; opacity: .5;
+  background: repeating-linear-gradient(180deg, transparent 0 5px, rgba(140, 170, 255, .22) 5px 6px);
+  -webkit-mask: linear-gradient(#000, transparent); mask: linear-gradient(#000, transparent);
+}
+.theme-togetherness .ch-scene-art i:nth-child(3) { inset: 0; background: radial-gradient(60% 40% at 50% 64%, rgba(90, 120, 255, .28), transparent 70%); }
+.theme-togetherness .ch-year { font: 300 clamp(70px, 11vw, 170px)/.9 var(--f-en); letter-spacing: .12em; color: #c9d6ff; }
+.theme-togetherness .ch-title { font: 500 clamp(36px, 6.4vw, 104px)/1 var(--f-en); letter-spacing: .14em; color: #eef2ff; text-shadow: 0 0 .5em rgba(110, 140, 255, .55); }
+
+/* Don't Complain — above the clouds at dawn; the only daylight scene. */
+.theme-dont-complain { --ink-scene: #182340; }
+.theme-dont-complain .ch-scene-art, .ht-type.theme-dont-complain {
+  background:
+    radial-gradient(30% 40% at 78% 26%, rgba(255, 245, 225, .95), transparent 70%),
+    radial-gradient(60% 30% at 20% 78%, rgba(255, 255, 255, .85), transparent 70%),
+    radial-gradient(70% 30% at 80% 92%, rgba(255, 255, 255, .9), transparent 70%),
+    linear-gradient(180deg, #9db6dc 0%, #d9e2f1 42%, #f4dccf 64%, #e9eef6 100%);
+}
+.theme-dont-complain .ch-scene-art i:nth-child(1) { inset: auto -10% 0 -10%; height: 34%; background: radial-gradient(45% 80% at 30% 100%, #fff 40%, transparent 72%), radial-gradient(50% 90% at 75% 100%, #f8f8fb 40%, transparent 72%); }
+.theme-dont-complain .ch-scene-art i:nth-child(2) { inset: 0; background: linear-gradient(115deg, transparent 55%, rgba(255, 230, 200, .35) 70%, transparent 85%); }
+.theme-dont-complain .ch-scene::after { background: radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(30, 40, 70, .25) 100%); }
+.theme-dont-complain .ch-year { font: 400 clamp(84px, 15vw, 220px)/.86 Anton, Impact, sans-serif; color: transparent; -webkit-text-stroke: 2px #2a3963; }
+.theme-dont-complain .ch-title { font: 400 clamp(46px, 7.4vw, 118px)/1 Anton, Impact, sans-serif; transform: rotate(-4deg) skewX(-6deg); transform-origin: left bottom; color: #2b1b1e; }
+.theme-dont-complain .ch-count { opacity: .7; }
+
+/* RICE — a hot red flare. */
+.theme-rice .ch-scene-art, .ht-type.theme-rice {
+  background:
+    radial-gradient(12% 18% at 30% 34%, rgba(255, 255, 240, .95), transparent 70%),
+    radial-gradient(40% 50% at 30% 34%, rgba(255, 120, 60, .7), transparent 70%),
+    linear-gradient(150deg, #8a0a0a 0%, #d0201b 38%, #6a0606 70%, #160202 100%);
+}
+.theme-rice .ch-scene-art i:nth-child(1) { inset: auto auto 18% 46%; width: clamp(90px, 12vw, 170px); aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255, 200, 160, .35); background: radial-gradient(circle, rgba(255, 150, 120, .18), transparent 70%); }
+.theme-rice .ch-scene-art i:nth-child(2) { inset: auto auto 34% 62%; width: clamp(40px, 5vw, 70px); aspect-ratio: 1; border-radius: 50%; background: rgba(255, 190, 150, .22); }
+.theme-rice .ch-scene-art i:nth-child(3) { inset: 0; background: linear-gradient(170deg, transparent 52%, rgba(0, 0, 0, .55) 52.3%, rgba(0, 0, 0, .75)); }
+.theme-rice .ch-year { color: #ffd2c0; opacity: .9; }
+.theme-rice .ch-title { font-size: clamp(64px, 11vw, 170px); background: linear-gradient(180deg, #fff 30%, #c8c8c8 52%, #fff 70%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 .04em .02em #3a0000); }
+
+/* 乳バンド (ChiChiBand) — black ink and pink on paper, halftone. */
+.theme-chichiband { --ink-scene: #131013; }
+.theme-chichiband .ch-scene-art, .ht-type.theme-chichiband {
+  background:
+    radial-gradient(circle, rgba(0, 0, 0, .22) 1.4px, transparent 1.6px) 0 0 / 9px 9px,
+    radial-gradient(60% 70% at 78% 30%, rgba(231, 120, 170, .55), transparent 70%),
+    linear-gradient(160deg, #f4f1ee, #d9d4d0);
+}
+.theme-chichiband .ch-scene-art i:nth-child(1) { inset: 8% auto auto 56%; width: clamp(160px, 24vw, 360px); aspect-ratio: 1; border-radius: 50%; border: clamp(14px, 2vw, 28px) solid rgba(20, 16, 20, .82); }
+.theme-chichiband .ch-scene-art i:nth-child(2) { inset: 14% auto auto 70%; width: clamp(120px, 18vw, 270px); aspect-ratio: 1; border-radius: 50%; border: clamp(8px, 1.2vw, 16px) solid #e3709f; mix-blend-mode: multiply; }
+.theme-chichiband .ch-scene::after { background: radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(0, 0, 0, .18) 100%); }
+.theme-chichiband .ch-year { font: 400 clamp(70px, 11vw, 170px)/.9 Anton, Impact, sans-serif; color: #e3709f; }
+.theme-chichiband .ch-title { font: 800 clamp(54px, 9vw, 140px)/1 var(--f-head); letter-spacing: .08em; }
+.theme-chichiband .ch-sub { color: #c4527f; opacity: 1; }
+
+/* PROFESSIONAL — yellow, black and a hazard stripe. */
+.theme-professional { --ink-scene: #111; }
+.theme-professional .ch-scene-art, .ht-type.theme-professional {
+  background: radial-gradient(70% 80% at 20% 10%, #fff27a, transparent 70%), linear-gradient(135deg, #f6d81e 0%, #e2b70c 55%, #2a2205 100%);
+}
+.theme-professional .ch-scene-art i:nth-child(1) { inset: 7% -6% auto 48%; height: clamp(26px, 3.4vw, 48px); transform: rotate(-6deg); background: repeating-linear-gradient(-45deg, #111 0 22px, #f6d81e 22px 44px); box-shadow: 0 12px 30px #0006; }
+.theme-professional .ch-scene-art i:nth-child(2) { inset: 0 0 0 58%; background: linear-gradient(90deg, transparent, rgba(0, 0, 0, .55)); }
+.theme-professional .ch-scene::after { background: radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(0, 0, 0, .3) 100%); }
+.theme-professional .ch-year { color: #111; }
+.theme-professional .ch-title { font-size: clamp(50px, 8.4vw, 132px); letter-spacing: .04em; color: #111; }
+
+/* Mini tiles (top page) take the same themes. */
+.ht-type.theme-dont-complain, .ht-type.theme-chichiband, .ht-type.theme-professional { color: #151515; }
 
 /* ── Tablet / phone ─────────────────────────────────────────────── */
 @media (max-width: 1000px) {
   .history-teaser { grid-template-columns: minmax(0, 1fr); align-items: start; }
-  .chapter { grid-template-columns: clamp(48px, 7vw, 80px) minmax(0, 1fr); }
-  .ch-body { grid-column: 2; }
-  .ch-jacket { position: relative; top: 0; max-width: 520px; }
+  .ch-grid { grid-template-columns: minmax(0, 1fr); }
+  .ch-side { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 }
 @media (max-width: 760px) {
   .ht-strip {
@@ -114,21 +248,24 @@
   .ht-strip::-webkit-scrollbar { display: none; }
   .ht-strip li { scroll-snap-align: start; }
   .ht-title { font-size: 13px; }
-  .history { padding-inline: 18px; padding-top: calc(58px + 5svh); }
+  .history { padding-inline: 16px; padding-top: calc(58px + 5svh); }
+  .hist-title { font-size: clamp(28px, 9.6vw, 44px); }
   .hist-index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hist-index a, .hist-index a + a { padding: 12px 10px 10px 0; border-left: 0; }
   .hist-index a:nth-child(even) { padding-left: 12px; border-left: 1px solid var(--line); }
-  .chapter { grid-template-columns: minmax(0, 1fr); gap: 22px; padding-block: 64px; }
-  .ch-rail { position: relative; top: 0; display: flex; align-items: baseline; justify-content: space-between; }
-  .ch-year { writing-mode: horizontal-tb; transform: none; font-size: clamp(54px, 17vw, 76px); }
-  .ch-body { grid-column: auto; }
-  .ch-jacket { width: 100%; max-width: none; }
-  .ch-title { font-size: clamp(40px, 12vw, 58px); }
-  .ch-facts div { grid-template-columns: 7em minmax(0, 1fr); }
-  .ch-tracks ol { columns: 1; }
+  .chapters { gap: 80px; }
+  .ch-scene { min-height: min(118vw, 70svh); padding: 22px 20px 26px; margin-inline: -4px; }
+  .ch-year { font-size: clamp(76px, 25vw, 120px); }
+  .ch-title, .theme-pip-popper .ch-title, .theme-rice .ch-title, .theme-professional .ch-title { font-size: clamp(40px, 13.5vw, 64px); }
+  .theme-togetherness .ch-title { font-size: clamp(26px, 8.2vw, 44px); letter-spacing: .05em; white-space: nowrap; }
+  .theme-chichiband .ch-title { font-size: clamp(46px, 15vw, 70px); }
+  .theme-pip-popper .ch-year, .theme-togetherness .ch-year, .theme-chichiband .ch-year { font-size: clamp(70px, 22vw, 110px); }
+  .ch-no { letter-spacing: .2em; }
+  .ch-side { grid-template-columns: minmax(0, 1fr); }
+  .ch-panel dl div { grid-template-columns: 6.4em minmax(0, 1fr); }
+  .ch-archive { justify-self: stretch; max-width: none; }
   /* Sub-pages show their menu inline; on phones アーティスト紹介 moves to the footer to make room for ヒストリー. */
   .page-track .topbar nav .nav-about { display: none; }
-  .hist-title { font-size: clamp(28px, 9.6vw, 44px); }
   /* Four footer links (ヒストリー added) wrap instead of widening narrow phones. */
   .site-foot nav { flex-wrap: wrap; }
 }
@@ -137,3 +274,88 @@
 @media (prefers-reduced-motion: reduce) {
   .ht-jacket img { transition: none; }
 }
+
+/* ── Chapter with an adopted AI jacket (Producer-approved design, 2026-11-20) ──
+   Dark recording-studio cinema: the jacket framed on the left, the brush title, typewriter
+   "First Album" and the year on the right with the origin story; four panels below. The studio
+   behind is the jacket itself, enlarged, darkened and softened. */
+.chapter.has-visual { --gold: #f2c14e; --paper: #e9dcc2; --brush: #c4161c; }
+.ch-feature {
+  position: relative; isolation: isolate; overflow: hidden;
+  width: 100vw; margin-inline: calc(50% - 50vw);
+  padding: clamp(40px, 6vw, 86px) max(var(--gutter), calc((100vw - 1440px) / 2)) clamp(36px, 5vw, 64px);
+  display: grid; gap: clamp(30px, 4vw, 54px);
+}
+.ch-feature-bg { position: absolute; inset: -4%; z-index: -2; width: 108%; height: 108%; object-fit: cover; object-position: 20% 78%; transform: scale(1.35); transform-origin: 30% 80%; filter: blur(10px) saturate(1.05) brightness(.34); }
+.ch-feature::before { /* warm lamp light from the left and a dark floor */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(55% 60% at 10% 8%, rgba(255, 160, 70, .26), transparent 70%),
+    linear-gradient(180deg, rgba(8, 6, 6, .2), rgba(8, 6, 6, .45) 55%, rgba(8, 6, 6, .92) 100%),
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, .7) 100%);
+}
+.ch-feature-top { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1fr); gap: clamp(30px, 4.6vw, 72px); align-items: start; }
+.has-visual .ch-visual { margin: 0; padding: clamp(5px, .5vw, 8px); background: linear-gradient(135deg, #f0e3c8, #c9a97c 60%, #e6d4b0); box-shadow: 0 0 0 1px #5b3d22, 0 40px 90px -20px #000, 0 0 60px rgba(255, 150, 60, .12); }
+.has-visual .ch-visual img { display: block; width: 100%; height: auto; filter: sepia(.06); }
+.ch-feature-head { display: grid; gap: clamp(14px, 2svh, 22px); min-width: 0; padding-top: clamp(0px, 1vw, 14px); }
+.ch-badge {
+  justify-self: start; padding: .2em .9em .25em .6em; transform: rotate(-3deg);
+  font: italic 800 clamp(22px, 2.2vw, 32px)/1.1 "Playfair Display", var(--f-en), serif; letter-spacing: .02em; color: #fff;
+  background: linear-gradient(100deg, transparent 0 2%, var(--brush) 6% 88%, transparent 100%);
+  clip-path: polygon(2% 18%, 98% 0, 100% 78%, 4% 100%, 0 60%);
+}
+.ch-titlerow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+@media (min-width: 1101px) { .ch-titlerow { flex-wrap: nowrap; } }
+.has-visual .ch-title { display: grid; justify-items: center; gap: .1em; font: 400 clamp(48px, 5.1vw, 96px)/.95 "Permanent Marker", Anton, sans-serif; letter-spacing: .01em; color: #f5efe6; transform: rotate(-2deg); text-shadow: 0 .04em .2em #000a; }
+.ch-kindline { display: flex; align-items: center; gap: .7em; font: 400 clamp(18px, 1.8vw, 28px)/1 "Special Elite", "Courier New", monospace; letter-spacing: .18em; color: #f1e8db; transform: rotate(2deg); }
+.ch-kindline::before, .ch-kindline::after { content: ""; width: 2.2em; height: 1px; background: currentColor; opacity: .8; }
+.has-visual .ch-year { position: relative; font: italic 800 clamp(52px, 4.9vw, 92px)/1 "Playfair Display", var(--f-en), serif; color: #f6f0e8; padding-bottom: .12em; }
+.has-visual .ch-year::after { content: ""; position: absolute; left: -6%; right: -10%; bottom: 0; height: .12em; background: var(--brush); clip-path: polygon(0 50%, 100% 0, 96% 100%, 6% 90%); transform: rotate(-3deg); }
+.ch-origin { display: grid; gap: 12px; }
+.ch-origin h3 { padding-bottom: 10px; border-bottom: 1px solid #ffffff45; font: italic 800 clamp(22px, 2.3vw, 34px)/1.3 "Playfair Display", "Shippori Mincho B1", serif; letter-spacing: .03em; color: var(--gold); }
+.ch-origin-text { display: grid; gap: .25em; padding-bottom: 14px; border-bottom: 1px solid #ffffff30; font: 500 clamp(15px, 1.22vw, 18px)/1.95 var(--f-body); letter-spacing: .03em; color: #f3eee8; text-shadow: 0 1px 6px #000c; line-break: strict; }
+.ch-origin-text em { font: italic 800 1.05em "Playfair Display", var(--f-head), serif; color: var(--gold); }
+
+.ch-feature-panels { display: grid; grid-template-columns: 1fr 1.08fr 1.15fr .62fr; gap: clamp(12px, 1.4vw, 22px); align-items: stretch; }
+.fp { position: relative; padding: 20px clamp(16px, 1.6vw, 26px) 18px; border: 1px solid rgba(255, 226, 190, .42); border-radius: 14px; background: rgba(12, 9, 8, .74); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); min-width: 0; }
+.fp-head {
+  display: inline-block; margin: -6px 0 12px -6px; padding: .18em 1.1em .22em .5em; transform: rotate(-2deg);
+  font: italic 800 clamp(17px, 1.45vw, 22px)/1.2 "Playfair Display", "Shippori Mincho B1", serif; letter-spacing: .03em; color: #fff;
+  background: linear-gradient(100deg, var(--brush) 0 86%, transparent 100%); clip-path: polygon(0 12%, 97% 0, 100% 85%, 3% 100%);
+}
+.fp table { width: 100%; border-collapse: collapse; }
+.fp th, .fp td { padding: 8px 6px; border-top: 1px solid #ffffff22; text-align: left; vertical-align: baseline; }
+.fp tr:first-child th, .fp tr:first-child td { border-top-color: #ffffff38; }
+.fp-info th { width: 7em; border-right: 1px solid #ffffff22; font: 500 14px/1.5 var(--f-body); letter-spacing: .1em; color: #e8e0d6; }
+.fp-info td { padding-left: 16px; font: 500 15px/1.5 var(--f-body); letter-spacing: .04em; }
+.fp-members th { width: 5.6em; font: 700 clamp(19px, 1.6vw, 24px)/1.2 "Playfair Display", var(--f-en), serif; font-style: normal; letter-spacing: .04em; color: #fff; }
+.fp-members td { font-size: 13px; line-height: 1.6; color: #e8e0d6; }
+.fp-src { margin-top: 8px; font-size: 11px; color: #bdb3a8; }
+.fp-tracks ol { list-style: none; padding: 0; margin: 0; counter-reset: tr; columns: 2; column-gap: 22px; column-rule: 1px solid #ffffff26; }
+.fp-tracks li { counter-increment: tr; break-inside: avoid; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; padding: 3px 0; font: 400 15px/1.55 "Special Elite", var(--f-body), monospace; color: var(--gold); }
+.fp-tracks li::before { content: counter(tr, decimal-leading-zero) "."; flex: none; width: 2.3em; }
+.fp-tracks .tr-note { display: none; } /* NARI's part is shown in the members panel, as in the approved design */
+.fp-tracks .tr-music { margin-left: 2.3em; font-family: var(--f-body); }
+.fp-archive { display: grid; justify-items: center; align-content: start; gap: 10px; padding-top: 16px; }
+.fp-archive-label { justify-self: start; padding: 4px 10px; transform: rotate(-3deg); font: 400 clamp(11px, .92vw, 15px)/1.2 "Special Elite", monospace; letter-spacing: .04em; white-space: nowrap; color: #2a2118; background: var(--paper); box-shadow: 0 3px 10px #0008; }
+.fp-archive img { width: min(100%, 132px); height: auto; aspect-ratio: 1; object-fit: cover; box-shadow: 0 8px 20px #000a; outline: 1px solid #ffffff2a; }
+.fp-archive-note { font-size: 11px; letter-spacing: .04em; color: #d6ccc0; text-align: center; }
+
+@media (max-width: 1100px) {
+  .ch-feature-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .ch-feature { padding: 30px 16px 34px; gap: 26px; }
+  .ch-feature-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .ch-titlerow { align-items: center; }
+  .has-visual .ch-title { font-size: clamp(42px, 13.6vw, 62px); }
+  .ch-kindline { font-size: clamp(14px, 4.4vw, 20px); }
+  .has-visual .ch-year { font-size: clamp(46px, 14vw, 64px); }
+  .ch-origin-text { font-size: 15px; line-height: 1.95; }
+  .ch-feature-panels { grid-template-columns: minmax(0, 1fr); }
+  .fp-archive { grid-template-columns: auto minmax(0, 1fr); justify-items: start; column-gap: 14px; }
+  .fp-archive-label { grid-column: 1 / -1; }
+  .fp-archive img { width: 96px; }
+  .fp-archive-note { text-align: left; align-self: center; }
+}
+@media (max-width: 380px) { .fp-tracks ol { columns: 1; } }
