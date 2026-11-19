@@ -108,6 +108,7 @@ for (const a of albums) {
     if (!await exists(u)) throw new Error(`資料用の旧ジャケットがありません: albums/${a.id}/cover-240.jpg（python tools/make-album-images.py を実行）`);
     a.archiveSize = await jpegSize(u);
   }
+  if (a.backdrop && !await exists(new URL(`${a.backdrop}/visual-web.jpg`, albumDir))) throw new Error(`背景に使うアルバムの採用ジャケットがありません: ${a.id} → ${a.backdrop}`);
   for (const t of a.tracks) if (t.music) {
     if (!songById.has(t.music)) throw new Error(`HISTORYのMUSICリンク先がありません: ${a.id} → ${t.music}`);
     originOf.set(t.music, a);
@@ -582,14 +583,14 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
       const fMembers = (a.members ?? []).map(m => `<tr><th scope="row">${esc(m.name)}</th><td>${esc(m.role ?? m.note ?? '')}</td></tr>`).join('');
       return `<li class="chapter theme-${a.id} has-visual" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
       <div class="ch-feature">
-        <img class="ch-feature-bg" src="${albumVisual(r, a.id)}" alt="" aria-hidden="true" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async">
+        <img class="ch-feature-bg" src="${albumVisual(r, a.backdrop ?? a.id)}" alt="" aria-hidden="true" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async">
         <div class="ch-feature-top">
           <figure class="ch-visual reveal"><img src="${albumVisual(r, a.id)}" width="${a.visualSize.w}" height="${a.visualSize.h}" alt="『${esc(a.title)}』のジャケット" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async"></figure>
           <div class="ch-feature-head reveal">
             <p class="ch-badge">${esc(a.no ?? '')}</p>
             <div class="ch-titlerow">
               <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}<span class="ch-kindline">${esc(a.kindLabel ?? a.kind)}</span></h2>
-              <p class="ch-year">${esc(a.year)}</p>
+              ${a.sideLabel ? `<p class="ch-side-label">${a.sideLabel.split(' ').map(esc).join('<br>')}</p>` : `<p class="ch-year">${esc(a.year)}</p>`}
             </div>
             ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div></section>` : ''}
           </div>

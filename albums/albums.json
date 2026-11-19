@@ -95,17 +95,32 @@
     {
       "id": "togetherness",
       "no": "SOLO WORK",
-      "kind": "NARI Solo Album",
+      "kind": "NARI Solo Project",
+      "kindLabel": "NARIのためのソロアルバム",
+      "sideLabel": "Special Solo Project",
       "year": "SOLO",
       "date": null,
       "dateLabel": null,
       "title": "TOGETHERNESS",
       "subtitle": null,
       "accent": "#4d6bff",
-      "visual": null,
+      "visual": {
+        "source": "トゥギャザーネス 特設アルバムページ.png（Producer採用デザイン見本からジャケット部分を切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "backdrop": "pip-popper",
       "members": [
         {
-          "name": "NARI"
+          "name": "NARI",
+          "role": "ボーカル（本作の主役）"
+        },
+        {
+          "name": "HAYATO",
+          "role": "プロデュース・作詞作曲・ピアノ"
+        },
+        {
+          "name": "KAI",
+          "role": "ギター"
         }
       ],
       "story": [
@@ -113,7 +128,19 @@
         "NARIは当時、バンドのボーカルとしても活動していました。",
         "NARIのソロ作品のため、PIP POPPER名義のアルバムの番号には数えていません。"
       ],
-      "episode": null,
+      "episode": {
+        "title": "NARIのために作った、ひとつのアルバム。",
+        "text": [
+          "ファーストアルバム『PIP POPPER』で「タンクトップ」に参加したNARI。",
+          "当時、NARIはバンドのボーカルとしても活動していた。",
+          "そんなNARIのために、今度は彼を主役にしたソロアルバムを制作することになった。",
+          "こうして生まれたのが『TOGETHERNESS』。",
+          "ラップも、バンドサウンドも、バラードも。",
+          "決まったジャンルに縛られず、作りたい音楽を自由に作る。",
+          "『TOGETHERNESS』も、そんなPIP POPPERの音楽活動から生まれた一枚だった。"
+        ],
+        "highlight": "PIP POPPER"
+      },
       "tracks": [
         {
           "title": "Rain of my heart"
@@ -122,31 +149,42 @@
           "title": "Be myself"
         },
         {
-          "title": "Sitsuren"
+          "title": "失恋"
         },
         {
-          "title": "Kiiroika-ten"
+          "title": "黄色いカーテン"
         },
         {
-          "title": "Mirainikimiga"
+          "title": "未来に君が・・・"
         },
         {
-          "title": "No more tears"
+          "title": "No More Tears"
         },
         {
           "title": "Believe"
         },
         {
-          "title": "Wakarenoyokan"
+          "title": "別れの予感"
         },
         {
           "title": "Never gonna stop it"
         },
         {
-          "title": "Forever in my heart"
+          "title": "FOREVER IN MY HEART"
         }
       ],
-      "archive": true
+      "archive": true,
+      "membersSource": "役割はCDのクレジット表記より",
+      "info": [
+        [
+          "関連プロジェクト",
+          "PIP POPPER"
+        ],
+        [
+          "作詞・作曲",
+          "HAYATO（CD記載：ALL SONGS WRITTEN BY HAYATO）"
+        ]
+      ]
     },
     {
       "id": "dont-complain",

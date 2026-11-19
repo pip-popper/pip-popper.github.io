@@ -326,16 +326,16 @@
 .fp table { width: 100%; border-collapse: collapse; }
 .fp th, .fp td { padding: 8px 6px; border-top: 1px solid #ffffff22; text-align: left; vertical-align: baseline; }
 .fp tr:first-child th, .fp tr:first-child td { border-top-color: #ffffff38; }
-.fp-info th { width: 7em; border-right: 1px solid #ffffff22; font: 500 14px/1.5 var(--f-body); letter-spacing: .1em; color: #e8e0d6; }
+.fp-info th { width: 1%; white-space: nowrap; border-right: 1px solid #ffffff22; font: 500 14px/1.5 var(--f-body); letter-spacing: .1em; color: #e8e0d6; }
 .fp-info td { padding-left: 16px; font: 500 15px/1.5 var(--f-body); letter-spacing: .04em; }
 .fp-members th { width: 5.6em; font: 700 clamp(19px, 1.6vw, 24px)/1.2 "Playfair Display", var(--f-en), serif; font-style: normal; letter-spacing: .04em; color: #fff; }
 .fp-members td { font-size: 13px; line-height: 1.6; color: #e8e0d6; }
 .fp-src { margin-top: 8px; font-size: 11px; color: #bdb3a8; }
 .fp-tracks ol { list-style: none; padding: 0; margin: 0; counter-reset: tr; columns: 2; column-gap: 22px; column-rule: 1px solid #ffffff26; }
-.fp-tracks li { counter-increment: tr; break-inside: avoid; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; padding: 3px 0; font: 400 15px/1.55 "Special Elite", var(--f-body), monospace; color: var(--gold); }
+.fp-tracks li { counter-increment: tr; break-inside: avoid; display: grid; grid-template-columns: 2.3em minmax(0, 1fr); align-items: baseline; column-gap: 4px; padding: 3px 0; font: 400 15px/1.55 "Special Elite", var(--f-body), monospace; color: var(--gold); }
 .fp-tracks li::before { content: counter(tr, decimal-leading-zero) "."; flex: none; width: 2.3em; }
 .fp-tracks .tr-note { display: none; } /* NARI's part is shown in the members panel, as in the approved design */
-.fp-tracks .tr-music { margin-left: 2.3em; font-family: var(--f-body); }
+.fp-tracks .tr-music { grid-column: 2; justify-self: start; margin-left: 0; font-family: var(--f-body); }
 .fp-archive { display: grid; justify-items: center; align-content: start; gap: 10px; padding-top: 16px; }
 .fp-archive-label { justify-self: start; padding: 4px 10px; transform: rotate(-3deg); font: 400 clamp(11px, .92vw, 15px)/1.2 "Special Elite", monospace; letter-spacing: .04em; white-space: nowrap; color: #2a2118; background: var(--paper); box-shadow: 0 3px 10px #0008; }
 .fp-archive img { width: min(100%, 132px); height: auto; aspect-ratio: 1; object-fit: cover; box-shadow: 0 8px 20px #000a; outline: 1px solid #ffffff2a; }
@@ -359,3 +359,42 @@
   .fp-archive-note { text-align: left; align-self: center; }
 }
 @media (max-width: 380px) { .fp-tracks ol { columns: 1; } }
+
+/* ── TOGETHERNESS (adopted design, 2026-11-20): the same studio cinema as chapter 1, lit in
+   purple and pink; a silver serif title with a pink sweep and "Special Solo Project" beside it. */
+.theme-togetherness.has-visual { --pink: #ff4fb8; }
+.theme-togetherness .ch-feature::after { /* pink-violet light washing over the shared studio */
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(45% 55% at 22% 40%, rgba(220, 60, 200, .22), transparent 72%), radial-gradient(40% 40% at 85% 20%, rgba(150, 70, 255, .12), transparent 70%);
+}
+.theme-togetherness.has-visual .ch-visual { background: linear-gradient(135deg, #f3dcc8, #c99a7a 55%, #ead2bd); box-shadow: 0 0 0 1px #5b3d22, 0 40px 90px -20px #000, 0 0 80px rgba(255, 70, 200, .22); }
+.theme-togetherness.has-visual .ch-titlerow { align-items: center; }
+.theme-togetherness.has-visual .ch-title {
+  position: relative; transform: none; gap: .18em;
+  font: italic 700 clamp(36px, 3.9vw, 72px)/1 "Playfair Display", var(--f-en), serif; letter-spacing: .01em; white-space: nowrap;
+  color: transparent; background: linear-gradient(180deg, #ffffff 20%, #d8d0e4 55%, #ffffff 85%); -webkit-background-clip: text; background-clip: text;
+  text-shadow: none; filter: drop-shadow(0 .05em .12em #000c);
+}
+.theme-togetherness.has-visual .ch-title::before { /* pink light sweep under the title */
+  content: ""; position: absolute; left: 4%; right: 2%; top: 1.02em; height: .07em; border-radius: 50%;
+  background: linear-gradient(90deg, transparent, var(--pink) 25%, #ffd2f0 60%, transparent); box-shadow: 0 0 .25em var(--pink);
+}
+.theme-togetherness .ch-kindline { margin-top: .35em; font: 600 clamp(16px, 1.45vw, 23px)/1.2 var(--f-head); letter-spacing: .2em; transform: none; -webkit-text-fill-color: #f1e8f2; color: #f1e8f2; }
+.ch-side-label {
+  position: relative; flex: none; padding: .2em 0 .45em .9em; border-left: 1px solid #ffffff70;
+  font: italic 700 clamp(21px, 1.9vw, 32px)/1.12 "Playfair Display", var(--f-en), serif; letter-spacing: .02em; color: #f6eef4; text-align: center;
+}
+.ch-side-label::after { content: ""; position: absolute; left: .6em; right: -.4em; bottom: 0; height: .16em; background: var(--pink, var(--brush)); clip-path: polygon(0 60%, 100% 0, 97% 100%, 4% 100%); transform: rotate(-4deg); }
+.theme-togetherness .ch-origin-text em { color: var(--gold); }
+@media (max-width: 760px) {
+  .theme-togetherness.has-visual .ch-title { font-size: clamp(34px, 10.4vw, 52px); white-space: nowrap; }
+  .ch-side-label { font-size: 19px; }
+}
+/* Approved order for TOGETHERNESS: ALBUM INFO, tracks, members, archive (visual order only). */
+@media (min-width: 761px) {
+  .theme-togetherness .ch-feature-panels { grid-template-columns: 1fr 1.3fr .92fr .6fr; }
+  .theme-togetherness .fp-tracks { order: 1; }
+  .theme-togetherness .fp-members { order: 2; }
+  .theme-togetherness .fp-archive { order: 3; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .theme-togetherness .ch-feature-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
