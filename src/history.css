@@ -685,6 +685,52 @@
   .theme-independence .fp-tracks ol { columns: 1; }
 }
 
+/* ── Marriageable (female vocal solo album produced by H, adopted design 2026-11-20): the one light
+   chapter — soft pink satin, petals and rings; deep rose serif text on white-pink panels. Every colour
+   below is scoped to this chapter only. */
+.theme-marriageable.has-visual { --brush: #b0174f; --gold: #c2185b; --paper: #fff3f6; --ink-m: #3d1f28; --line-m: rgba(150, 50, 80, .2); }
+.theme-marriageable .ch-feature-bg { filter: blur(10px) saturate(.95) brightness(1.08); object-position: 50% 70%; }
+.theme-marriageable .ch-feature::before {
+  background:
+    radial-gradient(45% 55% at 12% 10%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(40% 50% at 92% 80%, rgba(255, 190, 210, .35), transparent 70%),
+    linear-gradient(180deg, rgba(255, 238, 243, .72), rgba(255, 232, 239, .82) 55%, rgba(250, 222, 232, .9) 100%);
+}
+.theme-marriageable.has-visual .ch-visual { background: linear-gradient(135deg, #fff, #f2c9d6 55%, #fff4f7); box-shadow: 0 0 0 1px #e7b6c5, 0 30px 70px -24px rgba(120, 30, 60, .45), 0 0 60px rgba(255, 170, 200, .35); }
+.theme-marriageable.has-visual .ch-visual img { filter: none; }
+.theme-marriageable.has-visual .ch-title { font: 600 clamp(46px, 5.2vw, 88px)/1 "Cormorant Garamond", var(--f-head), serif; letter-spacing: .01em; color: #5a1a2c; transform: none; text-shadow: none; }
+.theme-marriageable .ch-kindline { font: 600 clamp(13px, 1.1vw, 16px)/1 "Cormorant Garamond", var(--f-en), serif; letter-spacing: .32em; color: #7a3448; transform: none; }
+.theme-marriageable .ch-side-label { border-left-color: var(--line-m); font: 600 clamp(14px, 1.1vw, 17px)/1.6 var(--f-body); letter-spacing: .14em; font-style: normal; color: #6b2a3c; }
+.theme-marriageable .ch-origin h3 { border-bottom-color: var(--line-m); font: 800 clamp(20px, 2vw, 30px)/1.45 "Shippori Mincho B1", "Yu Mincho", serif; color: var(--gold); text-wrap: balance; word-break: auto-phrase; }
+.theme-marriageable .ch-origin-text { border-bottom-color: var(--line-m); color: var(--ink-m); text-shadow: none; }
+.theme-marriageable .ch-closing { font-size: clamp(19px, 1.7vw, 25px); color: var(--gold); text-shadow: none; transform: none; }
+.theme-marriageable .ch-closing-after { color: var(--ink-m); }
+.theme-marriageable .ch-closing-after + .ch-closing-after { margin-top: -10px; }
+.theme-marriageable .fp { border-color: rgba(176, 80, 110, .35); background: rgba(255, 251, 252, .82); color: var(--ink-m); box-shadow: 0 10px 30px -18px rgba(120, 30, 60, .4); }
+.theme-marriageable .fp th, .theme-marriageable .fp td { border-top-color: var(--line-m); }
+.theme-marriageable .fp-info th { border-right-color: var(--line-m); color: #7a4a58; }
+.theme-marriageable .fp-members th { color: #5a1a2c; }
+.theme-marriageable .fp-members td { color: #5a3a44; }
+.theme-marriageable .fp-src, .theme-marriageable .fp-archive-note { color: #8a6070; }
+.theme-marriageable .fp-tracks ol { column-rule-color: var(--line-m); }
+.theme-marriageable .fp-tracks li { font: 600 17px/1.5 "Cormorant Garamond", "Shippori Mincho B1", serif; letter-spacing: .03em; color: var(--ink-m); }
+.theme-marriageable .fp-tracks li::before { color: var(--gold); }
+.theme-marriageable .fp-audio-note { box-shadow: 0 6px 16px rgba(120, 30, 60, .25); }
+@media (min-width: 1101px) {
+  .theme-marriageable .ch-feature-panels { grid-template-columns: 1fr .9fr 1.6fr; }
+  .theme-marriageable .fp-archive { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 18px; padding: 12px 20px; }
+  .theme-marriageable .fp-archive-note { text-align: left; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .theme-marriageable .fp-tracks { grid-column: 1 / -1; } }
+/* HISTORY only: the fixed header's dark wash is a little deeper behind its text, so the white menu stays
+   readable while this light chapter scrolls under it (on the dark chapters it looks the same as before). */
+.page-history .topbar { background: linear-gradient(rgba(6, 7, 8, .8), rgba(6, 7, 8, .55) 65%, transparent); }
+@media (max-width: 760px) {
+  .theme-marriageable.has-visual .ch-title { font-size: clamp(40px, 12vw, 56px); }
+  .theme-marriageable .ch-kindline { letter-spacing: .2em; }
+  .theme-marriageable .fp-tracks ol { columns: 1; }
+}
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by

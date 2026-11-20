@@ -1083,6 +1083,93 @@
         }
       ],
       "archive": false
+    },
+    {
+      "id": "marriageable",
+      "no": "FEMALE SOLO WORK",
+      "kind": "女性ボーカル・ソロアルバム",
+      "kindLabel": "PRODUCED BY H",
+      "sideLabel": "制作 2000年代前半",
+      "year": "SOLO",
+      "date": null,
+      "dateLabel": "2000年代前半（正確な年は未確認）",
+      "title": "Marriageable",
+      "subtitle": null,
+      "accent": "#c2185b",
+      "visual": {
+        "source": "a_polished_album_album_page_poster_in_soft_pink_cr.png（添付画像。Producer採用デザインからジャケット部分のみを切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "女性ボーカルの氏名は公開していません",
+      "members": [
+        {
+          "name": "H",
+          "role": "プロデュース"
+        },
+        {
+          "name": "VOCAL",
+          "role": "女性ボーカル"
+        }
+      ],
+      "info": [
+        [
+          "プロデュース",
+          "H"
+        ],
+        [
+          "関連プロジェクト",
+          "PIP POPPER"
+        ]
+      ],
+      "episode": {
+        "title": "歌いたい？ じゃあ、どんな変な歌でも歌えよ。",
+        "text": [
+          "PIP POPPERの曲を聴いた人たちから、「私も歌いたい」「歌わせて」という声が聞こえるようになった。",
+          "その頃、Kはすでに離れ、Hは一人でも曲を作り続けていた。",
+          "女性が歌う曲も作ってみたい。",
+          "そんな興味もあって、女性ボーカルの作品を作ることにした。",
+          "ただし、条件が一つ。"
+        ],
+        "closing": "「どんな変な歌でも歌えよ。」",
+        "closingAfter": [
+          "歌いたい人がいて、作りたい人がいる。",
+          "あとは、どんな曲ができるか分からない。",
+          "そんな新しい音楽遊びから生まれたのが『Marriageable』だった。",
+          "歌ってくれた人にとっても、ひとつの思い出として残るCDになった。"
+        ]
+      },
+      "audioNote": "既存の楽曲のカバーを含むため、本作の音源は公開していません。",
+      "tracks": [
+        {
+          "title": "Stardust"
+        },
+        {
+          "title": "TIME GOES BY -DAM Remix-"
+        },
+        {
+          "title": "未来に君が"
+        },
+        {
+          "title": "生きる強さ"
+        },
+        {
+          "title": "めぐり逢い"
+        },
+        {
+          "title": "Christmas Love"
+        },
+        {
+          "title": "あの頃のように…"
+        },
+        {
+          "title": "Close My Heart"
+        },
+        {
+          "title": "Over"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCD資料には参加者の実名が含まれるため、掲載していません。"
     }
   ]
 }
