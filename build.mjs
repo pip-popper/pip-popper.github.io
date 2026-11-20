@@ -596,7 +596,7 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
               <h2 class="ch-title${a.titleImageSize ? ' has-image' : ''}" id="${a.id}-title">${a.titleImageSize ? `<img class="ch-title-img" src="${r}assets/history/${a.id}-title.png" width="${a.titleImageSize.w}" height="${a.titleImageSize.h}" alt="${esc(a.title)}" decoding="async">` : esc(a.title)}<span class="ch-kindline">${esc(a.kindLabel ?? a.kind)}</span></h2>
               ${a.sideLabel ? `<p class="ch-side-label">${a.sideLabel.split(' ').map(esc).join('<br>')}</p>` : `<p class="ch-year${a.yearLabel ? ' is-date' : ''}">${esc(a.yearLabel ?? a.year)}</p>`}
             </div>
-            ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div>${a.episode.closing ? `<p class="ch-closing">${hl(a.episode.closing, 'PIP POPPER')}</p>` : ''}</section>` : ''}
+            ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div>${a.episode.closing ? `<p class="ch-closing">${hl(a.episode.closing, 'PIP POPPER')}</p>` : ''}${a.episode.note ? `<div class="ch-origin-note">${a.episode.note.map(p).join('')}</div>` : ''}</section>` : ''}
           </div>
         </div>
         <div class="ch-feature-panels reveal">

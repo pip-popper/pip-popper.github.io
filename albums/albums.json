@@ -523,6 +523,79 @@
       "yearLabel": "2001.11.01"
     },
     {
+      "id": "sukekomauta",
+      "no": "EXPERIMENTAL",
+      "kind": "Experimental Album",
+      "kindLabel": "EXPERIMENTAL ALBUM",
+      "year": "2002",
+      "date": null,
+      "dateLabel": "2002年",
+      "yearLabel": "2002",
+      "title": "すけこま詩",
+      "subtitle": null,
+      "accent": "#d3202a",
+      "visual": {
+        "source": "a_stylized_album_history_poster_layout_for_pip_pop.png（添付画像。Producer採用デザインからジャケット部分のみを切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "CDブックレットのクレジット（イニシャル表記）",
+      "members": [
+        {
+          "name": "H",
+          "role": "キーボード"
+        },
+        {
+          "name": "K",
+          "role": "ギター"
+        }
+      ],
+      "story": [
+        "『PROFESSIONAL』に続いて、既存の商業楽曲の伴奏にPIP POPPERの歌詞とラップを乗せた、全5曲の実験的な作品です。",
+        "「SUKEKOMASHI」は山嵐の「山嵐」、「STAY GOLD」はSteady&Co.の「STAY GOLD」を伴奏に使っています。「STAY GOLD」では、元の歌詞の響きに似せて「捨て子・捨て猫・ステテコ」と言葉遊びをしました。どちらも元のアーティストの公認作品や共同制作ではありません。"
+      ],
+      "episode": {
+        "title": "まだ、諦めていなかった。",
+        "text": [
+          "『PROFESSIONAL』で、プロの曲に自分たちのラップを乗せてみた。",
+          "これなら少しは格好よくなるんじゃないか。",
+          "ところが、出来上がったのは、やっぱりいつものPIP POPPER。",
+          "それでも、まだ諦めきれなかった。",
+          "今度は曲だけじゃなく、言葉の響きまで似せてみよう。",
+          "「捨て子、捨て猫、ステテコ。」",
+          "そんな言葉遊びまで持ち込んで、プロの曲に自分たちの歌詞を乗せていく。",
+          "格好よくなる方法を探しているはずなのに、やっていることはどんどんふざけていく。",
+          "格好よくなりたいのか、笑わせたいのか。",
+          "結局、その両方を試して遊んでいた。",
+          "こうして生まれたのが『すけこま詩』。",
+          "『PROFESSIONAL』から続く、PIP POPPERの実験だった。"
+        ],
+        "note": [
+          "制作の背景：「SUKEKOMASHI」は山嵐の「山嵐」、「STAY GOLD」はSteady&Co.の「STAY GOLD」を伴奏に使い、PIP POPPERが自分たちの歌詞を乗せた曲です。「STAY GOLD」では、元の言葉の響きに似せて「捨て子・捨て猫・ステテコ」と言葉遊びをしています。",
+          "いずれも元のアーティストの公認作品・公式コラボレーション・許諾済みリミックスではありません。"
+        ]
+      },
+      "audioNote": "本作は既存の商業楽曲を使用した実験作品のため、音源は公開していません。",
+      "tracks": [
+        {
+          "title": "SUKEKOMASHI"
+        },
+        {
+          "title": "OTOKOGOKORO"
+        },
+        {
+          "title": "AMAIWANA"
+        },
+        {
+          "title": "ITOSHINOHONEY"
+        },
+        {
+          "title": "STAY GOLD"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",
