@@ -1137,6 +1137,113 @@
       "archiveNote": "公開用のジャケットはAIで制作したイメージです。描かれた人物は当時のメンバー本人ではありません。"
     },
     {
+      "id": "blood-necks",
+      "no": "PIP POPPER · 2007",
+      "kind": "Album",
+      "kindLabel": "H · T · G · トド — 20 TRACKS",
+      "year": "2007",
+      "date": null,
+      "dateLabel": "2007年",
+      "yearLabel": "2007",
+      "title": "Blood Necks",
+      "subtitle": null,
+      "accent": "#df3538",
+      "visual": {
+        "source": "PIP_POPPER_BLOOD_NECKS_HISTORY_最終受渡版.html（Producer採用HTMLに内蔵のポスター 1254×1254 から上部 1254×680＝タイトル・4人・キャッチを切り出し。下部の紹介文・メンバー欄・曲目は呼び名を含むため画像では使わずHTMLで掲載）",
+        "adopted": "2026-11-21 Producer正式採用（採用HTML）"
+      },
+      "membersSource": "イニシャル・呼び名で表記",
+      "members": [
+        {
+          "name": "H"
+        },
+        {
+          "name": "T"
+        },
+        {
+          "name": "G"
+        },
+        {
+          "name": "トド"
+        }
+      ],
+      "episode": {
+        "title": "新しい仲間、新しい世代、新しい遊び方。",
+        "text": [
+          "Nが抜けた後、Tが新しい後輩Gを連れてきた。",
+          "HとTより9歳年下のGは、そのノリの良さがPIP POPPERにぴったりだった。",
+          "さらにGが連れてきた絵の得意なトドも加わり、4人で毎週スタジオに集まってレコーディングを楽しんだ。",
+          "ものまねバトルやアドリブバトルで、面白かった方を採用するはずが、結局は両方のバージョンを作ってしまう。"
+        ],
+        "closing": "面白い方が勝ち。だけど、両方作る。",
+        "closingAfter": "世代の違う4人が、新しい遊び方を見つけた時期の作品。"
+      },
+      "tracks": [
+        {
+          "title": "INTRODUCTION"
+        },
+        {
+          "title": "Pip Popper2007"
+        },
+        {
+          "title": "FREESTYLE"
+        },
+        {
+          "title": "PLAYZONE"
+        },
+        {
+          "title": "OSU!!BANCYO"
+        },
+        {
+          "title": "SLOTER"
+        },
+        {
+          "title": "KAEUTA2006"
+        },
+        {
+          "title": "TRIANGLE"
+        },
+        {
+          "title": "Drunkers"
+        },
+        {
+          "title": "MINATORODUCTION"
+        },
+        {
+          "title": "P-VIRUS"
+        },
+        {
+          "title": "FUNKYHEADS Part2"
+        },
+        {
+          "title": "DIETER"
+        },
+        {
+          "title": "MOTIVATION"
+        },
+        {
+          "title": "STAIN"
+        },
+        {
+          "title": "Talk about separation"
+        },
+        {
+          "title": "RESPECT[condom]"
+        },
+        {
+          "title": "ArigachinaHoliday"
+        },
+        {
+          "title": "Kimito..."
+        },
+        {
+          "title": "TIME CAPSULE"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "2007年のCD資料と、新たに制作したイメージを組み合わせたHISTORYデザインです。画像の人物は当時の実在メンバーの写真ではありません。制作当時のPSD・原画は非公開の保存資料です。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",

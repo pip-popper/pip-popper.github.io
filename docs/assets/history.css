@@ -857,6 +857,42 @@
 }
 @media (max-width: 400px) { .theme-minami-kaze .fp-tracks ol { columns: 1; } }
 
+/* ── Blood Necks (adopted HTML 2026-11-21): four of two generations in a warm, gritty studio drawn like the
+   old illustrations; red brush title on black and rust, red bars, warm gold-orange labels. The poster's
+   upper part (title, four, catch copy) runs wide across the top; texts and the 20 tracks are HTML. */
+.theme-blood-necks.has-visual { --brush: #df3538; --gold: #e7b48f; }
+.theme-blood-necks .ch-feature-bg { filter: blur(9px) saturate(1.1) brightness(.34); object-position: 50% 30%; }
+.theme-blood-necks .ch-feature::before {
+  background:
+    radial-gradient(45% 50% at 20% 20%, rgba(49, 26, 28, .55), transparent 70%),
+    radial-gradient(45% 50% at 90% 55%, rgba(51, 33, 30, .5), transparent 70%),
+    linear-gradient(180deg, rgba(7, 9, 13, .35), rgba(23, 16, 15, .6) 42%, rgba(7, 9, 13, .95) 100%);
+}
+.theme-blood-necks .is-wide .ch-visual { width: 100%; mix-blend-mode: normal; -webkit-mask-image: none; mask-image: none; border: 1px solid #8c4841; box-shadow: 0 12px 70px #000c; }
+.theme-blood-necks .is-wide .ch-visual img { width: 100%; height: auto; }
+.theme-blood-necks .ch-badge { padding: 0 0 0 0; font: 600 clamp(11px, 1vw, 13px)/1 var(--f-body); letter-spacing: .33em; color: #d9beb0; background: none; clip-path: none; transform: none; display: grid; gap: 14px; }
+.theme-blood-necks .ch-badge::before { content: ""; width: 115px; height: 4px; background: var(--brush); }
+.theme-blood-necks.has-visual .is-wide .ch-title { font: 700 clamp(40px, 4.6vw, 70px)/1.05 Georgia, "Times New Roman", serif; letter-spacing: .05em; color: #eee6dc; font-style: normal; }
+.theme-blood-necks .ch-kindline { font: 600 clamp(11px, 1vw, 13px)/1.4 var(--f-body); letter-spacing: .14em; color: #e0aa85; }
+.theme-blood-necks .ch-kindline::before, .theme-blood-necks .ch-kindline::after { display: none; }
+.theme-blood-necks.has-visual .ch-year { font: italic 800 clamp(34px, 3vw, 52px)/1 "Playfair Display", Georgia, serif; color: #eee6dc; }
+.theme-blood-necks .ch-origin h3 { border-bottom-color: rgba(103, 80, 75, .7); font: 800 clamp(20px, 2.1vw, 30px)/1.5 "Shippori Mincho B1", "Yu Mincho", serif; font-style: normal; color: #eee6dc; text-wrap: balance; word-break: auto-phrase; }
+.theme-blood-necks .ch-origin-text { color: #e6dcd2; border-bottom-color: rgba(103, 80, 75, .6); }
+.theme-blood-necks .ch-closing { font: 800 clamp(20px, 2vw, 30px)/1.5 "Shippori Mincho B1", "Yu Mincho", serif; color: #fff; transform: rotate(-1.5deg); }
+.theme-blood-necks .ch-closing-after { color: #c8b8ad; }
+.theme-blood-necks .fp { border-color: rgba(103, 80, 75, .9); border-radius: 3px; background: rgba(13, 16, 19, .85); }
+.theme-blood-necks .fp-tracks li { font: 500 15px/1.5 var(--f-body); color: #eee6dc; padding: 6px 0; border-bottom: 1px solid rgba(86, 67, 58, .47); overflow-wrap: anywhere; }
+.theme-blood-necks .fp-tracks li::before { font: 700 15px/1.5 var(--f-body); font-variant-numeric: tabular-nums; content: counter(tr, decimal-leading-zero); color: #e0aa85; }
+.theme-blood-necks .fp-members.is-initials th { font: 700 clamp(20px, 1.9vw, 30px)/1.2 "Shippori Mincho B1", "Yu Mincho", serif; font-style: normal; white-space: nowrap; }
+@media (min-width: 1101px) {
+  .theme-blood-necks .ch-feature-panels { grid-template-columns: .7fr .85fr 1.9fr; }
+  .theme-blood-necks .fp-archive { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 18px; padding: 12px 20px; }
+  .theme-blood-necks .fp-archive-note { text-align: left; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .theme-blood-necks .fp-tracks { grid-column: 1 / -1; } }
+@media (max-width: 670px) { .theme-blood-necks .fp-tracks ol { columns: 1; } }
+@media (max-width: 760px) { .theme-blood-necks.has-visual .is-wide .ch-title { font-size: clamp(34px, 10.5vw, 48px); } }
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by
