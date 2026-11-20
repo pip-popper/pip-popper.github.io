@@ -882,6 +882,112 @@
       "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
     },
     {
+      "id": "independence",
+      "no": "H SOLO WORK",
+      "kind": "H 1st Solo Album",
+      "kindLabel": "H 1ST SOLO ALBUM",
+      "year": "2003",
+      "date": null,
+      "dateLabel": "2003年",
+      "yearLabel": "2003",
+      "title": "INDEPENDENCE",
+      "subtitle": null,
+      "accent": "#c8332a",
+      "visual": {
+        "source": "hソロアルバム_independence_特設ページ.png（添付画像。Producer採用デザインからジャケット部分のみを切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "CDのクレジットより（イニシャル表記）",
+      "members": [
+        {
+          "name": "H",
+          "role": "プロデュース・メインボーカル・キーボード"
+        },
+        {
+          "name": "T",
+          "role": "ゲスト（一部の曲）"
+        }
+      ],
+      "info": [
+        [
+          "アーティスト",
+          "H"
+        ],
+        [
+          "ゲスト",
+          "T（一部の曲）"
+        ],
+        [
+          "関連プロジェクト",
+          "PIP POPPER"
+        ]
+      ],
+      "episode": {
+        "title": "歌詞は、あの頃の自分の日記だった。",
+        "text": [
+          "PIP POPPERがひとつの区切りを迎えても、曲を作ることはやめなかった。",
+          "もともと自分の趣味なのだから、誰かと一緒でなくても続けられる。",
+          "そして、この頃に作っていた曲には、仲間との出来事よりも、自分個人の考えや感情を歌詞にしたものが多かった。",
+          "世の中のこと、人のこと、自分がそのとき感じたこと。",
+          "他人から見れば「それはあなたの感想ですよね？」で終わるような話ばかりかもしれない。",
+          "でも、それでよかった。",
+          "自分が何を考え、何を感じていたのか。",
+          "それを歌詞にして、音楽にして、残しておく。",
+          "曲がたまれば、一枚のCDにまとめる。",
+          "そうして生まれたのが、Hのソロアルバム『INDEPENDENCE』だった。",
+          "ときにはTも参加している。"
+        ],
+        "closing": "このアルバムは、2003年の自分が何を考えていたのかを残した、音楽でできた日記でもある。"
+      },
+      "audioNote": "既存の楽曲に由来する伴奏などを含む可能性があるため、本作の音源は公開していません。",
+      "tracks": [
+        {
+          "title": "Intro"
+        },
+        {
+          "title": "YUKUEFUMEISYA feat. T"
+        },
+        {
+          "title": "MOTENAIKUN ～RAP VERSION～"
+        },
+        {
+          "title": "FUNENBUTSU"
+        },
+        {
+          "title": "MISSION CHINPOTENCE"
+        },
+        {
+          "title": "KANOJONIHUMAN"
+        },
+        {
+          "title": "TRANCEFORMATION feat. T"
+        },
+        {
+          "title": "UNNECESSARY GIRLS"
+        },
+        {
+          "title": "RAPGOCCO feat. T"
+        },
+        {
+          "title": "PROPOSE remix"
+        },
+        {
+          "title": "Attention"
+        },
+        {
+          "title": "Grow into a woman"
+        },
+        {
+          "title": "SALARIED MAN"
+        },
+        {
+          "title": "Think something over"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCD資料には実名のクレジットが含まれるため、掲載していません。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",

@@ -653,6 +653,38 @@
   .ch-strip { gap: 6px; padding: 12px 8px; }
 }
 
+/* ── INDEPENDENCE (H 1st solo album, adopted design 2026-11-20): red-black molten metal, a single
+   figure in the light; bronze-gold italic title, the year in white, studio gear in the dark. */
+.theme-independence.has-visual { --brush: #b8141b; --gold: #e9c27a; }
+.theme-independence .ch-feature-bg { filter: blur(6px) saturate(1.15) brightness(.38); object-position: 50% 45%; }
+.theme-independence .ch-feature::before {
+  background:
+    radial-gradient(42% 50% at 30% 30%, rgba(255, 110, 70, .2), transparent 70%),
+    radial-gradient(40% 45% at 90% 10%, rgba(255, 170, 90, .1), transparent 70%),
+    linear-gradient(180deg, rgba(10, 5, 4, .3), rgba(10, 5, 4, .58) 55%, rgba(8, 4, 3, .95) 100%);
+}
+.theme-independence.has-visual .ch-visual { background: linear-gradient(135deg, #c98f5a, #6b3a1f 55%, #b77a46); box-shadow: 0 0 0 1px #3d2014, 0 40px 90px -20px #000, 0 0 80px rgba(220, 70, 40, .22); }
+.theme-independence.has-visual .ch-visual img { filter: none; }
+.theme-independence.has-visual .ch-title { font: italic 700 clamp(44px, 5vw, 86px)/1 "Playfair Display", var(--f-head), serif; letter-spacing: .01em; transform: none;
+  background: linear-gradient(180deg, #fff6e4, #e9cf9e 45%, #a8784a 60%, #f3dfb8); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 10px #000c); }
+.theme-independence .ch-kindline { font: 400 clamp(13px, 1.15vw, 17px)/1 "Jost", var(--f-en), sans-serif; letter-spacing: .4em; color: #f0e4d2; transform: none; }
+.theme-independence .ch-origin h3 { font-family: "Shippori Mincho B1", "Yu Mincho", serif; font-style: normal; font-weight: 700; text-wrap: balance; word-break: auto-phrase; }
+.theme-independence .ch-closing { font-size: clamp(18px, 1.6vw, 24px); color: var(--gold); transform: none; }
+.theme-independence .fp { border-color: rgba(233, 194, 122, .45); background: rgba(14, 7, 5, .78); }
+.theme-independence .fp-tracks li { font: 500 15px/1.5 "Cormorant Garamond", var(--f-body), serif; letter-spacing: .04em; color: #f3ebdf; }
+.theme-independence .fp-tracks li::before { font-family: "Cormorant Garamond", serif; font-weight: 600; color: var(--gold); }
+@media (min-width: 1101px) {
+  .theme-independence .ch-feature-panels { grid-template-columns: 1fr .95fr 2fr; }
+  .theme-independence .fp-archive { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 18px; padding: 12px 20px; }
+  .theme-independence .fp-archive-note { text-align: left; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .theme-independence .fp-tracks { grid-column: 1 / -1; } }
+@media (max-width: 760px) {
+  .theme-independence.has-visual .ch-title { font-size: clamp(34px, 10.5vw, 48px); }
+  .theme-independence .ch-kindline { letter-spacing: .18em; }
+  .theme-independence .fp-tracks ol { columns: 1; }
+}
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by
