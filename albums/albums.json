@@ -18,26 +18,26 @@
       "membersSource": "役割はCDのクレジット表記より",
       "members": [
         {
-          "name": "HAYATO",
+          "name": "H",
           "role": "作詞・作曲・楽曲制作"
         },
         {
-          "name": "KAI",
+          "name": "K",
           "role": "Co-Produce & Programming"
         },
         {
-          "name": "NARI",
+          "name": "N",
           "role": "MC（「タンクトップ」のみ参加）"
         }
       ],
       "info": [
         [
           "作詞・作曲",
-          "HAYATO（CD記載：ALL WORD & MUSIC BY HAYATO）"
+          "H（CDクレジットによる）"
         ]
       ],
       "story": [
-        "PIP POPPER名義で作った、最初のアルバム。HAYATOとKAIを中心に全11曲を収録し、NARIが「タンクトップ」の1曲に参加しています。"
+        "PIP POPPER名義で作った、最初のアルバム。HとKを中心に全11曲を収録し、Nが「タンクトップ」の1曲に参加しています。"
       ],
       "episode": {
         "title": "PIP POPPER 誕生の経緯",
@@ -65,7 +65,7 @@
         },
         {
           "title": "タンクトップ",
-          "note": "NARI参加"
+          "note": "N参加"
         },
         {
           "title": "少年時代"
@@ -95,8 +95,8 @@
     {
       "id": "togetherness",
       "no": "SOLO WORK",
-      "kind": "NARI Solo Project",
-      "kindLabel": "NARIのためのソロアルバム",
+      "kind": "N Solo Project",
+      "kindLabel": "Nのためのソロアルバム",
       "sideLabel": "Special Solo Project",
       "year": "SOLO",
       "date": null,
@@ -111,29 +111,29 @@
       "backdrop": "pip-popper",
       "members": [
         {
-          "name": "NARI",
+          "name": "N",
           "role": "ボーカル（本作の主役）"
         },
         {
-          "name": "HAYATO",
+          "name": "H",
           "role": "プロデュース・作詞作曲・ピアノ"
         },
         {
-          "name": "KAI",
+          "name": "K",
           "role": "ギター"
         }
       ],
       "story": [
-        "1stアルバム『PIP POPPER』の「タンクトップ」に参加したNARIのために制作した、全10曲のソロアルバムです。",
-        "NARIは当時、バンドのボーカルとしても活動していました。",
-        "NARIのソロ作品のため、PIP POPPER名義のアルバムの番号には数えていません。"
+        "1stアルバム『PIP POPPER』の「タンクトップ」に参加したNのために制作した、全10曲のソロアルバムです。",
+        "Nは当時、バンドのボーカルとしても活動していました。",
+        "Nのソロ作品のため、PIP POPPER名義のアルバムの番号には数えていません。"
       ],
       "episode": {
-        "title": "NARIのために作った、ひとつのアルバム。",
+        "title": "Nのために作った、ひとつのアルバム。",
         "text": [
-          "ファーストアルバム『PIP POPPER』で「タンクトップ」に参加したNARI。",
-          "当時、NARIはバンドのボーカルとしても活動していた。",
-          "そんなNARIのために、今度は彼を主役にしたソロアルバムを制作することになった。",
+          "ファーストアルバム『PIP POPPER』で「タンクトップ」に参加したN。",
+          "当時、Nはバンドのボーカルとしても活動していた。",
+          "そんなNのために、今度は彼を主役にしたソロアルバムを制作することになった。",
           "こうして生まれたのが『TOGETHERNESS』。",
           "ラップも、バンドサウンドも、バラードも。",
           "決まったジャンルに縛られず、作りたい音楽を自由に作る。",
@@ -182,7 +182,7 @@
         ],
         [
           "作詞・作曲",
-          "HAYATO（CD記載：ALL SONGS WRITTEN BY HAYATO）"
+          "H（CDクレジットによる）"
         ]
       ]
     },
@@ -199,27 +199,27 @@
       "visual": null,
       "members": [
         {
-          "name": "HAYATO"
+          "name": "H"
         },
         {
-          "name": "KAI"
+          "name": "K"
         },
         {
-          "name": "TATSUO"
+          "name": "T"
         },
         {
-          "name": "RAKKYO"
+          "name": "R"
         }
       ],
       "story": [
-        "PIP POPPER名義の2ndアルバム。このアルバムから、TATSUOとRAKKYOが加わりました。"
+        "PIP POPPER名義の2ndアルバム。このアルバムから、TとRが加わりました。"
       ],
       "episode": {
         "title": "新メンバーの加入条件",
         "text": [
-          "TATSUOは歌がうまかった。そこでHAYATOが「ふざけるだけでいいから」と誘い、半ば無理やり歌ってもらうことになりました。",
-          "RAKKYOは、TATSUOが連れてきた友達。PIP POPPERの曲を聴きたいというので聴かせてみたら、爆笑した。",
-          "「俺たちの曲を聴いて爆笑できるなら、歌う資格がある」。そんな理由で、RAKKYOも参加することになりました。"
+          "Tは歌がうまかった。そこでHが「ふざけるだけでいいから」と誘い、半ば無理やり歌ってもらうことになりました。",
+          "Rは、Tが連れてきた友達。PIP POPPERの曲を聴きたいというので聴かせてみたら、爆笑した。",
+          "「俺たちの曲を聴いて爆笑できるなら、歌う資格がある」。そんな理由で、Rも参加することになりました。"
         ]
       },
       "tracks": [
@@ -270,16 +270,16 @@
       "membersLabel": "中心メンバー",
       "members": [
         {
-          "name": "HAYATO"
+          "name": "H"
         },
         {
-          "name": "KAI"
+          "name": "K"
         },
         {
-          "name": "TATSUO"
+          "name": "T"
         },
         {
-          "name": "RAKKYO"
+          "name": "R"
         }
       ],
       "story": [
@@ -347,7 +347,7 @@
       "visual": null,
       "members": [],
       "story": [
-        "それまでのシンセサイザーによる打ち込み中心の制作から、生のギターサウンドを取り入れたアルバム。KAIがギターを弾けたので、打ち込みだけでなく本物のギターを入れてみよう、という発想から生まれました。"
+        "それまでのシンセサイザーによる打ち込み中心の制作から、生のギターサウンドを取り入れたアルバム。Kがギターを弾けたので、打ち込みだけでなく本物のギターを入れてみよう、という発想から生まれました。"
       ],
       "episode": {
         "title": "タイトルの由来",

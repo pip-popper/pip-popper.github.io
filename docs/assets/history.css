@@ -334,7 +334,7 @@
 .fp-tracks ol { list-style: none; padding: 0; margin: 0; counter-reset: tr; columns: 2; column-gap: 22px; column-rule: 1px solid #ffffff26; }
 .fp-tracks li { counter-increment: tr; break-inside: avoid; display: grid; grid-template-columns: 2.3em minmax(0, 1fr); align-items: baseline; column-gap: 4px; padding: 3px 0; font: 400 15px/1.55 "Special Elite", var(--f-body), monospace; color: var(--gold); }
 .fp-tracks li::before { content: counter(tr, decimal-leading-zero) "."; flex: none; width: 2.3em; }
-.fp-tracks .tr-note { display: none; } /* NARI's part is shown in the members panel, as in the approved design */
+.fp-tracks .tr-note { display: none; } /* N's part is shown in the members panel, as in the approved design */
 .fp-tracks .tr-music { grid-column: 2; justify-self: start; margin-left: 0; font-family: var(--f-body); }
 .fp-archive { display: grid; justify-items: center; align-content: start; gap: 10px; padding-top: 16px; }
 .fp-archive-label { justify-self: start; padding: 4px 10px; transform: rotate(-3deg); font: 400 clamp(11px, .92vw, 15px)/1.2 "Special Elite", monospace; letter-spacing: .04em; white-space: nowrap; color: #2a2118; background: var(--paper); box-shadow: 0 3px 10px #0008; }
