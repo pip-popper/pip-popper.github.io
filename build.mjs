@@ -588,16 +588,16 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
           <figure class="ch-visual reveal"><img src="${albumVisual(r, a.id)}" width="${a.visualSize.w}" height="${a.visualSize.h}" alt="『${esc(a.title)}』のジャケット" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async"></figure>
           <div class="ch-feature-head reveal">
             <p class="ch-badge">${esc(a.no ?? '')}</p>
-            <div class="ch-titlerow">
+            <div class="ch-titlerow${a.yearLabel ? ' has-date' : ''}">
               <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}<span class="ch-kindline">${esc(a.kindLabel ?? a.kind)}</span></h2>
-              ${a.sideLabel ? `<p class="ch-side-label">${a.sideLabel.split(' ').map(esc).join('<br>')}</p>` : `<p class="ch-year">${esc(a.year)}</p>`}
+              ${a.sideLabel ? `<p class="ch-side-label">${a.sideLabel.split(' ').map(esc).join('<br>')}</p>` : `<p class="ch-year${a.yearLabel ? ' is-date' : ''}">${esc(a.yearLabel ?? a.year)}</p>`}
             </div>
             ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div></section>` : ''}
           </div>
         </div>
         <div class="ch-feature-panels reveal">
           <section class="fp fp-info" aria-labelledby="${a.id}-info"><h3 class="fp-head" id="${a.id}-info">ALBUM INFO</h3><table>${fInfo}</table></section>
-          ${fMembers ? `<section class="fp fp-members" aria-labelledby="${a.id}-members"><h3 class="fp-head" id="${a.id}-members">${esc(a.membersLabel ?? '参加メンバー')}</h3><table>${fMembers}</table>${a.membersSource ? `<p class="fp-src">${esc(a.membersSource)}</p>` : ''}</section>` : ''}
+          ${fMembers ? `<section class="fp fp-members${(a.members ?? []).some(m => m.role ?? m.note) ? '' : ' is-initials'}" aria-labelledby="${a.id}-members"><h3 class="fp-head" id="${a.id}-members">${esc(a.membersLabel ?? '参加メンバー')}</h3><table>${fMembers}</table>${a.membersSource ? `<p class="fp-src">${esc(a.membersSource)}</p>` : ''}</section>` : ''}
           <section class="fp fp-tracks" aria-labelledby="${a.id}-tracks"><h3 class="fp-head" id="${a.id}-tracks">収録曲（全${a.tracks.length}曲）</h3><ol>${tracks}</ol></section>
           ${a.archive ? `<aside class="fp fp-archive" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><img src="${albumArchive(r, a.id)}" width="${a.archiveSize.w}" height="${a.archiveSize.h}" alt="当時の『${esc(a.title)}』CDジャケット（資料）" loading="lazy" decoding="async"><p class="fp-archive-note">※当時の実物CDジャケット（資料）</p></aside>` : ''}
         </div>

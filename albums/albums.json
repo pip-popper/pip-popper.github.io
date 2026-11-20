@@ -196,31 +196,41 @@
       "title": "Don't Complain",
       "subtitle": null,
       "accent": "#9cc3ff",
-      "visual": null,
+      "visual": {
+        "source": "PIP POPPER「DON'T COMPLAIN」アルバムページ.png（Producer採用デザイン見本からジャケット部分を切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
       "members": [
         {
-          "name": "H"
+          "name": "H",
+          "role": "中心メンバー"
         },
         {
-          "name": "K"
+          "name": "K",
+          "role": "中心メンバー"
         },
         {
-          "name": "T"
+          "name": "T",
+          "role": "ボーカル（本作から参加）"
         },
         {
-          "name": "R"
+          "name": "R",
+          "role": "ボーカル（本作から参加）"
         }
       ],
       "story": [
         "PIP POPPER名義の2ndアルバム。このアルバムから、TとRが加わりました。"
       ],
       "episode": {
-        "title": "新メンバーの加入条件",
+        "title": "遊びの輪が広がった、4人のアルバム。",
         "text": [
-          "Tは歌がうまかった。そこでHが「ふざけるだけでいいから」と誘い、半ば無理やり歌ってもらうことになりました。",
-          "Rは、Tが連れてきた友達。PIP POPPERの曲を聴きたいというので聴かせてみたら、爆笑した。",
-          "「俺たちの曲を聴いて爆笑できるなら、歌う資格がある」。そんな理由で、Rも参加することになりました。"
-        ]
+          "1作目を経て、PIP POPPERの遊び方に共感してくれる仲間が増えていった。",
+          "Tは歌がうまかった。そこでHが「ふざけるだけでいいから」と誘い、半ば強引に引き込んだ。",
+          "Rは、Tが連れてきた友達。PIP POPPERの曲が欲しいと言うので聴かせてみたら、爆笑した。",
+          "「爆笑してくれたなら、歌う資格がある」。そんな理由で、Rも参加することになった。",
+          "こうしてH・K・T・Rの4人で作ったのが、『Don't Complain』。"
+        ],
+        "highlight": "Don't Complain"
       },
       "tracks": [
         {
@@ -254,7 +264,9 @@
           "title": "HIT MAN"
         }
       ],
-      "archive": true
+      "archive": true,
+      "kindLabel": "PIP POPPER 2nd Album",
+      "yearLabel": "2001.03.01"
     },
     {
       "id": "rice",
@@ -266,7 +278,10 @@
       "title": "RICE",
       "subtitle": null,
       "accent": "#ff3b30",
-      "visual": null,
+      "visual": {
+        "source": "pip_popper_rice_音楽史ポスター（添付画像。Producer採用デザイン見本からジャケット部分を切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
       "membersLabel": "中心メンバー",
       "members": [
         {
@@ -286,22 +301,33 @@
         "PIP POPPER名義の3rdアルバム。全14曲を収録しています。",
         "この頃には、PIP POPPERという音楽遊びが仲間たちの間にすっかり浸透していました。みんなで本格的にふざけて曲を作るのが、日常の一部になっていた時期の作品です。"
       ],
-      "episode": null,
+      "episode": {
+        "title": "主役にならなくてもいい。だから、RICE。",
+        "text": [
+          "ご飯は、どんなおかずにも合う。でも、自分が主役になろうとはしない。",
+          "みんなが本当に聴きたい、完成度の高い曲は、うまいプロに任せればいい。",
+          "PIP POPPERがやるのは、日常のあれこれや仲間内の空気、その場の面白さを、そのまま音楽にすること。",
+          "このアルバムでは、普段の生活をそのまま歌詞にし、友達の名前までネタにした。会話がそのまま曲になったトラックもある。",
+          "あるとき、Hが「この中でどの曲が一番好き？」とTに聞くと、返ってきた答えは「G-MANZ」だった。",
+          "主役にはならないけれど、何にでも合う。それが『RICE』。"
+        ],
+        "highlight": "RICE"
+      },
       "tracks": [
         {
-          "title": "FREE STYLE"
+          "title": "Free Style"
         },
         {
-          "title": "Pip popper ~Short Remix~"
+          "title": "PIP POPPER（Short Remix）"
         },
         {
           "title": "B-Girl"
         },
         {
-          "title": "kiminokareshi"
+          "title": "君の彼氏"
         },
         {
-          "title": "Dansonjyohi"
+          "title": "男尊女卑"
         },
         {
           "title": "Show time"
@@ -310,14 +336,14 @@
           "title": "Diet"
         },
         {
-          "title": "Syusyokukatsudou",
+          "title": "就職活動",
           "music": "job-hunting"
         },
         {
           "title": "O.B"
         },
         {
-          "title": "Doutei"
+          "title": "童貞"
         },
         {
           "title": "KARAOKE"
@@ -326,13 +352,15 @@
           "title": "Why I'm Me"
         },
         {
-          "title": "Kyujitsu"
+          "title": "休日"
         },
         {
           "title": "G-MANZ"
         }
       ],
-      "archive": true
+      "archive": true,
+      "kindLabel": "PIP POPPER 3rd Album",
+      "yearLabel": "2001.07.13"
     },
     {
       "id": "chichiband",
