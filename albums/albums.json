@@ -1137,6 +1137,65 @@
       "archiveNote": "公開用のジャケットはAIで制作したイメージです。描かれた人物は当時のメンバー本人ではありません。"
     },
     {
+      "id": "drunkers",
+      "no": "PIP POPPER / RECORDING DOCUMENT",
+      "kind": "Album",
+      "kindLabel": "今度のレコーディング場所は、居酒屋だった。",
+      "year": "2007",
+      "date": null,
+      "dateLabel": "2007年（CD記載）",
+      "yearLabel": "2007",
+      "title": "Drunkers",
+      "subtitle": null,
+      "accent": "#e53830",
+      "visual": {
+        "source": "PIP_POPPER_DRUNKERS_HISTORY_修正版.html（Producer採用HTMLの背景画像 1672×941＝居酒屋で録音する架空の3人。無加工）",
+        "adopted": "2026-11-21 Producer正式採用（採用HTML）"
+      },
+      "info": [
+        [
+          "参加",
+          "H / T / G"
+        ],
+        [
+          "時期",
+          "南風 の後 / Blood Necks の前"
+        ],
+        [
+          "位置づけ",
+          "GUCCI加入記念作品"
+        ]
+      ],
+      "episode": {
+        "title": "笑い声まで、録音してしまえ。",
+        "text": [
+          "『南風』のあと、Tが新しい後輩GUCCI（G）を連れてきた。『Drunkers』は、そのGUCCI加入を記念して作られたアルバムだった。",
+          "曲の間奏に入れるアドリブ会話を録るため、今度は居酒屋へ。実際に酒を飲みながら、自由なやり取りを録音した。",
+          "新メンバーを迎えた3人で、スタジオの外まで遊び場にしてしまう。そんなPIP POPPERらしい勢いと遊び心から生まれたのが『Drunkers』だった。"
+        ],
+        "closing": "「その場の会話も、作品になる。」"
+      },
+      "tracks": [
+        {
+          "title": "DRUNKER(S)"
+        },
+        {
+          "title": "MANNER"
+        },
+        {
+          "title": "TREASURE"
+        },
+        {
+          "title": "FUNKYHEADS"
+        },
+        {
+          "title": "BOY FRIEND"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "GUCCI加入を記念して残された5曲。居酒屋で録ったアドリブも、この時期のPIP POPPERの記録になった。年は当時のCDの「SAMURAI RECORD 2007」表記によるもの。人物はAIによる架空の表現です。"
+    },
+    {
       "id": "blood-necks",
       "no": "PIP POPPER · 2007",
       "kind": "Album",
