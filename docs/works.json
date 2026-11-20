@@ -1,5 +1,10 @@
 [
  {
+  "id": "rappu-gokko",
+  "title": "らっぷごっこ",
+  "cover": "https://pip-popper.github.io/assets/covers/rappu-gokko-640.jpg"
+ },
+ {
   "id": "blood-type",
   "title": "Blood type feat.AI",
   "cover": "https://pip-popper.github.io/assets/covers/blood-type-640.jpg"
