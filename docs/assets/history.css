@@ -768,6 +768,45 @@
   .sw-jacket img { height: auto; width: min(100%, 320px); }
 }
 
+/* ── CAPITAL GAINS (adopted HTML 2026-11-20): two men walking a wet night road under a street lamp;
+   deep navy, warm lamp amber, a gold accent and a quiet Georgia serif, as in the adopted page. */
+.theme-capital-gains.has-visual { --brush: #b64a39; --gold: #eec18a; }
+.theme-capital-gains .ch-feature-bg { filter: blur(7px) saturate(1.05) brightness(.4); object-position: 50% 65%; }
+.theme-capital-gains .ch-feature::before {
+  background:
+    radial-gradient(45% 40% at 83% 20%, rgba(52, 68, 88, .36), transparent 85%),
+    radial-gradient(40% 45% at 12% 75%, rgba(174, 106, 40, .2), transparent 75%),
+    linear-gradient(180deg, rgba(8, 12, 18, .32), rgba(8, 12, 18, .58) 55%, rgba(7, 9, 13, .95) 100%);
+}
+.theme-capital-gains.has-visual .ch-visual { padding: 0; background: none; box-shadow: 0 0 0 1px rgba(246, 220, 176, .24), 0 24px 90px #000a, 0 0 90px rgba(164, 88, 34, .19); }
+.theme-capital-gains.has-visual .ch-visual img { filter: none; }
+.theme-capital-gains.has-visual .ch-title { font: 500 clamp(50px, 5.6vw, 96px)/.97 Georgia, "Times New Roman", serif; letter-spacing: -.02em; color: #fcf8ef; transform: none; text-shadow: 0 4px 32px #0005; }
+.theme-capital-gains .ch-kindline { font: 400 clamp(12px, 1vw, 14px)/1 var(--f-body); letter-spacing: .22em; color: #b2bbc4; transform: none; }
+.theme-capital-gains .ch-kindline::before, .theme-capital-gains .ch-kindline::after { background: #d89f68; }
+.theme-capital-gains .ch-badge { font: 600 clamp(12px, 1vw, 14px)/1 var(--f-body); letter-spacing: .3em; padding: .7em 1.2em; color: var(--gold); background: none; border: 1px solid rgba(215, 187, 146, .45); border-radius: 999px; clip-path: none; transform: none; }
+.theme-capital-gains.has-visual .ch-year { font: 500 clamp(40px, 3.6vw, 64px)/1 Georgia, serif; font-style: normal; color: #f0d6af; }
+.theme-capital-gains.has-visual .ch-year::after { background: #d89f68; height: 2px; clip-path: none; transform: none; }
+.theme-capital-gains .ch-origin h3 { font: 600 clamp(23px, 2.4vw, 34px)/1.6 "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .07em; color: #f0d6af; border-bottom-color: rgba(208, 189, 157, .25); }
+.theme-capital-gains .ch-origin-text { color: #d6d8da; border-bottom-color: rgba(208, 189, 157, .2); }
+.theme-capital-gains .ch-closing { font: 400 clamp(26px, 2.6vw, 40px)/1.15 Georgia, serif; letter-spacing: .03em; color: #fcf8ef; transform: none; }
+.theme-capital-gains .ch-closing::after { background: #d89f68; height: 2px; width: min(40%, 220px); clip-path: none; }
+.theme-capital-gains .ch-closing em { font: inherit; color: var(--gold); }
+.theme-capital-gains .ch-closing-after { color: #bcbec0; }
+.theme-capital-gains .fp { border-color: rgba(208, 189, 157, .28); background: rgba(9, 13, 20, .78); }
+.theme-capital-gains .fp-head { color: #0b1017; background: linear-gradient(100deg, var(--gold) 0 86%, transparent 100%); }
+.theme-capital-gains .fp-tracks ol { columns: 1; }
+.theme-capital-gains .fp-tracks li { font: 400 18px/1.55 Georgia, "Shippori Mincho B1", serif; color: #eee9e1; padding: 7px 0; border-bottom: 1px solid rgba(208, 189, 157, .17); }
+.theme-capital-gains .fp-tracks li::before { font-family: Georgia, serif; font-size: 15px; letter-spacing: .06em; color: #a98c70; }
+@media (min-width: 1101px) {
+  .theme-capital-gains .ch-feature-panels { grid-template-columns: 1fr .8fr 1.5fr; }
+  .theme-capital-gains .fp-archive { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 18px; padding: 12px 20px; }
+  .theme-capital-gains .fp-archive-note { text-align: left; }
+}
+@media (max-width: 760px) {
+  .theme-capital-gains.has-visual .ch-title { font-size: clamp(42px, 12.5vw, 60px); }
+  .theme-capital-gains .ch-closing { font-size: 26px; }
+}
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by

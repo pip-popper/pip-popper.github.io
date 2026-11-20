@@ -988,6 +988,64 @@
       "archiveNote": "当時のCD資料には実名のクレジットが含まれるため、掲載していません。"
     },
     {
+      "id": "capital-gains",
+      "no": "THE RESTART",
+      "kind": "Album",
+      "kindLabel": "PIP POPPER — H & T",
+      "year": "2006",
+      "date": "2006-06-09",
+      "dateLabel": "2006年6月9日（CD記載）",
+      "yearLabel": "2006",
+      "title": "CAPITAL GAINS",
+      "subtitle": null,
+      "accent": "#eec18a",
+      "visual": {
+        "source": "PIP_POPPER_CAPITAL_GAINS_HISTORY_試作.html（Producer採用HTMLに埋め込まれたジャケット画像 1254×1254 をそのまま使用）",
+        "adopted": "2026-11-20 Producer正式採用（採用HTML）"
+      },
+      "membersSource": "イニシャル表記",
+      "members": [
+        {
+          "name": "H"
+        },
+        {
+          "name": "T"
+        }
+      ],
+      "episode": {
+        "title": "もう一度、音楽で遊ぼう。",
+        "text": [
+          "社会に出ると、みんなで集まることは少なくなった。それでもHとTはずっと遊んでいた。",
+          "大人の遊びはお金がかかることが多い。でも、PIP POPPERの活動はお金をあまり使わずに楽しめて、しかもその時間が作品として残る。",
+          "そんな感覚を思い出して、2006年に2人でPIP POPPERを再始動した。"
+        ],
+        "closing": "THE RETURN OF PIP POPPER.",
+        "closingAfter": "みんなで集まることが難しくなっても、音楽を作る楽しさは変わらなかった。HとTの二人で、また始まったPIP POPPERの記録。"
+      },
+      "tracks": [
+        {
+          "title": "KINKYO HOUKOKU2006"
+        },
+        {
+          "title": "SONGIRI SENSHI"
+        },
+        {
+          "title": "One night love"
+        },
+        {
+          "title": "Love Letter"
+        },
+        {
+          "title": "Don't stop the smoke"
+        },
+        {
+          "title": "30 years old"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "掲載ジャケットは現在制作したAIイメージです。当時の実在メンバーの写真ではありません。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",
