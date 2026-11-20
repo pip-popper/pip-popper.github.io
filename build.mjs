@@ -107,6 +107,12 @@ for (const a of albums) {
   a.ownBackdrop = await exists(new URL(`${a.id}/backdrop-web.jpg`, albumDir));
   const titleImage = new URL(`${a.id}/title-web.png`, albumDir);   // optional: the adopted design's title lettering (transparent PNG)
   a.titleImageSize = a.visualSize && await exists(titleImage) ? (b => ({ w: b.readUInt32BE(16), h: b.readUInt32BE(20) }))(await readFile(titleImage)) : null;
+  // optional: small supporting pictures cut from the adopted design (albums/<id>/strip-N.jpg)
+  a.stripSizes = a.strip ? await Promise.all(a.strip.map(async (_, n) => {
+    const u = new URL(`${a.id}/strip-${n + 1}.jpg`, albumDir);
+    if (!await exists(u)) throw new Error(`補助ビジュアルがありません: albums/${a.id}/strip-${n + 1}.jpg`);
+    return jpegSize(u);
+  })) : [];
   if (a.archive) {
     const u = new URL(`${a.id}/cover-240.jpg`, albumDir);
     if (!await exists(u)) throw new Error(`資料用の旧ジャケットがありません: albums/${a.id}/cover-240.jpg（python tools/make-album-images.py を実行）`);
@@ -599,13 +605,16 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
             ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div>${a.episode.closing ? `<p class="ch-closing">${hl(a.episode.closing, 'PIP POPPER')}</p>` : ''}${a.episode.closingAfter ? `<p class="ch-closing-after">${esc(a.episode.closingAfter)}</p>` : ''}${a.episode.note ? `<div class="ch-origin-note">${a.episode.note.map(p).join('')}</div>` : ''}</section>` : ''}
           </div>
         </div>
+        ${a.column ? `<section class="ch-column reveal" aria-labelledby="${a.id}-column"><h3 id="${a.id}-column">${esc(a.column.title)}</h3>${a.column.text.map(p).join('')}${a.column.closing ? `<p class="ch-column-closing">${esc(a.column.closing)}</p>` : ''}${a.column.closingAfter ? `<p>${esc(a.column.closingAfter)}</p>` : ''}</section>` : ''}
         <div class="ch-feature-panels reveal">
           <section class="fp fp-info" aria-labelledby="${a.id}-info"><h3 class="fp-head" id="${a.id}-info">ALBUM INFO</h3><table>${fInfo}</table></section>
           ${fMembers ? `<section class="fp fp-members${(a.members ?? []).some(m => m.role ?? m.note) ? '' : ' is-initials'}" aria-labelledby="${a.id}-members"><h3 class="fp-head" id="${a.id}-members">${esc(a.membersLabel ?? '参加メンバー')}</h3><table>${fMembers}</table>${a.membersSource ? `<p class="fp-src">${esc(a.membersSource)}</p>` : ''}</section>` : ''}
           <section class="fp fp-tracks" aria-labelledby="${a.id}-tracks"><h3 class="fp-head" id="${a.id}-tracks">収録曲（全${a.tracks.length}曲）</h3><ol>${tracks}</ol>${a.audioNote ? `<p class="fp-audio-note">※ ${esc(a.audioNote)}</p>` : ''}</section>
+          ${a.memo ? `<section class="fp fp-caution is-memo" aria-labelledby="${a.id}-memo"><h3 class="fp-caution-head" id="${a.id}-memo">${esc(a.memo.title)}</h3><ul>${a.memo.items.map(t => `<li>${esc(t)}</li>`).join('')}</ul></section>` : ''}
           ${a.caution ? `<section class="fp fp-caution" aria-labelledby="${a.id}-caution"><h3 class="fp-caution-head" id="${a.id}-caution">${esc(a.caution.title)}</h3><ol>${a.caution.items.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${a.caution.note ? `<p class="fp-caution-note">※ ${esc(a.caution.note)}</p>` : ''}</section>` : ''}
           ${a.archive ? `<aside class="fp fp-archive" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><img src="${albumArchive(r, a.id)}" width="${a.archiveSize.w}" height="${a.archiveSize.h}" alt="当時の『${esc(a.title)}』CDジャケット（資料）" loading="lazy" decoding="async"><p class="fp-archive-note">※当時の実物CDジャケット（資料）</p></aside>` : a.archiveNote ? `<aside class="fp fp-archive is-text" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><p class="fp-archive-note">${esc(a.archiveNote)}</p></aside>` : ''}
         </div>
+        ${a.stripSizes.length ? `<div class="ch-strip reveal">${a.stripSizes.map((z, n) => `<figure><img src="${r}assets/history/${a.id}-strip-${n + 1}.jpg" width="${z.w}" height="${z.h}" alt="${esc(a.strip[n])}" loading="lazy" decoding="async"></figure>`).join('')}</div>` : ''}
       </div>
     </li>`;
     }
@@ -676,6 +685,7 @@ for (const a of albums) {
   if (a.titleImageSize) await copyFile(new URL(`${a.id}/title-web.png`, albumDir), new URL(`assets/history/${a.id}-title.png`, out));
   if (a.ownBackdrop) await copyFile(new URL(`${a.id}/backdrop-web.jpg`, albumDir), new URL(`assets/history/${a.id}-backdrop.jpg`, out));
   if (a.archive) await copyFile(new URL(`${a.id}/cover-240.jpg`, albumDir), new URL(`assets/history/${a.id}-archive.jpg`, out));
+  for (const n of a.stripSizes.keys()) await copyFile(new URL(`${a.id}/strip-${n + 1}.jpg`, albumDir), new URL(`assets/history/${a.id}-strip-${n + 1}.jpg`, out));
 }
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));
 await copyFile(new URL('src/stage.jpg', root), new URL('assets/stage.jpg', out));

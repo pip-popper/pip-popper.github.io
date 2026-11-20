@@ -759,6 +759,129 @@
       "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
     },
     {
+      "id": "mission-impotence",
+      "no": "ALBUM",
+      "kind": "Album",
+      "kindLabel": "ミッション・インポテンツ",
+      "year": "2002",
+      "date": "2002-09-30",
+      "dateLabel": "2002年9月30日（CD記載）",
+      "yearLabel": "2002.9.30",
+      "title": "MISSION IMPOTENCE",
+      "subtitle": null,
+      "accent": "#d4382c",
+      "visual": {
+        "source": "pip_popper_mission_impotence_歴史ポスター.png（添付画像。Producer採用デザインから上部のタイトル部分と、下部の機材・CDの3枚を切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "strip": [
+        "アナログシンセサイザー（採用デザインより）",
+        "スタジオマイク（採用デザインより）",
+        "「MISSION IMPOTENCE 2002.9.30」と書かれたCD（採用デザインより）"
+      ],
+      "membersSource": "イニシャル表記",
+      "members": [
+        {
+          "name": "H"
+        },
+        {
+          "name": "K"
+        },
+        {
+          "name": "T"
+        }
+      ],
+      "info": [
+        [
+          "位置づけ",
+          "Kの最後の参加作品／Tの本格参加作品"
+        ]
+      ],
+      "episode": {
+        "title": "ひとつの時代が終わる。そして、次の時代が始まる。",
+        "text": [
+          "PIP POPPERの面白さには、Kの存在が欠かせなかった。",
+          "一緒に曲を作り、歌い、ふざけてきた仲間。",
+          "そんなKが参加する最後のアルバムとなったのが『MISSION IMPOTENCE』だった。",
+          "この頃にはTも本格的に制作に加わり、H・K・Tの3人による曲が増えていた。",
+          "当時のCDには「解散」の言葉も書かれていた。",
+          "それまでのPIP POPPERにとって、Kが離れることは、それほど大きな出来事だった。",
+          "しかし、音楽作りそのものが終わることはなかった。",
+          "その後も、HとTによるPIP POPPERの活動は続いていく。"
+        ],
+        "closing": "Kと作ってきた時代の最後の一枚。そして、Tと続いていく新しいPIP POPPERの始まり。",
+        "closingAfter": "この作品は、そんな転換点に生まれたアルバムだった。"
+      },
+      "column": {
+        "title": "ダサい曲も、聴いているうちに名曲になる。",
+        "text": [
+          "この頃になると、自分たちの曲のダサさにも、すっかり慣れていた。",
+          "最初は人に聴かせるのが恥ずかしかった曲も、何度も聴いているうちに、不思議といい曲に思えてくる。",
+          "曲が変わったわけではない。",
+          "自分たちの中で、その曲への愛着が育っていたのだ。",
+          "そして、気がつけば人に聴かせることにも抵抗がなくなっていた。"
+        ],
+        "closing": "自分で作った曲は、どんなにダサくても、いつの間にか自分にとっての名曲になってしまう。",
+        "closingAfter": "これは、実際に曲を作った人にしか分からない感覚なのかもしれない。"
+      },
+      "memo": {
+        "title": "制作メモ",
+        "items": [
+          "Kのラスト参加",
+          "Tが本格参加",
+          "3人での曲が増加",
+          "人に聴かせる抵抗が薄れた時期"
+        ]
+      },
+      "audioNote": "本作はプロの既存曲を使った実験作を含むため、音源は公開していません。",
+      "tracks": [
+        {
+          "title": "Put your hands up!"
+        },
+        {
+          "title": "O.B"
+        },
+        {
+          "title": "TOP"
+        },
+        {
+          "title": "PACHINKO ～RIP SLYME Version～"
+        },
+        {
+          "title": "TWO HOURS WAR"
+        },
+        {
+          "title": "すけこまし"
+        },
+        {
+          "title": "Boy ～少年時代～"
+        },
+        {
+          "title": "パチンコマン"
+        },
+        {
+          "title": "浮気調査"
+        },
+        {
+          "title": "コンパ"
+        },
+        {
+          "title": "未来日記"
+        },
+        {
+          "title": "BAD BOYS ～ヒモの道～"
+        },
+        {
+          "title": "Heart Scream"
+        },
+        {
+          "title": "KILLER"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",
