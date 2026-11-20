@@ -500,6 +500,103 @@
       ],
       "archive": false,
       "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
+    },
+    {
+      "id": "forever-love",
+      "no": "SOLO WORK",
+      "kind": "T Solo Album",
+      "kindLabel": "T SOLO ALBUM",
+      "sideLabel": "制作年 未確定",
+      "year": "SOLO",
+      "date": null,
+      "dateLabel": "未確定",
+      "title": "FOREVER LOVE",
+      "subtitle": null,
+      "accent": "#6fa8ff",
+      "visual": {
+        "source": "a_detailed_album_style_poster_cover_layout_for_pip.png（添付画像。Producer採用デザインから木と夕日の部分を切り出し、背景に空の部分を使用）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "役割は採用デザインのクレジットより（イニシャル表記）",
+      "members": [
+        {
+          "name": "T",
+          "role": "ボーカル（本作の主役）"
+        },
+        {
+          "name": "H",
+          "role": "プロデュース・キーボード・アートディレクション"
+        }
+      ],
+      "info": [
+        [
+          "関連プロジェクト",
+          "PIP POPPER"
+        ],
+        [
+          "Direction",
+          "SAMURAI RECORDS"
+        ]
+      ],
+      "story": [
+        "Tのソロアルバム。全11曲がTの歌声を中心とした普通の歌で、ラップ作品ではありません。制作年は未確定です。"
+      ],
+      "episode": {
+        "title": "自分の作品が、形になって残るということ。",
+        "text": [
+          "歌のうまいTを、PIP POPPERの音楽遊びにもっと引きずり込みたかった。",
+          "でも、ただ歌ってもらうだけじゃ面白くない。",
+          "T自身にも作詞をしてもらい、一緒に曲作りを楽しんでほしかった。",
+          "そして、出来上がった曲を一枚のCDにして残す。",
+          "自分の言葉が歌になり、自分の声が録音され、一つの作品として手元に残る。",
+          "それが、自分の生きた証にもなる。",
+          "そんな喜びをTにも感じてほしかった。",
+          "T本人に頼まれたわけではない。Hが勝手に始めたプロジェクトだった。",
+          "こうして生まれたのが、全11曲のソロアルバム『FOREVER LOVE』。",
+          "収録曲はすべて、Tの歌声を中心とした普通の歌。",
+          "ラップにこだわらず、作りたい音楽を自由に作る。",
+          "それもまた、PIP POPPERの楽しみ方だった。"
+        ],
+        "highlight": "PIP POPPER"
+      },
+      "tracks": [
+        {
+          "title": "AME（雨）"
+        },
+        {
+          "title": "UGLY GIRL"
+        },
+        {
+          "title": "MECHA-LIKE"
+        },
+        {
+          "title": "Lovesong"
+        },
+        {
+          "title": "PROPOSE feat. Pip popper"
+        },
+        {
+          "title": "USO（ウソ）"
+        },
+        {
+          "title": "AInoARUBASYOE（愛のある場所へ）"
+        },
+        {
+          "title": "Every little children"
+        },
+        {
+          "title": "Christmas love"
+        },
+        {
+          "title": "No more tears feat. H",
+          "note": "『TOGETHERNESS』と同じ曲（歌唱：T）"
+        },
+        {
+          "title": "Forever in my heart",
+          "note": "『TOGETHERNESS』と同じ曲（歌唱：T）"
+        }
+      ],
+      "archive": false
     }
   ]
 }

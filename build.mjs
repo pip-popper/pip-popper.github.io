@@ -548,7 +548,7 @@ ${sharedScript}
 
 // ── HISTORY page: history/index.html ─────────────────────────────────
 // Lettering of the approved chapter design: brush title, typewriter "First Album", heavy italic year.
-const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&family=Playfair+Display:ital,wght@1,700;1,800&display=swap">
+const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&family=Playfair+Display:ital,wght@1,700;1,800&family=Jost:wght@300;400&display=swap">
 `;
 // "The site is the real thing; the content is PIP POPPER." Only confirmed facts from albums.json.
 {
