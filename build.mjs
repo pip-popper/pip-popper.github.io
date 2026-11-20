@@ -105,6 +105,8 @@ for (const a of albums) {
   if (a.visualSize && !await exists(new URL(`${a.id}/visual-640.jpg`, albumDir))) throw new Error(`visual-640.jpg がありません: albums/${a.id}（python tools/make-album-images.py を実行）`);
   a.visualWide = !!a.visualSize && a.visualSize.w / a.visualSize.h > 1.8;   // a logo banner rather than a jacket
   a.ownBackdrop = await exists(new URL(`${a.id}/backdrop-web.jpg`, albumDir));
+  const titleImage = new URL(`${a.id}/title-web.png`, albumDir);   // optional: the adopted design's title lettering (transparent PNG)
+  a.titleImageSize = a.visualSize && await exists(titleImage) ? (b => ({ w: b.readUInt32BE(16), h: b.readUInt32BE(20) }))(await readFile(titleImage)) : null;
   if (a.archive) {
     const u = new URL(`${a.id}/cover-240.jpg`, albumDir);
     if (!await exists(u)) throw new Error(`資料用の旧ジャケットがありません: albums/${a.id}/cover-240.jpg（python tools/make-album-images.py を実行）`);
@@ -591,17 +593,17 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
           <div class="ch-feature-head reveal">
             <p class="ch-badge">${esc(a.no ?? '')}</p>
             <div class="ch-titlerow${a.yearLabel ? ' has-date' : ''}">
-              <h2 class="ch-title" id="${a.id}-title">${esc(a.title)}<span class="ch-kindline">${esc(a.kindLabel ?? a.kind)}</span></h2>
+              <h2 class="ch-title${a.titleImageSize ? ' has-image' : ''}" id="${a.id}-title">${a.titleImageSize ? `<img class="ch-title-img" src="${r}assets/history/${a.id}-title.png" width="${a.titleImageSize.w}" height="${a.titleImageSize.h}" alt="${esc(a.title)}" decoding="async">` : esc(a.title)}<span class="ch-kindline">${esc(a.kindLabel ?? a.kind)}</span></h2>
               ${a.sideLabel ? `<p class="ch-side-label">${a.sideLabel.split(' ').map(esc).join('<br>')}</p>` : `<p class="ch-year${a.yearLabel ? ' is-date' : ''}">${esc(a.yearLabel ?? a.year)}</p>`}
             </div>
-            ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div></section>` : ''}
+            ${a.episode ? `<section class="ch-origin" aria-labelledby="${a.id}-origin"><h3 id="${a.id}-origin">${esc(a.episode.title)}</h3><div class="ch-origin-text">${lines}</div>${a.episode.closing ? `<p class="ch-closing">${hl(a.episode.closing, 'PIP POPPER')}</p>` : ''}</section>` : ''}
           </div>
         </div>
         <div class="ch-feature-panels reveal">
           <section class="fp fp-info" aria-labelledby="${a.id}-info"><h3 class="fp-head" id="${a.id}-info">ALBUM INFO</h3><table>${fInfo}</table></section>
           ${fMembers ? `<section class="fp fp-members${(a.members ?? []).some(m => m.role ?? m.note) ? '' : ' is-initials'}" aria-labelledby="${a.id}-members"><h3 class="fp-head" id="${a.id}-members">${esc(a.membersLabel ?? '参加メンバー')}</h3><table>${fMembers}</table>${a.membersSource ? `<p class="fp-src">${esc(a.membersSource)}</p>` : ''}</section>` : ''}
-          <section class="fp fp-tracks" aria-labelledby="${a.id}-tracks"><h3 class="fp-head" id="${a.id}-tracks">収録曲（全${a.tracks.length}曲）</h3><ol>${tracks}</ol></section>
-          ${a.archive ? `<aside class="fp fp-archive" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><img src="${albumArchive(r, a.id)}" width="${a.archiveSize.w}" height="${a.archiveSize.h}" alt="当時の『${esc(a.title)}』CDジャケット（資料）" loading="lazy" decoding="async"><p class="fp-archive-note">※当時の実物CDジャケット（資料）</p></aside>` : ''}
+          <section class="fp fp-tracks" aria-labelledby="${a.id}-tracks"><h3 class="fp-head" id="${a.id}-tracks">収録曲（全${a.tracks.length}曲）</h3><ol>${tracks}</ol>${a.audioNote ? `<p class="fp-audio-note">※ ${esc(a.audioNote)}</p>` : ''}</section>
+          ${a.archive ? `<aside class="fp fp-archive" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><img src="${albumArchive(r, a.id)}" width="${a.archiveSize.w}" height="${a.archiveSize.h}" alt="当時の『${esc(a.title)}』CDジャケット（資料）" loading="lazy" decoding="async"><p class="fp-archive-note">※当時の実物CDジャケット（資料）</p></aside>` : a.archiveNote ? `<aside class="fp fp-archive is-text" aria-label="ORIGINAL ARCHIVE"><p class="fp-archive-label">ORIGINAL ARCHIVE</p><p class="fp-archive-note">${esc(a.archiveNote)}</p></aside>` : ''}
         </div>
       </div>
     </li>`;
@@ -670,6 +672,7 @@ for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.
 for (const a of albums) {
   if (a.visualSize) for (const [src, dst] of [['visual-web', 'visual'], ['visual-640', 'visual-640']])
     await copyFile(new URL(`${a.id}/${src}.jpg`, albumDir), new URL(`assets/history/${a.id}-${dst}.jpg`, out));
+  if (a.titleImageSize) await copyFile(new URL(`${a.id}/title-web.png`, albumDir), new URL(`assets/history/${a.id}-title.png`, out));
   if (a.ownBackdrop) await copyFile(new URL(`${a.id}/backdrop-web.jpg`, albumDir), new URL(`assets/history/${a.id}-backdrop.jpg`, out));
   if (a.archive) await copyFile(new URL(`${a.id}/cover-240.jpg`, albumDir), new URL(`assets/history/${a.id}-archive.jpg`, out));
 }

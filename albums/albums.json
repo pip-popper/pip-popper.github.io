@@ -468,22 +468,41 @@
     },
     {
       "id": "professional",
-      "no": "2001.11",
-      "kind": "Album",
+      "no": "EXPERIMENTAL",
+      "kind": "Experimental Album",
       "year": "2001",
       "date": "2001-11-01",
       "dateLabel": "2001年11月1日",
       "title": "PROFESSIONAL",
       "subtitle": null,
-      "accent": "#f2d12c",
-      "visual": null,
+      "accent": "#e2262c",
+      "visual": {
+        "source": "a_cinematic_high_contrast_album_poster_cover_styl.png（添付画像。Producer採用デザインからマイク部分をメイン画像、タイトル文字をタイトル画像として切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
       "members": [],
       "story": [
-        "『RICE』の制作が楽しくて、その勢いのままさらに曲を作り、面白くなったので短いアルバムにまとめた作品です。",
-        "当時は、既存の商業楽曲の伴奏を使った替え歌やラップ、リミックスなども作っていました。"
+        "プロの商業楽曲の伴奏にPIP POPPERのラップを乗せた、全4曲の実験的なアルバムです。"
       ],
-      "episode": null,
-      "audioNote": "この作品の音源は、必要な権利の確認ができないため公開していません。",
+      "episode": {
+        "title": "プロの曲を使えば、プロっぽくなるんじゃね？",
+        "text": [
+          "それまでのPIP POPPERの曲は、全部Hが作っていた。",
+          "あるとき、ふと思った。",
+          "「なんで俺たちの曲って、こんなにダサいんだろう？」",
+          "だったら、ちょっと実験してみよう。",
+          "「プロが作った曲に、俺たちのラップを乗せたら、プロっぽくなるんじゃね？」",
+          "そんな思いつきから、実際にプロのアーティストの曲を伴奏に使って、ラップを乗せてみることにした。",
+          "そして出来上がったのが、全4曲の『PROFESSIONAL』。",
+          "結果はどうだったか。",
+          "伴奏は、確かにプロの音楽。",
+          "でも、その上に乗っているのは、いつもどおりふざけた俺たちの歌詞。",
+          "結局、何に乗せてもPIP POPPERはPIP POPPERだった。",
+          "そんな実験の記録が、このアルバムには残っている。"
+        ],
+        "closing": "プロの曲に乗せても、俺たちはやっぱりPIP POPPERだった。"
+      },
+      "audioNote": "本作は既存の商業楽曲を使用した実験的作品のため、音源の公開は行っていません。",
       "tracks": [
         {
           "title": "FUN FAN"
@@ -499,7 +518,9 @@
         }
       ],
       "archive": false,
-      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
+      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。",
+      "kindLabel": "EXPERIMENTAL ALBUM",
+      "yearLabel": "2001.11.01"
     },
     {
       "id": "forever-love",

@@ -75,6 +75,7 @@
 !/docs/assets/page-fade.js
 !/docs/assets/history/
 !/docs/assets/history/*.jpg
+!/docs/assets/history/*.png
 !/tools/make-album-images.py
 !/albums/
 /albums/**
@@ -87,3 +88,5 @@
 /albums/professional/cover-240.jpg
 !/albums/*/visual.png
 !/albums/*/backdrop.png
+!/albums/*/title.png
+!/albums/*/title-web.png
