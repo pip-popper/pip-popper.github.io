@@ -1170,6 +1170,99 @@
       ],
       "archive": false,
       "archiveNote": "当時のCD資料には参加者の実名が含まれるため、掲載していません。"
+    },
+    {
+      "id": "solo-works",
+      "no": "SOLO WORKS",
+      "kind": "Solo Works（3作品）",
+      "year": "SOLO",
+      "date": null,
+      "dateLabel": null,
+      "title": "SOLO WORKS",
+      "lead": "あの頃、それぞれの歌を残した。",
+      "accent": "#d9a441",
+      "visual": {
+        "source": "SOLO WORKS 合同デザイン（チャット添付画像、1536×1024）。CDケース3枚を切り出し、背景は見出し・本文・曲目の文字部分だけを強くぼかして読めなくしたもの",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "works": [
+        {
+          "title": "SCHOOLMATE",
+          "kind": "Hの2枚目のソロ作品",
+          "text": "一人で思ったことを歌詞にし、独り言のように曲にしていた頃の作品。仲間と歌っていないこともあって、現在はそれほど頻繁に聴き返さない。それでも、今の技術で作り直せば、また違う魅力が生まれるかもしれない。",
+          "tracksLabel": "収録曲（全7曲）",
+          "tracks": [
+            {
+              "title": "Go to the school"
+            },
+            {
+              "title": "Chimpanzee"
+            },
+            {
+              "title": "Okuru Kotoba（feat. T）"
+            },
+            {
+              "title": "Ohitoyoshi"
+            },
+            {
+              "title": "Leisured Persons"
+            },
+            {
+              "title": "Men of the World"
+            },
+            {
+              "title": "Sex Friend - DJ Masterkey Remix -"
+            }
+          ]
+        },
+        {
+          "title": "Love is blind.",
+          "kind": "女性ボーカルによるソロ作品",
+          "text": "女性ボーカルによるソロ作品。あの頃に歌われた曲を、一枚のCDとして残した記録。",
+          "tracksLabel": "確認済み収録曲（5曲）",
+          "tracks": [
+            {
+              "title": "Smile"
+            },
+            {
+              "title": "遠距離恋愛"
+            },
+            {
+              "title": "恋心"
+            },
+            {
+              "title": "雪道"
+            },
+            {
+              "title": "Christmas Love"
+            }
+          ]
+        },
+        {
+          "title": "RAKUEN",
+          "kind": "Tの友人によるソロ作品",
+          "text": "京都から遊びに来たその日、本人が歌詞を書き、その日のうちにレコーディング。一日の出来事が、そのまま一枚のCDになった。",
+          "tracksLabel": "収録曲（全5曲）",
+          "tracks": [
+            {
+              "title": "RAKUEN"
+            },
+            {
+              "title": "Be myself"
+            },
+            {
+              "title": "Soul and Dream"
+            },
+            {
+              "title": "Love go round"
+            },
+            {
+              "title": "Rain of my love"
+            }
+          ]
+        }
+      ],
+      "archive": false
     }
   ]
 }

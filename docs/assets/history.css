@@ -731,6 +731,43 @@
   .theme-marriageable .fp-tracks ol { columns: 1; }
 }
 
+/* ── SOLO WORKS (joint chapter, adopted design 2026-11-20): a warm old recording studio in amber light;
+   gold "SOLO WORKS", the three CD cases side by side, each with a short text and its track list.
+   The studio is the adopted image with its words blurred away; every word on screen is HTML. */
+.theme-solo-works.has-visual { --gold: #e7bd62; --brush: #b8862e; }
+.theme-solo-works .ch-feature { gap: clamp(22px, 3vw, 40px); }
+.theme-solo-works .ch-feature-bg { inset: calc(var(--xfade, 0px) * .45) 0 auto; width: 100%; height: auto; aspect-ratio: 1400 / 933; object-fit: cover; transform: none; filter: blur(2px) saturate(1.05) brightness(.55);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 72%, transparent); mask-image: linear-gradient(180deg, transparent, #000 22%, #000 72%, transparent); }
+.theme-solo-works .ch-feature::before {
+  background:
+    radial-gradient(40% 35% at 8% 4%, rgba(255, 180, 90, .22), transparent 70%),
+    radial-gradient(60% 45% at 50% 50%, rgba(8, 6, 4, .55), transparent 80%),
+    linear-gradient(180deg, rgba(8, 6, 4, .3), rgba(8, 6, 4, .45) 50%, rgba(8, 6, 4, .85) 100%);
+}
+.sw-head { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.sw-kicker { display: flex; align-items: center; gap: .9em; font: 600 clamp(13px, 1.3vw, 19px)/1 "Cormorant Garamond", var(--f-en), serif; letter-spacing: .32em; color: var(--gold); }
+.sw-kicker::before, .sw-kicker::after { content: ""; width: clamp(28px, 6vw, 110px); height: 1px; background: currentColor; opacity: .7; }
+.sw-title { font: 600 clamp(48px, 7.2vw, 112px)/1 "Cormorant Garamond", var(--f-head), serif; letter-spacing: .04em;
+  background: linear-gradient(180deg, #fff3cf, #f0c96a 42%, #a8761f 62%, #f6dc93); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 14px #000c); }
+.sw-lead { font: 700 clamp(17px, 1.9vw, 28px)/1.5 "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .14em; color: #f5ede0; text-shadow: 0 2px 12px #000; }
+.sw-works { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.6vw, 40px); align-items: start; }
+.sw-work { display: grid; gap: 10px; min-width: 0; }
+.sw-jacket { display: flex; justify-content: center; margin: 0 0 6px; filter: drop-shadow(0 22px 30px rgba(0, 0, 0, .7)) drop-shadow(0 0 26px rgba(255, 190, 110, .14)); }
+.sw-jacket img { display: block; width: auto; max-width: 100%; height: clamp(170px, 17.5vw, 268px); object-fit: contain; }
+.sw-work-title { text-align: center; font: italic 700 clamp(26px, 2.5vw, 38px)/1.15 "Playfair Display", var(--f-en), serif; letter-spacing: .04em; color: #f6e7c4; text-shadow: 0 2px 10px #000c; }
+.sw-work-kind { text-align: center; font: 700 13px/1.5 var(--f-body); letter-spacing: .18em; color: var(--gold); }
+.sw-work-text { padding: 0 4px; font: 500 14.5px/1.95 var(--f-body); letter-spacing: .03em; color: #efe8dd; text-shadow: 0 1px 6px #000c; line-break: strict; }
+.sw-tracks-head { margin: 6px 0 0; padding: 6px 0; border-block: 1px solid rgba(231, 189, 98, .45); text-align: center; font: 700 14px/1.4 "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .14em; color: #f3e6c8; background: linear-gradient(90deg, transparent, rgba(60, 40, 15, .55), transparent); }
+.sw-tracks { list-style: none; margin: 0; padding: 0 6px; counter-reset: sw; display: grid; gap: 3px; }
+.sw-tracks li { counter-increment: sw; display: grid; grid-template-columns: 2em minmax(0, 1fr); align-items: baseline; font: 500 16px/1.5 "Cormorant Garamond", "Shippori Mincho B1", serif; letter-spacing: .02em; color: #f4ede2; overflow-wrap: anywhere; }
+.sw-tracks li::before { content: counter(sw) "."; color: var(--gold); font-weight: 600; }
+.sw-note { text-align: center; font-size: 12px; color: #cfc4b4; }
+@media (max-width: 900px) {
+  .theme-solo-works .ch-feature-bg { aspect-ratio: auto; height: min(100% - var(--xfade, 0px), 1500px); object-position: 22% 40%; }
+  .sw-works { grid-template-columns: minmax(0, 1fr); gap: 46px; max-width: 560px; margin-inline: auto; }
+  .sw-jacket img { height: auto; width: min(100%, 320px); }
+}
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by

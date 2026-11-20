@@ -99,7 +99,7 @@ const songById = new Map(songs.map(s => [s.id, s]));
 const originOf = new Map();          // song id → album (only confirmed same songs)
 for (const a of albums) {
   if (!/^[a-z0-9-]+$/.test(a.id)) throw new Error(`アルバムIDは英小文字・数字・ハイフンのみ: ${a.id}`);
-  if (!a.title || !a.tracks?.length) throw new Error(`アルバムの曲名・収録曲がありません: ${a.id}`);
+  if (!a.title || !(a.tracks?.length || a.works?.every(w => w.title && w.tracks?.length))) throw new Error(`アルバムの曲名・収録曲がありません: ${a.id}`);
   const visual = new URL(`${a.id}/visual-web.jpg`, albumDir);
   a.visualSize = await exists(visual) ? await jpegSize(visual) : null;
   if (a.visualSize && !await exists(new URL(`${a.id}/visual-640.jpg`, albumDir))) throw new Error(`visual-640.jpg がありません: albums/${a.id}（python tools/make-album-images.py を実行）`);
@@ -113,13 +113,19 @@ for (const a of albums) {
     if (!await exists(u)) throw new Error(`補助ビジュアルがありません: albums/${a.id}/strip-${n + 1}.jpg`);
     return jpegSize(u);
   })) : [];
+  // joint chapter: each work's jacket cut from the adopted design (albums/<id>/jacket-N.jpg)
+  a.workSizes = a.works ? await Promise.all(a.works.map(async (_, n) => {
+    const u = new URL(`${a.id}/jacket-${n + 1}.jpg`, albumDir);
+    if (!await exists(u)) throw new Error(`作品ジャケットがありません: albums/${a.id}/jacket-${n + 1}.jpg`);
+    return jpegSize(u);
+  })) : [];
   if (a.archive) {
     const u = new URL(`${a.id}/cover-240.jpg`, albumDir);
     if (!await exists(u)) throw new Error(`資料用の旧ジャケットがありません: albums/${a.id}/cover-240.jpg（python tools/make-album-images.py を実行）`);
     a.archiveSize = await jpegSize(u);
   }
   if (a.backdrop && !await exists(new URL(`${a.backdrop}/visual-web.jpg`, albumDir))) throw new Error(`背景に使うアルバムの採用ジャケットがありません: ${a.id} → ${a.backdrop}`);
-  for (const t of a.tracks) if (t.music) {
+  for (const t of a.tracks ?? []) if (t.music) {
     if (!songById.has(t.music)) throw new Error(`HISTORYのMUSICリンク先がありません: ${a.id} → ${t.music}`);
     originOf.set(t.music, a);
   }
@@ -565,6 +571,29 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
   // Each chapter: a cinematic scene (the adopted AI jacket, or the album's typographic stand-in),
   // then story + episode beside the track list / album facts / members, then a small archive note.
   const chapter = (a, i) => {
+    // Joint chapter (SOLO WORKS, adopted design 2026-11-20): one studio scene, a gold heading, and the
+    // works side by side, each with its jacket, a short text and its track list.
+    if (a.works) return `<li class="chapter theme-${a.id} has-visual is-group" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
+      <div class="ch-feature">
+        <img class="ch-feature-bg" src="${a.ownBackdrop ? `${r}assets/history/${a.id}-backdrop.jpg` : albumVisual(r, a.id)}" alt="" aria-hidden="true" loading="lazy" decoding="async">
+        <header class="sw-head reveal">
+          <p class="sw-kicker">PIP POPPER HISTORY</p>
+          <h2 class="sw-title" id="${a.id}-title">${esc(a.title)}</h2>
+          <p class="sw-lead">${esc(a.lead)}</p>
+        </header>
+        <div class="sw-works reveal">
+          ${a.works.map((w, n) => `<article class="sw-work" aria-labelledby="${a.id}-w${n + 1}">
+            <figure class="sw-jacket"><img src="${r}assets/history/${a.id}-jacket-${n + 1}.jpg" width="${a.workSizes[n].w}" height="${a.workSizes[n].h}" alt="『${esc(w.title)}』のジャケット" loading="lazy" decoding="async"></figure>
+            <h3 class="sw-work-title" id="${a.id}-w${n + 1}">${esc(w.title)}</h3>
+            <p class="sw-work-kind">${esc(w.kind)}</p>
+            <p class="sw-work-text">${esc(w.text)}</p>
+            <h4 class="sw-tracks-head">${esc(w.tracksLabel)}</h4>
+            <ol class="sw-tracks">${w.tracks.map(t => `<li>${esc(t.title)}</li>`).join('')}</ol>
+          </article>`).join('\n          ')}
+        </div>
+        ${a.audioNote ? `<p class="sw-note">※ ${esc(a.audioNote)}</p>` : ''}
+      </div>
+    </li>`;
     const tracks = a.tracks.map(t => `<li><span class="tr-title">${esc(t.title)}</span>${t.note ? `<small class="tr-note">${esc(t.note)}</small>` : ''}${t.music ? `<a class="tr-music" href="${trackUrl(r, t.music)}">MUSIC「${esc(songById.get(t.music).title)}」 <span aria-hidden="true">→</span></a>` : ''}</li>`).join('');
     const info = [['アルバム名', a.title + (a.subtitle ? `（${a.subtitle}）` : '')], ['発表', a.dateLabel], ['区分', a.kind], ['収録', `全${a.tracks.length}曲`], ...(a.info ?? [])]
       .filter(([, v]) => v).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
@@ -685,6 +714,7 @@ for (const a of albums) {
   if (a.titleImageSize) await copyFile(new URL(`${a.id}/title-web.png`, albumDir), new URL(`assets/history/${a.id}-title.png`, out));
   if (a.ownBackdrop) await copyFile(new URL(`${a.id}/backdrop-web.jpg`, albumDir), new URL(`assets/history/${a.id}-backdrop.jpg`, out));
   if (a.archive) await copyFile(new URL(`${a.id}/cover-240.jpg`, albumDir), new URL(`assets/history/${a.id}-archive.jpg`, out));
+  for (const n of a.workSizes.keys()) await copyFile(new URL(`${a.id}/jacket-${n + 1}.jpg`, albumDir), new URL(`assets/history/${a.id}-jacket-${n + 1}.jpg`, out));
   for (const n of a.stripSizes.keys()) await copyFile(new URL(`${a.id}/strip-${n + 1}.jpg`, albumDir), new URL(`assets/history/${a.id}-strip-${n + 1}.jpg`, out));
 }
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));
