@@ -28,6 +28,10 @@ for d in sorted(p for p in root.iterdir() if p.is_dir()):
         save(im, d / 'visual-web.jpg', 1400)
         save(im, d / 'visual-640.jpg', 640)
         done.append(f'visual {im.size}')
+    backdrop = d / 'backdrop.png'   # optional: a text-free part of the adopted design, used blurred behind the chapter
+    if backdrop.exists():
+        save(Image.open(backdrop).convert('RGB'), d / 'backdrop-web.jpg', 1400)
+        done.append('backdrop')
     cover = d / 'cover.png'
     if cover.exists():
         save(Image.open(cover).convert('RGB'), d / 'cover-240.jpg', 240)

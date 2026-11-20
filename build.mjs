@@ -103,6 +103,8 @@ for (const a of albums) {
   const visual = new URL(`${a.id}/visual-web.jpg`, albumDir);
   a.visualSize = await exists(visual) ? await jpegSize(visual) : null;
   if (a.visualSize && !await exists(new URL(`${a.id}/visual-640.jpg`, albumDir))) throw new Error(`visual-640.jpg がありません: albums/${a.id}（python tools/make-album-images.py を実行）`);
+  a.visualWide = !!a.visualSize && a.visualSize.w / a.visualSize.h > 1.8;   // a logo banner rather than a jacket
+  a.ownBackdrop = await exists(new URL(`${a.id}/backdrop-web.jpg`, albumDir));
   if (a.archive) {
     const u = new URL(`${a.id}/cover-240.jpg`, albumDir);
     if (!await exists(u)) throw new Error(`資料用の旧ジャケットがありません: albums/${a.id}/cover-240.jpg（python tools/make-album-images.py を実行）`);
@@ -128,7 +130,7 @@ const albumGlow = (r, a) => a.visualSize ? glowStyle(albumVisual(r, a.id, true))
   : `background:radial-gradient(60% 55% at 50% 38%, ${a.accent}, transparent 70%) center / cover no-repeat`;
 // Small tile used on the top page: the AI jacket, or a typographic stand-in in the album's theme.
 const albumTile = (r, a) => a.visualSize
-  ? `<span class="ht-jacket"><img src="${albumVisual(r, a.id, true)}" width="640" height="640" alt="" loading="lazy" decoding="async"></span>`
+  ? `<span class="ht-jacket${a.visualWide ? ' is-wide' : ''}"><img src="${albumVisual(r, a.id, true)}" width="640" height="640" alt="" loading="lazy" decoding="async"></span>`
   : `<span class="ht-jacket ht-type theme-${a.id}" aria-hidden="true"><span class="ht-type-year">${esc(a.year)}</span><span class="ht-type-title">${esc(a.title)}</span></span>`;
 const coverUrl = (r, id, small) => `${r}assets/covers/${id}${small ? '-640' : ''}.jpg`;
 
@@ -583,9 +585,9 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
       const fMembers = (a.members ?? []).map(m => `<tr><th scope="row">${esc(m.name)}</th><td>${esc(m.role ?? m.note ?? '')}</td></tr>`).join('');
       return `<li class="chapter theme-${a.id} has-visual" id="${a.id}" data-light="${a.id}" style="--accent:${esc(a.accent)}" aria-labelledby="${a.id}-title">
       <div class="ch-feature">
-        <img class="ch-feature-bg" src="${albumVisual(r, a.backdrop ?? a.id)}" alt="" aria-hidden="true" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async">
-        <div class="ch-feature-top">
-          <figure class="ch-visual reveal"><img src="${albumVisual(r, a.id)}" width="${a.visualSize.w}" height="${a.visualSize.h}" alt="『${esc(a.title)}』のジャケット" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async"></figure>
+        <img class="ch-feature-bg" src="${a.ownBackdrop ? `${r}assets/history/${a.id}-backdrop.jpg` : albumVisual(r, a.backdrop ?? a.id)}" alt="" aria-hidden="true" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async">
+        <div class="ch-feature-top${a.visualWide ? ' is-wide' : ''}">
+          <figure class="ch-visual reveal"><img src="${albumVisual(r, a.id)}" width="${a.visualSize.w}" height="${a.visualSize.h}" alt="『${esc(a.title)}』の${a.visualWide ? 'ロゴ' : 'ジャケット'}" loading="${i < 1 ? 'eager' : 'lazy'}" decoding="async"></figure>
           <div class="ch-feature-head reveal">
             <p class="ch-badge">${esc(a.no ?? '')}</p>
             <div class="ch-titlerow${a.yearLabel ? ' has-date' : ''}">
@@ -668,6 +670,7 @@ for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.
 for (const a of albums) {
   if (a.visualSize) for (const [src, dst] of [['visual-web', 'visual'], ['visual-640', 'visual-640']])
     await copyFile(new URL(`${a.id}/${src}.jpg`, albumDir), new URL(`assets/history/${a.id}-${dst}.jpg`, out));
+  if (a.ownBackdrop) await copyFile(new URL(`${a.id}/backdrop-web.jpg`, albumDir), new URL(`assets/history/${a.id}-backdrop.jpg`, out));
   if (a.archive) await copyFile(new URL(`${a.id}/cover-240.jpg`, albumDir), new URL(`assets/history/${a.id}-archive.jpg`, out));
 }
 await copyFile(new URL('src/site.css', root), new URL('assets/site.css', out));

@@ -375,25 +375,47 @@
     },
     {
       "id": "chichiband",
-      "no": "2001.09",
-      "kind": "Album",
+      "no": "ALBUM 04",
+      "kind": "4th Album",
       "year": "2001",
       "date": "2001-09-30",
       "dateLabel": "2001年9月30日",
-      "title": "乳バンド",
-      "subtitle": "ChiChiBand",
-      "accent": "#e7a9c8",
-      "visual": null,
-      "members": [],
+      "title": "chichiBand",
+      "subtitle": "乳バンド",
+      "accent": "#e8347f",
+      "visual": {
+        "source": "a_detailed_album_promo_poster_for_pip_popper_s_4th.png（添付画像。Producer採用デザインからロゴ部分を切り出し、背景にギター部分を使用）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "members": [
+        {
+          "name": "H",
+          "role": "打ち込み・楽曲制作"
+        },
+        {
+          "name": "K",
+          "role": "ギター演奏"
+        }
+      ],
       "story": [
         "それまでのシンセサイザーによる打ち込み中心の制作から、生のギターサウンドを取り入れたアルバム。Kがギターを弾けたので、打ち込みだけでなく本物のギターを入れてみよう、という発想から生まれました。"
       ],
       "episode": {
-        "title": "タイトルの由来",
+        "title": "今度は、バンドサウンドを作ってみよう。",
         "text": [
-          "「乳バンド」は、ブラジャーを指す昔の言い方です。",
-          "PIP POPPERには下ネタの多い曲があったので、バンドっぽい音楽を作るなら名前は「乳バンド」だろう、ということで決まりました。"
-        ]
+          "それまでのPIP POPPERは、シンセサイザーによる打ち込みを中心に曲を作っていた。",
+          "でも、Kはギターが弾ける。",
+          "だったら、そのギターを曲に取り入れて、もっとバンドらしい音にしてみよう。",
+          "そんな発想から生まれたのが『chichiBand』。",
+          "そして、アルバムの名前。",
+          "昔、ばあちゃんたちがブラジャーのことを「乳バンド」と呼んでいた。",
+          "もともと下ネタの多かったPIP POPPER。",
+          "バンドをやるなら、乳バンドでいいんじゃないか。",
+          "そんな名前を付けて、今度はバンドサウンド作りに真剣に取り組んでみた。",
+          "音作りは真剣。名前は相変わらず。",
+          "それが『chichiBand』だった。"
+        ],
+        "highlight": "chichiBand"
       },
       "tracks": [
         {
@@ -421,7 +443,7 @@
           "title": "INAKAMUSUME"
         },
         {
-          "title": "Bye ByeKin"
+          "title": "Bye Byekin"
         },
         {
           "title": "Big Old Clock"
@@ -436,10 +458,13 @@
           "title": "Police Man"
         },
         {
-          "title": "ChiChiBand"
+          "title": "ChichiBand"
         }
       ],
-      "archive": true
+      "archive": true,
+      "kindLabel": "PIP POPPER 4th Album",
+      "yearLabel": "2001.09.30",
+      "membersLabel": "参加アーティスト"
     },
     {
       "id": "professional",
