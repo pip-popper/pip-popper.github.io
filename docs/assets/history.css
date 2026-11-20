@@ -652,3 +652,28 @@
   .ch-column p { font-size: 14.5px; }
   .ch-strip { gap: 6px; padding: 12px 8px; }
 }
+
+/* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
+   Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
+   the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by
+   --xfade: each chapter gets --xfade of extra empty padding at the top and bottom, and its whole
+   scene fades to transparent across exactly that padding (eased), so the end of one album dissolves
+   into the start of the next like a film cross-fade. Only the empty padding overlaps — no text,
+   panel or picture is covered — and the spacing between two albums' contents stays as before.
+   Static (no animation), so nothing to reduce for prefers-reduced-motion. */
+.chapters { --xfade: clamp(110px, 18svh, 200px); }
+.chapters:has(> .chapter.has-visual) { gap: 0; }
+.chapter.has-visual + .chapter.has-visual { margin-top: calc(var(--xfade) * -1); }
+.chapter.has-visual { scroll-margin-top: calc(64px - var(--xfade)); }
+.chapter.has-visual > .ch-feature {
+  padding-top: calc(clamp(40px, 6vw, 86px) + var(--xfade));
+  padding-bottom: calc(clamp(36px, 5vw, 64px) + var(--xfade));
+  --fade: linear-gradient(180deg,
+    transparent 0, rgb(0 0 0 / .12) calc(var(--xfade) * .25), rgb(0 0 0 / .42) calc(var(--xfade) * .5), rgb(0 0 0 / .8) calc(var(--xfade) * .75), #000 var(--xfade),
+    #000 calc(100% - var(--xfade)), rgb(0 0 0 / .8) calc(100% - var(--xfade) * .75), rgb(0 0 0 / .42) calc(100% - var(--xfade) * .5), rgb(0 0 0 / .12) calc(100% - var(--xfade) * .25), transparent 100%);
+  -webkit-mask-image: var(--fade); mask-image: var(--fade);
+}
+@media (max-width: 760px) {
+  .chapters { --xfade: 96px; }
+  .chapter.has-visual > .ch-feature { padding-top: calc(30px + var(--xfade)); padding-bottom: calc(34px + var(--xfade)); }
+}
