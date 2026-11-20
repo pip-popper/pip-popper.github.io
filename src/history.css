@@ -807,6 +807,56 @@
   .theme-capital-gains .ch-closing { font-size: 26px; }
 }
 
+/* ── 南風 (adopted poster HTML 2026-11-21): blue sky, sea and palms across the whole chapter, the cream-
+   framed jacket of three walking, a huge mincho "南風" with a red brush stroke, gold tagline, teal panels. */
+.theme-minami-kaze.has-visual { --brush: #d41f2a; --gold: #ffe28c; }
+.theme-minami-kaze .ch-feature { background: linear-gradient(180deg, transparent 0 34%, #08222c 52%, #0a2430 70%, #07131c 100%); }
+.theme-minami-kaze .ch-feature-bg { inset: 0 0 auto; width: 100%; height: min(100%, calc(max(820px, 52vw) + var(--xfade, 0px))); object-fit: cover; object-position: 50% 47%; transform: none; filter: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--xfade, 0px), #000 70%, transparent); mask-image: linear-gradient(180deg, transparent 0, #000 var(--xfade, 0px), #000 70%, transparent); }
+.theme-minami-kaze .ch-feature::before {
+  background:
+    linear-gradient(90deg, rgba(2, 10, 16, .62) 0%, rgba(0, 16, 24, .08) 39%, rgba(0, 8, 14, .22) 70%, rgba(1, 12, 18, .5) 100%),
+    linear-gradient(180deg, rgba(1, 9, 14, .45) 0%, transparent 14%, transparent 30%, rgba(8, 34, 44, .7) 46%, transparent 60%);
+}
+.theme-minami-kaze.has-visual .ch-visual { padding: 3px; background: #f6e9c7; transform: rotate(-1deg); box-shadow: 0 0 0 5px rgba(9, 39, 43, .47), 0 25px 50px #000c; }
+.theme-minami-kaze.has-visual .ch-visual img { filter: none; }
+.theme-minami-kaze .ch-badge { padding: 0; font: 600 13px/1 Georgia, serif; letter-spacing: .39em; color: #fff; background: none; clip-path: none; transform: none; display: flex; align-items: center; gap: 15px; }
+.theme-minami-kaze .ch-badge::before { content: ""; width: 60px; height: 5px; background: #f6293b; transform: rotate(-4deg); }
+.theme-minami-kaze.has-visual .ch-title { justify-items: start; gap: 0; font: 700 clamp(84px, 10vw, 170px)/1.1 "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .02em; color: #fff; transform: none; white-space: nowrap; text-shadow: 0 4px 2px #072333, 0 9px 28px #00131a; }
+.theme-minami-kaze .ch-kindline { flex-direction: column; align-items: flex-start; gap: 17px; margin-top: -6px; font: italic 400 clamp(16px, 1.6vw, 24px)/1 Georgia, serif; letter-spacing: .24em; color: #fff8da; transform: none; }
+.theme-minami-kaze .ch-kindline::before { width: min(100%, 420px); height: 9px; margin-left: 14px; opacity: 1; background: #ff3846; transform: rotate(-4deg); clip-path: polygon(0 50%, 11% 25%, 90% 0, 100% 25%, 70% 65%, 15% 100%); }
+.theme-minami-kaze .ch-kindline::after { display: none; }
+.theme-minami-kaze.has-visual .ch-year { font: italic 400 clamp(26px, 2.2vw, 36px)/1 Georgia, serif; color: #ffebca; text-shadow: 0 2px 10px #001a23; }
+.theme-minami-kaze.has-visual .ch-year::after { background: #f13236; }
+.theme-minami-kaze .ch-origin h3 { border-bottom: 0; padding-bottom: 0; font: 800 clamp(28px, 2.9vw, 44px)/1.45 "Shippori Mincho B1", "Yu Mincho", serif; font-style: normal; letter-spacing: .05em; color: #ffe28c; text-shadow: 0 2px 13px rgba(0, 18, 27, .67); }
+.theme-minami-kaze .ch-origin h3 em { font: inherit; font-style: normal; color: #fff; }
+.theme-minami-kaze .ch-origin-text { border-bottom: 0; padding-bottom: 0; font-weight: 600; font-size: clamp(15px, 1.4vw, 19px); color: #fff; text-shadow: 0 2px 7px #00202b, 0 1px 17px #00202b; }
+.theme-minami-kaze .ch-origin-text p:nth-child(2) { font-size: .9em; font-weight: 500; color: #f4efdf; }
+.theme-minami-kaze .ch-origin-text em { font: inherit; font-style: normal; color: #ffe698; }
+.theme-minami-kaze .ch-closing { margin-top: 10px; padding: 9px 0 10px 16px; border-left: 5px solid #ec3135; font: italic 400 16px/1.6 Georgia, "Shippori Mincho B1", serif; letter-spacing: .06em; color: #fff1cf; background: linear-gradient(90deg, rgba(6, 25, 35, .53), transparent 70%); transform: none; text-shadow: none; }
+.theme-minami-kaze .ch-closing::after { display: none; }
+.theme-minami-kaze .ch-closing em { font: inherit; color: inherit; }
+.theme-minami-kaze .fp { border-color: rgba(189, 196, 186, .5); border-radius: 5px; background: rgba(2, 16, 21, .72); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 13px 35px rgba(0, 20, 29, .56); }
+.theme-minami-kaze .fp-info th { color: #b5dadd; }
+.theme-minami-kaze .fp-tracks ol { column-rule-color: rgba(124, 180, 181, .48); }
+.theme-minami-kaze .fp-tracks li { font: 400 clamp(13px, 1.1vw, 16px)/1.65 var(--f-body); color: #fff; grid-template-columns: 2.4em minmax(0, 1fr); padding: 4px 0; overflow-wrap: anywhere; }
+.theme-minami-kaze .fp-tracks li::before { font: italic 400 19px/1 Georgia, serif; content: counter(tr, decimal-leading-zero); color: #f9d869; }
+@media (min-width: 1101px) {
+  .theme-minami-kaze .ch-feature-panels { grid-template-columns: .66fr 1.34fr; }
+  .theme-minami-kaze .fp-archive { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 18px; padding: 12px 20px; }
+  .theme-minami-kaze .fp-archive-note { text-align: left; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .theme-minami-kaze .fp-tracks { grid-column: 1 / -1; } }
+@media (max-width: 760px) {
+  .theme-minami-kaze .ch-feature-bg { height: min(100%, calc(980px + var(--xfade, 0px))); object-position: 30% 50%; }
+  .theme-minami-kaze .ch-feature::before { background: linear-gradient(180deg, rgba(7, 19, 27, .6) 0%, rgba(6, 19, 28, .2) 18%, rgba(6, 19, 28, .55) 34%, transparent 45%); }
+  .theme-minami-kaze.has-visual .ch-title { font-size: clamp(80px, 24vw, 120px); letter-spacing: .04em; }
+  .theme-minami-kaze .ch-kindline { font-size: 15px; letter-spacing: .14em; }
+  .theme-minami-kaze .ch-kindline::before { height: 6px; }
+  .theme-minami-kaze .ch-origin h3 { font-size: 27px; }
+}
+@media (max-width: 400px) { .theme-minami-kaze .fp-tracks ol { columns: 1; } }
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by

@@ -1046,6 +1046,96 @@
       "archiveNote": "掲載ジャケットは現在制作したAIイメージです。当時の実在メンバーの写真ではありません。"
     },
     {
+      "id": "minami-kaze",
+      "no": "PIP POPPER",
+      "kind": "Album",
+      "kindLabel": "SOUTH WIND — A NEW CHAPTER",
+      "year": "2006",
+      "date": null,
+      "dateLabel": "2006年",
+      "yearLabel": "2006",
+      "title": "南風",
+      "subtitle": null,
+      "accent": "#ec2630",
+      "visual": {
+        "source": "PIP_POPPER_南風_HISTORY_特設ポスター案.html（Producer採用HTMLに埋め込まれたジャケット 1254×1254 と背景の海辺 1914×822 をそのまま使用）",
+        "adopted": "2026-11-21 Producer正式採用（採用HTML）"
+      },
+      "info": [
+        [
+          "参加",
+          "H / T / N"
+        ],
+        [
+          "位置づけ",
+          "3人体制での作品"
+        ]
+      ],
+      "episode": {
+        "title": "ふたりから、三人へ。",
+        "titleHighlight": "三人へ。",
+        "text": [
+          "Tが職場の後輩Nを連れてきたことで、PIP POPPERは3人体制に。",
+          "先輩の誘いで、半ば強引に歌わされていたのかもしれない。",
+          "そんなNの名前にちなんで、『南風』と名付けられた。"
+        ],
+        "highlight": "『南風』",
+        "closing": "少し大人になったPIP POPPERに、新しい風が吹く。"
+      },
+      "tracks": [
+        {
+          "title": "intro"
+        },
+        {
+          "title": "PIP POPPER2006"
+        },
+        {
+          "title": "らっぷごっこ"
+        },
+        {
+          "title": "北斗の拳SE"
+        },
+        {
+          "title": "Back to the friends"
+        },
+        {
+          "title": "PIP POPな武勇伝"
+        },
+        {
+          "title": "夏の思い出"
+        },
+        {
+          "title": "近況報告2006"
+        },
+        {
+          "title": "MIDLIFE CRISIS"
+        },
+        {
+          "title": "expedition"
+        },
+        {
+          "title": "ブスの瞳に恋してる"
+        },
+        {
+          "title": "倦怠期-The stage of boredom-"
+        },
+        {
+          "title": "Take it easy(Album Remix)"
+        },
+        {
+          "title": "Thirty years old"
+        },
+        {
+          "title": "Precious Memory"
+        },
+        {
+          "title": "Ending-SAKURA (Bonus Track)"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "公開用のジャケットはAIで制作したイメージです。描かれた人物は当時のメンバー本人ではありません。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",
