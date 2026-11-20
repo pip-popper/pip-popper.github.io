@@ -523,6 +523,96 @@
       "yearLabel": "2001.11.01"
     },
     {
+      "id": "final-fantasy",
+      "no": "ALBUM",
+      "kind": "Album",
+      "kindLabel": "PIP POPPER",
+      "sideLabel": "制作年 未確定",
+      "year": "—",
+      "date": null,
+      "dateLabel": "未確定",
+      "title": "FINAL FANTASY",
+      "subtitle": null,
+      "accent": "#5b8cff",
+      "visual": {
+        "source": "幻想的なfinal_fantasyアルバム史.png（添付画像。Producer採用デザインからジャケット部分のみを切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "イニシャル表記（氏名が確認できない参加者は「氏名不明」）",
+      "members": [
+        {
+          "name": "H"
+        },
+        {
+          "name": "K"
+        },
+        {
+          "name": "I"
+        },
+        {
+          "name": "氏名不明の参加者"
+        }
+      ],
+      "info": [
+        [
+          "コンセプト",
+          "空想の世界への冒険／現実逃避"
+        ]
+      ],
+      "episode": {
+        "title": "現実から逃げ込んだ、俺たちの大冒険。",
+        "text": [
+          "学生ではなくなり、社会に出て、思い描いていたほど楽しくない現実を知るようになった。",
+          "毎日が楽しいことばかりではない。",
+          "そんな現実から、少しだけ逃げ出したくなった。",
+          "だったら、音楽の中だけでも、好きな世界へ行ってしまおう。",
+          "自分たちが主人公になって、現実にはない世界を自由に冒険する。",
+          "そんな空想の物語を音楽にしてみた。",
+          "こうして生まれたのが『FINAL FANTASY』。",
+          "このアルバムには、PIP POPPERが繰り広げる架空の大冒険が描かれている。"
+        ],
+        "closing": "現実が楽しくないなら、せめて音楽の中くらい、好き勝手に遊んでしまおう。",
+        "closingAfter": "そんな気持ちから作られた一枚だった。",
+        "note": [
+          "『FINAL FANTASY』はPIP POPPERの自主制作アルバムのタイトルです。同名のゲーム作品とは関係ありません。"
+        ]
+      },
+      "caution": {
+        "title": "保管上の注意",
+        "items": [
+          "聞き飽きたあとは直ちに他の人に販売しないでください",
+          "パッケージをエッチな絵に変えないでください",
+          "子供の手の届くところに置かないでください",
+          "ご飯にかけて食べないでください",
+          "レンジで温め過ぎないでください（限度は5秒です）"
+        ],
+        "note": "PIP POPPERが当時の作品に添えた、ユーモアの注意書きです。"
+      },
+      "audioNote": "既存の楽曲を元にした曲を含むため、本作の音源は公開していません。",
+      "tracks": [
+        {
+          "title": "Oyaji"
+        },
+        {
+          "title": "Meishin"
+        },
+        {
+          "title": "Nanpa (Hamasaki mix)"
+        },
+        {
+          "title": "Single Bell"
+        },
+        {
+          "title": "Final Fantasy"
+        },
+        {
+          "title": "Pink Spider"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
+    },
+    {
       "id": "sukekomauta",
       "no": "EXPERIMENTAL",
       "kind": "Experimental Album",
