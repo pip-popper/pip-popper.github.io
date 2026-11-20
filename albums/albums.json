@@ -596,6 +596,79 @@
       "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
     },
     {
+      "id": "time-capsule",
+      "no": "ALBUM 05",
+      "kind": "5th Album",
+      "kindLabel": "PIP POPPER 5th Album",
+      "year": "2002",
+      "date": "2002-04-28",
+      "dateLabel": "2002年4月28日",
+      "yearLabel": "2002.4.28",
+      "title": "TIME CAPSULE",
+      "subtitle": null,
+      "accent": "#e9a54a",
+      "visual": {
+        "source": "a_detailed_album_history_poster_in_the_same_dark_t.png（添付画像。Producer採用デザインからジャケット部分のみを切り出し）",
+        "adopted": "2026-11-20 Producer正式採用（ChatGPT制作）"
+      },
+      "membersSource": "CDブックレットのクレジット（イニシャル表記）",
+      "members": [
+        {
+          "name": "H"
+        },
+        {
+          "name": "K"
+        },
+        {
+          "name": "R"
+        }
+      ],
+      "story": [
+        "KとRが遠くへ旅立つ前に、H・K・Rの3人で当時の自分たちを詰め込んだ、全7曲のアルバムです。"
+      ],
+      "episode": {
+        "title": "あの頃の俺たちを、未来へ。",
+        "text": [
+          "2002年、KもRも、それぞれかなり遠くへ行くことになった。",
+          "それまで一緒に曲を作って、歌って、くだらないことで笑っていた仲間たち。",
+          "これからは、今までのように簡単には集まれなくなる。",
+          "だからこそ、今の俺たちを一枚のアルバムに残しておこうと思った。",
+          "10年後でも、20年後でも。",
+          "いつかこのアルバムを聴いたときに、当時の景色、音、そしてあの頃の自分たちを思い出せるように。",
+          "どんな曲を作って、どんなことで笑って、何を考えていたのか。",
+          "それを未来の俺たちに届けるために。",
+          "このアルバムは、KとRが遠くへ旅立つ前に、仲間たちで詰め込んだタイムカプセル。",
+          "今のPIP POPPER、そのままの音を閉じ込めた作品だった。"
+        ],
+        "highlight": "PIP POPPER"
+      },
+      "tracks": [
+        {
+          "title": "メンバー紹介"
+        },
+        {
+          "title": "応援歌"
+        },
+        {
+          "title": "MEAT STICK ～Chrange English～"
+        },
+        {
+          "title": "悪い大人"
+        },
+        {
+          "title": "プロポーズ ～結婚適齢期～"
+        },
+        {
+          "title": "DANGER ～ストーカー～"
+        },
+        {
+          "title": "タイムカプセル ～未来の俺たちへ～"
+        }
+      ],
+      "archive": false,
+      "archiveNote": "当時のCDジャケットは人物写真を含むため、掲載していません。"
+    },
+    {
       "id": "forever-love",
       "no": "SOLO WORK",
       "kind": "T Solo Album",

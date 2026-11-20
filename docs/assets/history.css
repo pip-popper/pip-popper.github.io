@@ -522,3 +522,27 @@
 .theme-sukekomauta .fp-tracks li { font-size: 17px; letter-spacing: .06em; color: #f2efe8; }
 .theme-sukekomauta .fp-tracks li::before { color: var(--brush); }
 @media (max-width: 760px) { .theme-sukekomauta .ch-kindline { letter-spacing: .16em; } }
+
+/* ── TIME CAPSULE (adopted design 2026-11-20): sunset over the town, an old metal capsule in the grass, white and gold. */
+.theme-time-capsule.has-visual { --brush: #c9302c; --gold: #e9b866; }
+.theme-time-capsule .ch-feature-bg { filter: blur(6px) saturate(1.1) brightness(.4); object-position: 50% 45%; }
+.theme-time-capsule .ch-feature::before {
+  background:
+    radial-gradient(45% 50% at 80% 0%, rgba(255, 150, 70, .2), transparent 70%),
+    radial-gradient(40% 45% at 5% 6%, rgba(130, 110, 180, .14), transparent 70%),
+    linear-gradient(180deg, rgba(10, 8, 6, .25), rgba(10, 8, 6, .55) 55%, rgba(8, 6, 5, .94) 100%);
+}
+.theme-time-capsule.has-visual .ch-visual { background: linear-gradient(135deg, #f3e3c0, #a8875a 55%, #ead6ae); box-shadow: 0 0 0 1px #3d3122, 0 40px 90px -20px #000, 0 0 70px rgba(255, 150, 70, .2); }
+.theme-time-capsule.has-visual .ch-visual img { filter: none; }
+.theme-time-capsule.has-visual .ch-title { font: 700 clamp(44px, 5vw, 84px)/1 "Playfair Display", var(--f-head), serif; letter-spacing: .02em; color: #f6efe2; transform: none; text-shadow: 0 2px 16px #000c; }
+.theme-time-capsule .ch-kindline { font-family: "Playfair Display", var(--f-en), serif; font-style: normal; letter-spacing: .2em; color: #efe4cf; transform: none; }
+.theme-time-capsule .ch-origin h3 { font-family: "Shippori Mincho B1", "Yu Mincho", serif; font-style: normal; font-weight: 700; }
+.theme-time-capsule .fp { border-color: rgba(233, 184, 102, .4); }
+@media (min-width: 1101px) { .theme-time-capsule .ch-feature-panels { grid-template-columns: 1fr 1fr 1.5fr; } }
+.theme-time-capsule .fp-tracks ol { columns: 1; }
+.theme-time-capsule .fp-tracks li { font-size: 16px; color: #f4ede0; }
+.theme-time-capsule .fp-tracks li::before { color: var(--gold); }
+@media (max-width: 760px) {
+  .theme-time-capsule.has-visual .ch-title { font-size: clamp(34px, 11vw, 48px); }
+  .theme-time-capsule .ch-kindline { letter-spacing: .1em; }
+}
