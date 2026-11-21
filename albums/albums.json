@@ -1813,6 +1813,149 @@
         }
       ],
       "archive": false
+    },
+    {
+      "id": "favorite-track",
+      "section": "other",
+      "no": "FROM THE ARCHIVES / 2003 — 2004",
+      "kind": "Hソロ作品",
+      "kindLabel": "2003–2004|H / SOLO",
+      "year": "2003–2004",
+      "date": null,
+      "dateLabel": null,
+      "title": "Favorite Track",
+      "titleLines": true,
+      "subtitle": null,
+      "accent": "#ff64c5",
+      "visual": {
+        "source": "PIP_POPPER_FAVORITE_TRACK_2003-2004_OTHER_WORKS_試作.html（Producer添付の試作HTMLの背景画像 1672×941＝夜の制作部屋、文字・人物なし。無加工）",
+        "adopted": "2026-11-21 Producer指示で試作を基本採用"
+      },
+      "episode": {
+        "title": "PIP POPPERが止まっていた時間にも、曲は生まれていた。",
+        "titleHighlight": "曲は生まれていた。",
+        "text": [
+          "PIP POPPERとしての活動が止まっていた時期。",
+          "Hがひとりで作りためていた、デモに近い音の記録。",
+          "あとになって、その曲たちが再びPIP POPPERへつながっていく。"
+        ]
+      },
+      "column": {
+        "title": "休止していたのは、PIP POPPERの活動だけだった。",
+        "text": [
+          "『SCHOOLMATE』の続きのように、Hは個人で曲を作り続けていた。",
+          "PIP POPPERの活動が止まっていた2003〜2004年。誰かに聴かせるために完成度を磨き込んだアルバムというより、思いついた音や言葉を、その都度かたちにして残していく。『Favorite Track』はそんな時期の、デモ音源に近い作品集だった。",
+          "当時のCDは2枚組。曲名の重複も残る、そのままの記録だ。",
+          "やがてPIP POPPERが再び動き出したとき、この時期に生まれた曲が新しい作品に使われることになる。"
+        ],
+        "quote": {
+          "label": "",
+          "lines": [
+            "あの頃、ひとりで作った曲が、",
+            "あとで仲間と作る曲になった。"
+          ]
+        },
+        "closingAfter": "SCHOOLMATE → FAVORITE TRACK → PIP POPPER RESTART"
+      },
+      "infoLabel": "Archive Notes",
+      "info": [
+        [
+          "記録期間",
+          "2003–2004（CDジャケット表記）"
+        ],
+        [
+          "構成",
+          "2枚組（Disc 1：8曲 / Disc 2：10曲）"
+        ],
+        [
+          "性格",
+          "活動休止中の制作ストック／デモに近い作品集"
+        ],
+        [
+          "つながり",
+          "SCHOOLMATEから続く個人制作。後のPIP POPPER再始動に楽曲がつながる。"
+        ]
+      ],
+      "infoNote": "アルバム表記、曲目、2枚組の構成は当時のCD制作データを基準としています。写真は当時の実景・実物の記録ではなく、作品世界を表現したイメージです。",
+      "tracksHead": {
+        "kicker": "02 / THE TAPES",
+        "title": "Track",
+        "sub": "Archive.",
+        "aside": [
+          "THE ORIGINAL TRACK LIST",
+          "2 DISCS / 18 TRACKS / AS PRINTED"
+        ]
+      },
+      "discs": [
+        {
+          "name": "Disc 1",
+          "sub": "8 TRACKS / FAVORITE TRACK",
+          "tracks": [
+            {
+              "title": "Hitosyakai"
+            },
+            {
+              "title": "Policeman"
+            },
+            {
+              "title": "Mr.Bigman"
+            },
+            {
+              "title": "Back to the Friends"
+            },
+            {
+              "title": "Manners"
+            },
+            {
+              "title": "Mistake"
+            },
+            {
+              "title": "Onanist"
+            },
+            {
+              "title": "Rap Gocco"
+            }
+          ]
+        },
+        {
+          "name": "Disc 2",
+          "sub": "10 TRACKS / H SOLO MUSIC",
+          "tracks": [
+            {
+              "title": "Kanojyoni human"
+            },
+            {
+              "title": "hitosyakai"
+            },
+            {
+              "title": "Policeman"
+            },
+            {
+              "title": "Mr.Bigman"
+            },
+            {
+              "title": "Back to the friends"
+            },
+            {
+              "title": "Mistake"
+            },
+            {
+              "title": "Worst Friend"
+            },
+            {
+              "title": "Manners"
+            },
+            {
+              "title": "Sex friends"
+            },
+            {
+              "title": "Onanist"
+            }
+          ]
+        }
+      ],
+      "audioNote": "曲名の英字表記・大文字小文字・曲順は当時のPSDジャケットの記載を尊重しています。同じ題名の曲が両ディスクに含まれていますが、各収録版の内容や差異はここでは断定していません。",
+      "archive": false
     }
   ]
 }
