@@ -191,8 +191,11 @@ try {
     const OLD = 'member-old-123456', NEW = 'member-new-789012', ADM = 'admin-pass-abcdef';
     const R2 = path.join(TMP, 'pv-r2'), VARS = path.join(TMP, 'pv.vars');
     writeFileSync(VARS, `PRIVATE_PASSWORD=${OLD}\nSESSION_KEY=${'k'.repeat(48)}\nADMIN_PASSWORD=${ADM}\n`);
-    // first the Worker as it is in production today (the committed version in the work copy): no change API yet
-    const oldPv = spawn(process.execPath, [path.join(WORK, 'private', 'dev', 'serve.mjs'), '--vars', VARS, '--r2', R2, '--port', String(PV_PORT)]);
+    // first the Worker as published today (origin/main = the deployed version, before this feature): no change API yet
+    const OLDTREE = path.join(TMP, 'published');
+    const PUBLISHED = g(REPO, 'rev-parse', 'origin/main');        // the real repository's GitHub state (the work copy's origin is the test remote)
+    g(WORK, 'worktree', 'add', '-q', '--detach', OLDTREE, PUBLISHED);
+    const oldPv = spawn(process.execPath, [path.join(OLDTREE, 'private', 'dev', 'serve.mjs'), '--vars', VARS, '--r2', R2, '--port', String(PV_PORT)]);
     await new Promise((res, rej) => { oldPv.stdout.on('data', d => /ローカル検証/.test(String(d)) && res()); setTimeout(() => rej(new Error('old PRIVATE imitation did not start')), 15000); });
     r = await call('POST', '/api/private/password', { newPassword: 'member-new-789012', confirmPassword: 'member-new-789012', adminPassword: ADM });
     ok(r.status === 501 && /まだこの機能に対応していません/.test(r.data.error), '更新前のPRIVATEには「まだ対応していません」と表示（変更なし）');

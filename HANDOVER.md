@@ -26,6 +26,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 - 2026-11-22 PRIVATEの招待者パスワードを管理ツールから変更する機能をローカル実装（Producer承認の方式：非公開R2に照合値、Cloudflare APIトークンなし）。Worker：`private/worker/src/credential.js` 新設、入室・Cookie確認・管理API（変更・戻す・状態）。管理ツール：「PRIVATE管理」画面。テスト：PRIVATE既存61・パスワード49・管理ツール77 すべて合格。**Cloudflareへのデプロイ・本番R2への書き込み・実際の変更は未実施**（本番反映はProducerの別途承認）。
 
+- 2026-11-22 PRIVATEパスワード機能の最終コードレビュー：重大な問題なし。小規模修正2件（照合ファイルが壊れていても「戻す」で消せる／変更回数の制限を「数えると同時に判定」にして同時要求でも上限を超えない、上限＝1時間10回）。管理ツールのテストが「更新前のPRIVATE」として公開中の版（origin/main）を使うよう修正。テスト：PRIVATE既存61・パスワード53・管理ツール77 すべて合格。最新版バックアップを作成（保守マニュアル側の記録に指紋）。
+
 ## 既知の事項（公開物）
 
 - `docs/` の172ファイルのうち、`build.mjs` が作るのは167。残り5つは初期（2026-11-14〜16）の画像で、今のページからは参照されていない：`docs/assets/covers/anniversary.png`・`busu-no-hitomi.png`・`job-hunting.png`・`manner.png`（初期の曲ジャケット原寸PNG、表示は現在 jpg）、`docs/assets/pip-popper-logo.png`（初期のロゴ）。URLを直接開けば見られる。削除するかは Producer 判断（公開物の変更になるため未対応）。

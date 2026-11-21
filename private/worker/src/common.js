@@ -76,8 +76,9 @@ export const PROFILES = {
   member: { max: 5, window: 10 * 60e3, lock: 15 * 60e3 },
   admin: { max: 5, window: 10 * 60e3, lock: 60 * 60e3 },
   adminAll: { max: 20, window: 60 * 60e3, lock: 60 * 60e3 },
-  // invitee password changes / restores (manager tool): 10 attempts in 60 min -> 60 min lock, all connections together
-  pwChange: { max: 10, window: 60 * 60e3, lock: 60 * 60e3 },
+  // invitee password changes / restores (manager tool): 10 attempts in 60 min are allowed, the 11th locks for 60 min
+  // (counted with "fail" before the attempt, all connections together)
+  pwChange: { max: 11, window: 60 * 60e3, lock: 60 * 60e3 },
 };
 export class LoginGuard {
   constructor(ctx) { this.storage = ctx.storage; }

@@ -118,6 +118,26 @@ ok('ロックは招待者の入室には影響しない', (await login('/login',
 ok('音源の管理（曲一覧）は使える', (await call('GET', '/admin/api/catalog', { cookie: admin, headers: { 'X-PP-Admin': '1' }, ip: '198.51.100.40' })).status === 200);
 ok('音源ファイルは変わっていない', readFileSync(path.join(r2, 'audio', 'manner.mp3')).equals(mp3));
 
+console.log('8. 照合情報が壊れていても「戻す」で復旧できる（別の環境で）');
+{
+  const r2b = path.join(tmp, 'r2b');
+  mkdirSync(path.join(r2b, 'auth'), { recursive: true });
+  writeFileSync(path.join(r2b, 'catalog.json'), readFileSync(path.join(r2, 'catalog.json')));
+  writeFileSync(path.join(r2b, 'auth', 'private-password.json'), '{"format":1,"broken":true}');
+  const env2 = mockEnv({ r2Dir: r2b, publicDir: path.join(here, '..', 'worker', 'public'), vars: { PRIVATE_PASSWORD: OLD, SESSION_KEY: 'k'.repeat(48), ADMIN_PASSWORD: ADMIN } });
+  const call2 = (method, p, opt = {}) => worker.fetch(new Request(O + p, { method, body: opt.body, headers: { Origin: O, 'CF-Connecting-IP': '198.51.100.50', ...(opt.cookie ? { Cookie: opt.cookie } : {}), ...(opt.headers ?? {}) } }), env2);
+  const form = pw => ({ body: new URLSearchParams({ password: pw }), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+  ok('壊れている間は入室できない', (await call2('POST', '/login', form(OLD))).status === 500);
+  const adm2 = cookieOf(await call2('POST', '/admin/login', form(ADMIN)));
+  const res = await call2('POST', '/admin/api/private-password/restore', { cookie: adm2, headers: { 'X-PP-Admin': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ adminPassword: ADMIN, confirm: '旧パスワードに戻す' }) });
+  ok('「戻す」で壊れたファイルを消せる', res.status === 200 && !existsSync(path.join(r2b, 'auth', 'private-password.json')));
+  ok('戻した後はCloudflareのパスワードで入れる', (await call2('POST', '/login', form(OLD))).status === 303);
+  // 10 attempts per hour are allowed, the 11th is refused: counted in one step, so a burst of concurrent calls cannot exceed it
+  const burst = await Promise.all(Array.from({ length: 15 }, () => call2('POST', '/admin/api/private-password', { cookie: adm2, headers: { 'X-PP-Admin': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ newPassword: 'x', adminPassword: ADMIN }) })));
+  const passed = burst.filter(x => x.status !== 429).length;
+  ok('同時に15件送っても、通るのは上限内（9件：既に1回使用済み）', passed === 9, `passed=${passed}`);
+}
+
 rmSync(tmp, { recursive: true, force: true });
 console.log(failures ? `\n${failures} 件 NG` : '\nすべて合格');
 process.exitCode = failures ? 1 : 0;

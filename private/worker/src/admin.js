@@ -4,7 +4,7 @@ import { SITE, MAX_PASSWORD, HttpError, html, json, text, redirect, sameOrigin, 
   secretVersion, guard, connection, lockMessage, wait } from './common.js';
 import { loadCatalog, commit, storeUpload, cleanup, RETIRE_GRACE, RESTORE_LIMIT, MAX_UPLOAD } from './catalog.js';
 import { adminLoginPage, adminPage, messagePage } from './pages.js';
-import { loadCredential, saveCredential, removeCredential, MIN_PASSWORD } from './credential.js';
+import { loadCredential, saveCredential, removeCredential, MIN_PASSWORD, CREDENTIAL_KEY } from './credential.js';
 import { serveAudio } from './audio.js';
 
 const ADMIN_COOKIE = 'pp_admin';
@@ -61,9 +61,10 @@ async function passwordApi(request, env, path) {
   const tries = guard(env, 'pw-change', 'pwChange');
   const mine = guard(env, `admin:${connection(request)}`, 'admin');
   const all = guard(env, 'admin-all', 'adminAll');
-  const states = [await tries('check'), await mine('check'), await all('check')];
+  // pwChange: counted and checked in one step (one Durable Object, one request at a time = no race between workers)
+  const counted = await tries('fail');                          // every attempt counts (success or not)
+  const states = [counted, await mine('check'), await all('check')];
   if (states.some(s => s.locked)) throw new HttpError(429, lockMessage(Math.max(...states.map(s => s.retryAfter))));
-  await tries('fail');                                          // every attempt counts toward pwChange (success or not)
   const body = await bodyJson(request);
   const adminPassword = typeof body.adminPassword === 'string' ? body.adminPassword : '';
   if (!adminPassword || adminPassword.length > MAX_PASSWORD || !await secretMatches(env, adminPassword, env.ADMIN_PASSWORD, 'admin-check')) {
@@ -73,9 +74,9 @@ async function passwordApi(request, env, path) {
   }
   if (path === 'private-password/restore') {
     if (body.confirm !== RESTORE_WORDS) throw new HttpError(400, `確認のため「${RESTORE_WORDS}」と入力してください。`);
-    if (!await loadCredential(env)) throw new HttpError(409, 'すでにCloudflareに登録されたパスワードを使っています。');
-    await removeCredential(env);
-    if (await loadCredential(env)) throw new HttpError(500, '元に戻せませんでした。今のパスワードのままです。');
+    if (!await env.BUCKET.head(CREDENTIAL_KEY)) throw new HttpError(409, 'すでにCloudflareに登録されたパスワードを使っています。');
+    await removeCredential(env);                                // works even if the file is damaged
+    if (await env.BUCKET.head(CREDENTIAL_KEY)) throw new HttpError(500, '元に戻せませんでした。今のパスワードのままです。');
     return json(200, { ok: true, mode: 'secret', message: 'Cloudflareに登録されたパスワードに戻しました。招待者は全員、入り直しになります。' });
   }
   const pw = typeof body.newPassword === 'string' ? body.newPassword : '';
