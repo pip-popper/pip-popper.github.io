@@ -23,7 +23,9 @@ spawnSync('git', ['clone', '-q', '--bare', REPO, BARE]);
 spawnSync('git', ['clone', '-q', BARE, WORK]);
 for (const p of ['build.mjs', 'content', 'manager']) cpSync(path.join(REPO, p), path.join(WORK, p), { recursive: true });
 g(WORK, 'config', 'user.name', 'Producer'); g(WORK, 'config', 'user.email', 'test@example.invalid');
-g(WORK, 'add', '-f', 'build.mjs', 'content', 'manager'); g(WORK, 'commit', '-q', '-m', 'test base'); g(WORK, 'push', '-q', 'origin', 'main');
+// --allow-empty: when the manager is already committed in the repository there is nothing to add, but the
+// tests still need one ordinary (non-manager) saved point named "test base"
+g(WORK, 'add', '-f', 'build.mjs', 'content', 'manager'); g(WORK, 'commit', '-q', '--allow-empty', '-m', 'test base'); g(WORK, 'push', '-q', 'origin', 'main');
 g(WORK, 'branch', '-q', '-u', 'origin/main');
 
 const env = { ...process.env, PP_MANAGER_EXPECTED_REMOTE: BARE, PP_MANAGER_PRINT_TOKEN: '1' };

@@ -22,6 +22,13 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 - 2026-11-22 管理ツールの編集対象を整理（自分で直せる＝A／固定・AI依頼＝B）。A に追加：ヒストリー・その他の作品ページの見出しといちばん下の文、メッセージ欄の説明文、音源非公開の曲ページの文（`content/site.json`、生成サイト167ファイル不変）、曲の配信リンク（Spotify・YouTube・Suno・Apple Music、https・対応サイトのみ、非公開曲は対象外）。画面の一覧に「固定（変更はAIに依頼）」、使い方にA／Bの区分を表示、`manager/README.md` に区分表。安全強化：AI等のまだ公開していない保存点があるときは管理ツールから公開しない（一緒に送らない）。自動テスト64項目合格。
 
+- 2026-11-22 初回公開前の最終整備：テストスクリプトを修正（管理ツールがGit登録済みでも「test base」の保存点を作る `--allow-empty`）し、正式リポジトリから 64項目合格。バックアップ `pip-popper.github.io_20261122.bundle` を作成（既存の 20261118 は残す。指紋・復元確認は保守マニュアル側の引継ぎ記録）。公開前の安全確認（読み取り）：3件の commit は docs/・private/ を変えない、公開中の172ファイルと HEAD の docs が全一致、秘密情報なし。
+
+## 既知の事項（公開物）
+
+- `docs/` の172ファイルのうち、`build.mjs` が作るのは167。残り5つは初期（2026-11-14〜16）の画像で、今のページからは参照されていない：`docs/assets/covers/anniversary.png`・`busu-no-hitomi.png`・`job-hunting.png`・`manner.png`（初期の曲ジャケット原寸PNG、表示は現在 jpg）、`docs/assets/pip-popper-logo.png`（初期のロゴ）。URLを直接開けば見られる。削除するかは Producer 判断（公開物の変更になるため未対応）。
+- `docs/assets/Anton-OFL.txt`（フォントのライセンス文）：Git には LF で保存されているが、作業フォルダーの `src/Anton-OFL.txt` は CRLF と LF が混在（`core.autocrlf=true` の環境）。`build.mjs` はファイルをそのままコピーするため、別フォルダーに作ると改行だけ違うが、`docs/` に作って Git に入れる時に自動で LF にそろうため、公開されるファイルは変わらない（改行を除いた内容は同一、`node build.mjs` 後の `git status` も変化なし）。
+
 ## 残件・承認待ち
 
 1. 管理ツール v1：Producer 実機確認（BATのダブルクリック起動、曲名の修正・保存・プレビュー・破棄／取り消し）。
