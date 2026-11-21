@@ -97,7 +97,9 @@ async function jpegSize(url) {
 }
 // Site texts edited from the manager (content/site.json): short copy that is not part of a song or an album.
 const SITE = JSON.parse(await readFile(new URL('content/site.json', root), 'utf8'));
-for (const [k, v] of Object.entries({ 'home.statement': SITE.home?.statement, 'home.historyLead': SITE.home?.historyLead, 'history.lead': SITE.history?.lead, 'history.description': SITE.history?.description, 'otherWorks.lead': SITE.otherWorks?.lead, 'otherWorks.description': SITE.otherWorks?.description, 'about.text': SITE.about?.text }))
+for (const [k, v] of Object.entries({ 'home.statement': SITE.home?.statement, 'home.historyLead': SITE.home?.historyLead, 'history.lead': SITE.history?.lead, 'history.description': SITE.history?.description, 'otherWorks.lead': SITE.otherWorks?.lead, 'otherWorks.description': SITE.otherWorks?.description, 'about.text': SITE.about?.text,
+  'history.title': SITE.history?.title, 'history.endText': SITE.history?.endText, 'otherWorks.title': SITE.otherWorks?.title, 'otherWorks.endText': SITE.otherWorks?.endText,
+  'message.lead': SITE.message?.lead, 'track.privateCondLabel': SITE.track?.privateCondLabel, 'track.privateCond': SITE.track?.privateCond }))
   if (!(Array.isArray(v) ? v.length && v.every(t => typeof t === 'string' && t.trim()) : typeof v === 'string' && v.trim())) throw new Error(`サイトの文言がありません: content/site.json の ${k}`);
 const songById = new Map(songs.map(s => [s.id, s]));
 const originOf = new Map();          // song id → album (only confirmed same songs)
@@ -309,7 +311,7 @@ if (!/^[A-Za-z0-9]{6,12}$/.test(MESSAGE.formId)) throw new Error('Formspree form
 const messageSection = `<section class="message" id="message" aria-labelledby="message-title">
     <header class="message-head reveal">
       <p class="section-label"><span class="label-en">Message</span><span class="label-ja" id="message-title"><span class="tw">PIP POPPERに</span><wbr><span class="tw">メッセージ</span></span></p>
-      <p class="message-lead">曲の感想、サイトの感想、ちょっとした一言など、何でもお気軽にどうぞ。<br>いただいたメッセージは本人が読みます。サイト上には公開されません。</p>
+      <p class="message-lead">${SITE.message.lead.map(esc).join('<br>')}</p>
     </header>
     <form class="message-form reveal" id="message-form" novalidate data-endpoint="https://formspree.io/f/${MESSAGE.formId}">
       <div class="field">
@@ -389,7 +391,7 @@ const lyricsHtml = text => text.trim().split(/\n\s*\n/).map(stanza => `<div clas
 // Songs whose audio is not released to the public: a light, PIP POPPER-style note instead of a player.
 const PRIVATE_NOTE = `<div class="listen-private" role="note">
         <p class="lp-status"><span class="lp-key">音源</span><span class="lp-val">一般非公開</span></p>
-        <p class="lp-cond"><span class="lp-key">聴ける可能性がある人の条件</span><span class="lp-val lp-heart">心が広い人。</span></p>
+        <p class="lp-cond"><span class="lp-key">${esc(SITE.track.privateCondLabel)}</span><span class="lp-val lp-heart">${esc(SITE.track.privateCond)}</span></p>
       </div>`;
 const listen = (r, song) => {
   if (song.audioPrivate) return PRIVATE_NOTE;
@@ -699,7 +701,7 @@ ${topbar(r, false)}
 <main class="history">
   <header class="hist-hero">
     <p class="section-label reveal"><span class="label-en">History</span><span class="label-ja">ヒストリー</span></p>
-    <h1 class="hist-title reveal"><span class="tw">アルバムでたどる</span><wbr><span class="tw">PIP POPPER</span></h1>
+    <h1 class="hist-title reveal">${SITE.history.title.map(t => `<span class="tw">${esc(t)}</span>`).join('<wbr>')}</h1>
     <p class="hist-lead reveal">${esc(SITE.history.lead)}</p>
     <nav class="hist-index reveal" aria-label="アルバム">
       ${historyAlbums.map(a => `<a href="#${a.id}"><span class="hi-year">${esc(a.year)}</span><span class="hi-title">${esc(a.title)}</span></a>`).join('\n      ')}
@@ -709,7 +711,7 @@ ${topbar(r, false)}
     ${historyAlbums.map((a, i) => chapter(a, i, historyAlbums)).join('\n    ')}
   </ol>
   <section class="hist-end reveal" aria-label="楽曲一覧へ">
-    <p>過去の曲は、いまの制作手段で再制作しながら、楽曲一覧で公開しています。</p>
+    <p>${esc(SITE.history.endText)}</p>
     <a class="more" href="${sec(r, 'works')}">楽曲一覧を見る <span aria-hidden="true">→</span></a>
     <a class="more" href="${otherUrl(r)}">その他の作品を見る <span aria-hidden="true">→</span></a>
   </section>
@@ -734,7 +736,7 @@ ${topbar(r, false)}
 <main class="history other-works">
   <header class="hist-hero">
     <p class="section-label reveal"><span class="label-en">Other Works</span><span class="label-ja">その他の作品</span></p>
-    <h1 class="hist-title reveal"><span class="tw">ソロ作品と</span><wbr><span class="tw">個別制作の作品</span></h1>
+    <h1 class="hist-title reveal">${SITE.otherWorks.title.map(t => `<span class="tw">${esc(t)}</span>`).join('<wbr>')}</h1>
     <p class="hist-lead reveal">${esc(SITE.otherWorks.lead)}</p>
   </header>
   <ol class="ow-gallery reveal" aria-label="作品">
@@ -749,7 +751,7 @@ ${topbar(r, false)}
     ${otherAlbums.map((a, i) => chapter(a, i, otherAlbums)).join('\n    ')}
   </ol>
   <section class="hist-end reveal" aria-label="ヒストリーへ">
-    <p>PIP POPPER本体のアルバムは、ヒストリーで年代順にたどれます。</p>
+    <p>${esc(SITE.otherWorks.endText)}</p>
     <a class="more" href="${historyUrl(r)}">アルバムの歴史を見る <span aria-hidden="true">→</span></a>
     <a class="more" href="${sec(r, 'works')}">楽曲一覧を見る <span aria-hidden="true">→</span></a>
   </section>

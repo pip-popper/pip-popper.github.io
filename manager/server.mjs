@@ -73,7 +73,16 @@ async function writeJsonAtomic(rel, data, indent, eol = '\n') {
 }
 
 // ── what can be edited (text values only; ids, colours, image settings, links stay as they are) ──
-const TRACK_FIELDS = [['title', '曲名', 'line', true], ['artist', 'アーティスト名', 'line'], ['aiImpression', '紹介文', 'text'], ['lyrics', '歌詞', 'lyrics'], ['background', '制作背景', 'text']];
+const TRACK_FIELDS = [['title', '曲名', 'line', true], ['artist', 'アーティスト名', 'line'], ['aiImpression', '紹介文', 'text'], ['lyrics', '歌詞', 'lyrics'], ['background', '制作背景', 'text'],
+  ['streamingUrl', '配信リンク（Spotify・YouTube・Suno・Apple Music のURL。空欄なら表示なし）', 'url']];
+// the services build.mjs shows as a "…で聴く" button (other sites need a label, which v1 does not edit)
+const LINK_HOSTS = ['open.spotify.com', 'spotify.link', 'suno.com', 'www.suno.com', 'app.suno.ai', 'suno.ai', 'www.youtube.com', 'youtube.com', 'youtu.be', 'music.youtube.com', 'music.apple.com'];
+function linkProblem(v) {
+  let u; try { u = new URL(v); } catch { return 'URLの形が正しくありません（https:// から入力してください）。'; }
+  if (u.protocol !== 'https:') return 'URLは https:// で始まるものだけ登録できます。';
+  if (!LINK_HOSTS.includes(u.hostname)) return 'Spotify・YouTube・Suno・Apple Music のURLだけ登録できます（ほかのサイトはAIに依頼してください）。';
+  return null;
+}
 const ALBUM_SKIP = new Set(['id', 'section', 'accent', 'visual', 'music', 'date', 'listOrder', 'archive', 'titleLines', 'backdrop']);
 const LABEL = {
   title: '作品名', subtitle: '副題', no: '上部の小見出し', kind: '区分', kindLabel: 'タイトル下の一行', year: '目次・一覧の年',
@@ -86,6 +95,7 @@ const LABEL = {
   infoLabel: '作品情報の見出し', infoNote: '作品情報の注記', stripHead: '写真欄', captions: 'キャプション', em: '強調する語',
   afterword: 'あとがき', sign: '署名', story: '本文', statement: 'トップの一文', historyLead: 'トップのヒストリー欄の文',
   description: '検索結果に出る説明文', home: 'トップページ', history: 'ヒストリー', otherWorks: 'その他の作品', about: 'アーティスト紹介',
+  message: 'メッセージ欄', track: '曲ページ（共通）',
 };
 function stringLeaves(value, p = [], skip = new Set()) {
   if (typeof value === 'string') return [p];
@@ -94,6 +104,19 @@ function stringLeaves(value, p = [], skip = new Set()) {
   return [];
 }
 // "title" means the work's name at the top, a song name inside a track list, and a heading elsewhere
+// content/site.json: each text named by where it appears on the site
+const SITE_PAGES = ['home', 'history', 'otherWorks', 'about', 'message', 'track'];
+const SITE_LABEL = {
+  'home.statement': 'トップページの大きな一文（行）', 'home.historyLead': 'トップページ「ヒストリー」欄の説明文',
+  'history.title': 'ヒストリーページの見出し（1行目・2行目。2行目は英字の太い書体）', 'history.lead': 'ヒストリーページの見出しの下の文',
+  'history.description': '検索結果やSNSに出る説明文（ヒストリー）', 'history.endText': 'ヒストリーページのいちばん下の文',
+  'otherWorks.title': 'その他の作品ページの見出し（1行目・2行目。2行目は英字の太い書体）', 'otherWorks.lead': 'その他の作品ページの見出しの下の文',
+  'otherWorks.description': '検索結果やSNSに出る説明文（その他の作品）', 'otherWorks.endText': 'その他の作品ページのいちばん下の文',
+  'about.text': 'アーティスト紹介の本文（段落。1段落目は大きな文字で、検索結果の説明文にも使われる）',
+  'message.lead': 'トップページ「メッセージ」欄の説明文（行）',
+  'track.privateCondLabel': '音源非公開の曲ページ：条件の見出し', 'track.privateCond': '音源非公開の曲ページ：条件の本文',
+};
+const siteLabel = (id, p) => (SITE_LABEL[`${id}.${p[0]}`] ?? labelOf(p)) + (typeof p[1] === 'number' ? ` › ${p[1] + 1}` : '');
 const labelOf = p => p.map((k, i) => typeof k === 'number' ? `${k + 1}` : k === 'title' && i > 0 ? (['tracks', 'works'].includes(p[i - 2]) ? (p[i - 2] === 'works' ? '作品名' : '曲名') : '見出し') : (LABEL[k] ?? k)).join(' › ');
 const getAt = (o, p) => p.reduce((v, k) => v?.[k], o);
 function setAt(o, p, value) { const last = p[p.length - 1]; const parent = getAt(o, p.slice(0, -1)); if (parent == null || !(last in parent)) throw new Error('項目が見つかりません'); parent[last] = value; }
@@ -110,7 +133,7 @@ async function listItems() {
   tracks.sort((a, b) => b.order - a.order);
   const { data: { albums } } = await readJson('albums/albums.json');
   const al = albums.map(a => ({ type: 'album', id: a.id, title: a.title, year: a.year, group: a.section === 'other' ? 'other' : 'history' }));
-  const site = ['home', 'history', 'otherWorks', 'about'].map(id => ({ type: 'site', id, title: LABEL[id] }));
+  const site = SITE_PAGES.map(id => ({ type: 'site', id, title: LABEL[id] }));
   return { tracks, history: al.filter(a => a.group === 'history'), other: al.filter(a => a.group === 'other'), site };
 }
 function fileOf(type, id) {
@@ -125,7 +148,7 @@ async function loadItem(type, id) {
   let base, fields;
   if (type === 'track') {
     base = [];
-    fields = TRACK_FIELDS.filter(([k]) => k in f.data && (f.data[k] === null || typeof f.data[k] === 'string'))
+    fields = TRACK_FIELDS.filter(([k]) => k in f.data && (f.data[k] === null || typeof f.data[k] === 'string') && !(k === 'streamingUrl' && f.data.audioRelease === 'private'))
       .map(([k, label, kind, required]) => ({ path: [k], label, kind, required: !!required, nullable: f.data[k] === null || !required, value: f.data[k] ?? '' }));
   } else if (type === 'album') {
     const i = f.data.albums.findIndex(a => a.id === id);
@@ -138,7 +161,7 @@ async function loadItem(type, id) {
   } else {
     if (!(id in f.data)) throw new Error('対象が見つかりません');
     base = [id];
-    fields = stringLeaves(f.data[id]).map(p => ({ path: p, label: labelOf(p), kind: kindOf(p, getAt(f.data[id], p)), required: true, nullable: false, value: getAt(f.data[id], p) }));
+    fields = stringLeaves(f.data[id]).map(p => ({ path: p, label: siteLabel(id, p), kind: kindOf(p, getAt(f.data[id], p)), required: true, nullable: false, value: getAt(f.data[id], p) }));
   }
   const title = type === 'track' ? f.data.title : type === 'album' ? f.data.albums[base[1]].title : LABEL[id];
   return { type, id, file: rel, rev: f.rev, title, fields, base };
@@ -157,7 +180,8 @@ async function saveItem({ type, id, rev, changes }) {
     const value = c.value.replace(/\r\n?/g, '\n');
     if (fd.required && !value.trim()) return { status: 400, body: { error: `「${fd.label}」は空にできません。` } };
     if (value.length > 20000) return { status: 400, body: { error: `「${fd.label}」が長すぎます。` } };
-    setAt(f.data, [...item.base, ...c.path], value === '' && fd.nullable && type === 'track' ? null : value);
+    if (fd.kind === 'url' && value.trim() && linkProblem(value.trim())) return { status: 400, body: { error: linkProblem(value.trim()) } };
+    setAt(f.data, [...item.base, ...c.path], (fd.kind === 'url' ? value.trim() : value) === '' && fd.nullable && type === 'track' ? null : (fd.kind === 'url' ? value.trim() : value));
   }
   const newRev = await writeJsonAtomic(rel, f.data, f.indent, f.eol);
   return { status: 200, body: { ok: true, rev: newRev } };
@@ -179,7 +203,7 @@ function runBuild(outDir) {
 }
 const pageOf = (type, id, albumGroup) => type === 'track' ? `tracks/${id}/index.html`
   : type === 'album' ? `${albumGroup === 'other' ? 'other-works' : 'history'}/index.html#${id}`
-  : ({ home: 'index.html', history: 'history/index.html', otherWorks: 'other-works/index.html', about: 'about/index.html' })[id] ?? 'index.html';
+  : ({ home: 'index.html', history: 'history/index.html', otherWorks: 'other-works/index.html', about: 'about/index.html', message: 'index.html#message', track: 'tracks/itoshi-no-honey/index.html' })[id] ?? 'index.html';
 
 // ── unpublished changes, field by field ───────────────────────────────
 async function headJson(rel) { const r = git(['show', `HEAD:${rel}`]); return r.ok ? JSON.parse(r.out) : null; }
@@ -199,7 +223,7 @@ async function describeChanges() {
     walk(before, now, []);
     const named = diffs.map(d => {
       if (file === 'albums/albums.json') { const al = now.albums[d.path[1]]; return { ...d, item: `アルバム『${al?.title ?? '?'}』`, label: labelOf(d.path.slice(2)) }; }
-      if (file === 'content/site.json') return { ...d, item: `サイトの文言（${LABEL[d.path[0]] ?? d.path[0]}）`, label: labelOf(d.path.slice(1)) };
+      if (file === 'content/site.json') return { ...d, item: `サイトの文言（${LABEL[d.path[0]] ?? d.path[0]}）`, label: siteLabel(d.path[0], d.path.slice(1)) };
       return { ...d, item: `曲「${now.title}」`, label: (TRACK_FIELDS.find(t => t[0] === d.path[0]) ?? [, d.path.join('.')])[1] };
     });
     items.push(...named);
@@ -208,8 +232,17 @@ async function describeChanges() {
 }
 
 // ── publish checks ────────────────────────────────────────────────────
+// saved points on this PC that GitHub does not have yet, split into the manager's own and everything else
+function unpushed() {
+  const r = git(['log', '--format=%s', `${REMOTE}/${BRANCH}..HEAD`]);
+  const subjects = r.ok && r.out ? r.out.split('\n') : [];
+  return { tool: subjects.filter(s => s.startsWith(COMMIT_PREFIX)).length, other: subjects.filter(s => !s.startsWith(COMMIT_PREFIX)).length };
+}
 function publishProblems({ fetch = true } = {}) {
   const problems = [];
+  // publishing pushes HEAD: never carry an AI's not-yet-approved work to the live site with it
+  const up = unpushed();
+  if (up.other) problems.push(`AI等の作業による、まだ公開していない保存点が ${up.other} 件あります。担当者の公開が終わるまで、管理ツールからは公開できません。`);
   if (currentBranch() !== BRANCH) problems.push(`作業中のブランチが ${BRANCH} ではありません。`);
   if (normUrl(remoteUrl()) !== normUrl(EXPECTED_REMOTE)) problems.push('送信先が公式サイトのリポジトリではありません。');
   const other = changedFiles().filter(f => !DATA_RE.test(f.file));
@@ -322,9 +355,9 @@ const server = http.createServer(async (req, res) => {
     const route = `${req.method} ${url.pathname}`;
     if (route === 'GET /api/state') {
       const ch = await describeChanges();
-      const ahead = git(['rev-list', '--count', `${REMOTE}/${BRANCH}..HEAD`]);
+      const up = unpushed();
       return send(res, 200, { list: await listItems(), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
-        pendingPush: ahead.ok ? Number(ahead.out) : 0, liveUrl: LIVE_URL, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
+        pendingPush: up.tool, otherUnpushed: up.other, liveUrl: LIVE_URL, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
     }
     if (route === 'GET /api/item') return send(res, 200, await loadItem(url.searchParams.get('type'), url.searchParams.get('id')));
     if (route === 'GET /api/history') return send(res, 200, { history: history() });

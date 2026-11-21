@@ -50,6 +50,7 @@
     s.textContent = state.pendingPush ? `GitHubへの送信待ちが ${state.pendingPush} 件あります（「公開する」で送信をやり直せます）。`
       : n ? `公開していない変更が ${n} 件あります。` : '公開していない変更はありません。';
     if (state.changes.other.length) s.textContent += `（管理ツール以外の変更 ${state.changes.other.length} 件があるため、今は公開できません）`;
+    if (state.otherUnpushed) { s.className = 'status dirty'; s.textContent += `（AI等の作業でまだ公開していない保存点が ${state.otherUnpushed} 件あるため、今は公開できません。保存・プレビュー・破棄は使えます）`; }
     $('#btn-publish').disabled = !(n || state.pendingPush);
     $('#btn-discard').disabled = !n;
     renderLists();
@@ -71,8 +72,21 @@
       }, el('span', { textContent: `${mark(it) ? '● ' : ''}${it.title}` }), el('span', { className: 'yr', textContent: it.year ?? '' })))))];
     };
     $('#lists').replaceChildren(...group('楽曲', state.list.tracks), ...group('HISTORY（アルバム）', state.list.history),
-      ...group('その他の作品', state.list.other), ...group('サイトの文言', state.list.site));
+      ...group('その他の作品', state.list.other), ...group('サイトの文言', state.list.site),
+      ...(q ? [] : [el('h2', { textContent: '固定（変更はAIに依頼）' }), el('ul', { className: 'fixed' }, ...FIXED.map(([t, why]) => el('li', { title: why }, el('span', { textContent: t }), el('small', { textContent: why }))))]));
   }
+  // what this tool does not change: kept fixed, ask an AI (Claude Code / ChatGPT Work) when a change is really needed
+  const FIXED = [
+    ['ページの構成・デザイン', 'レイアウト、色、文字の大きさ、動き（演出）'],
+    ['アルバムの特設デザイン・画像', '作品ごとの世界観。ジャケット・背景の画像'],
+    ['メニュー・ボタン・欄の名前', '「最新楽曲」「楽曲一覧」「AIの感想」など'],
+    ['メッセージの送信フォーム', '入力欄の名前・送信の仕組み'],
+    ['曲・アルバムの追加・削除・並び順', '管理ツール v2 で対応予定'],
+    ['曲の公開日・掲載順', '「最新楽曲」の選ばれ方に関わるため'],
+    ['上記以外のリンク・ダウンロード', 'Spotify・YouTube・Suno・Apple Music 以外の配信先、ダウンロード'],
+    ['サイト全体の検索用説明文', '曲数が自動で入る文のため'],
+    ['PRIVATE（音源）', 'PRIVATEの管理画面で操作します'],
+  ];
 
   async function openItem(type, id) {
     if (!await guard()) return;
@@ -87,7 +101,8 @@
       el('button', { type: 'button', textContent: 'プレビュー', onclick: preview }));
     const fields = current.fields.map((f, i) => {
       const id = `f${i}`;
-      const input = f.kind === 'line' ? el('input', { id, type: 'text', value: f.value }) : el('textarea', { id, value: f.value, className: f.kind === 'lyrics' ? 'lyrics' : '' });
+      const input = f.kind === 'url' ? el('input', { id, type: 'url', value: f.value, placeholder: 'https://open.spotify.com/…' })
+        : f.kind === 'line' ? el('input', { id, type: 'text', value: f.value }) : el('textarea', { id, value: f.value, className: f.kind === 'lyrics' ? 'lyrics' : '' });
       if (f.kind === 'text') input.rows = Math.min(14, Math.max(3, Math.ceil(f.value.length / 60) + (f.value.match(/\n/g) || []).length));
       const box = el('div', { className: 'field' }, el('label', { htmlFor: id, textContent: f.label }, ...(f.required ? [el('span', { className: 'req', textContent: '（必須）' })] : [])), input);
       input.addEventListener('input', () => {

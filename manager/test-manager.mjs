@@ -49,7 +49,7 @@ try {
 
   console.log('2. 一覧と読み込み');
   let st = (await call('GET', '/api/state')).data;
-  ok(st.list.tracks.length === 25 && st.list.history.length === 16 && st.list.other.length === 6 && st.list.site.length === 4, `一覧：曲${st.list.tracks.length}・HISTORY${st.list.history.length}・その他${st.list.other.length}・文言${st.list.site.length}`);
+  ok(st.list.tracks.length === 25 && st.list.history.length === 16 && st.list.other.length === 6 && st.list.site.length === 6, `一覧：曲${st.list.tracks.length}・HISTORY${st.list.history.length}・その他${st.list.other.length}・文言${st.list.site.length}`);
   ok(st.changes.items.length === 0 && st.remoteOk && st.branch === 'main', '変更なし・送信先とブランチが正しい');
   const pts = (await call('GET', '/api/item?type=album&id=place-to-stay')).data;
   const fIdx = pts.fields.findIndex(f => f.value === 'Showtime2010');
@@ -89,6 +89,12 @@ try {
   ok(r.status === 409 && /管理ツール以外の変更/.test(r.data.error), 'ほかの作業の変更があると公開を拒否');
   g(WORK, 'checkout', '--', 'build.mjs');
   ok((await call('POST', '/api/publish', { summary: 't' })).status === 400, '確認なしの公開は拒否');
+  g(WORK, 'commit', '-q', '--allow-empty', '-m', 'AI work not yet approved');
+  st = (await call('GET', '/api/state')).data;
+  r = await call('POST', '/api/publish', { confirm: true, summary: 't' });
+  ok(st.otherUnpushed === 1 && st.pendingPush === 0 && r.status === 409 && /AI等の作業/.test(r.data.error), 'AI等の未公開の保存点があると公開を拒否（一緒に送らない）');
+  ok((await call('POST', '/api/push-pending', { confirm: true })).status !== 200, '送信のやり直しでもAI等の保存点は送らない');
+  g(WORK, 'reset', '-q', '--soft', 'HEAD~1');
   g(WORK, 'remote', 'set-url', 'origin', path.join(TMP, 'nowhere.git'));
   r = await call('POST', '/api/publish', { confirm: true, summary: 't' });
   ok(r.status === 409 && /送信先/.test(r.data.error), '送信先が違うと公開を拒否');
@@ -136,6 +142,47 @@ try {
   r = await call('POST', '/api/discard', { confirm: true });
   ok(r.status === 200 && r.data.count === 2 && read('tracks/job-hunting/track.json') === tBefore && status() === '', '破棄で2ファイルとも元通り');
   ok(existsSync(path.join(WORK, '.manager', 'backup')), '保存・破棄の前の内容は .manager/backup に残る');
+
+  console.log('8b. 追加した文言（見出し・末尾の文・メッセージ欄・非公開の注記）');
+  st = (await call('GET', '/api/state')).data;
+  ok(['home', 'history', 'otherWorks', 'about', 'message', 'track'].every(id => st.list.site.some(x => x.id === id)), 'サイトの文言に6項目（メッセージ欄・曲ページ（共通）を含む）');
+  const hist = (await call('GET', '/api/item?type=site&id=history')).data;
+  const hLead = hist.fields.find(f => f.value.startsWith('1999年から2001年へ'));
+  const hTitle = hist.fields.find(f => f.value === 'アルバムでたどる');
+  const hEnd = hist.fields.find(f => f.value.startsWith('過去の曲は'));
+  ok(!!hLead && /見出しの下/.test(hLead.label) && !!hTitle && !!hEnd, 'ヒストリーの冒頭文「1999年から2001年へ」・見出し・末尾の文が編集項目にある');
+  const siteBefore = read('content/site.json');
+  r = await call('POST', '/api/item', { type: 'site', id: 'history', rev: hist.rev, changes: [{ path: hLead.path, value: 'テスト冒頭文' }, { path: hTitle.path, value: 'テスト見出し' }, { path: hEnd.path, value: 'テスト末尾' }] });
+  ok(r.status === 200, 'ヒストリーの3項目をまとめて保存');
+  const msg = (await call('GET', '/api/item?type=site&id=message')).data;
+  ok((await call('POST', '/api/item', { type: 'site', id: 'message', rev: msg.rev, changes: [{ path: msg.fields[1].path, value: 'テスト2行目' }] })).status === 200, 'メッセージ欄の説明文を保存');
+  const trk = (await call('GET', '/api/item?type=site&id=track')).data;
+  const cond = trk.fields.find(f => f.value === '心が広い人。');
+  ok((await call('POST', '/api/item', { type: 'site', id: 'track', rev: trk.rev, changes: [{ path: cond.path, value: 'テスト条件' }] })).status === 200, '非公開の注記を保存');
+  r = await call('POST', '/api/preview', { type: 'site', id: 'history' });
+  const ph = read('.manager/preview/history/index.html');
+  ok(r.data.url === '/preview/history/index.html' && ph.includes('<span class="tw">テスト見出し</span><wbr><span class="tw">PIP POPPER</span>') && ph.includes('テスト冒頭文') && ph.includes('<p>テスト末尾</p>'), 'プレビューのヒストリーに見出し・冒頭文・末尾の文が反映');
+  ok(read('.manager/preview/index.html').includes('何でもお気軽にどうぞ。<br>テスト2行目</p>'), 'プレビューのトップのメッセージ欄に反映');
+  ok(read('.manager/preview/tracks/itoshi-no-honey/index.html').includes('lp-heart">テスト条件</span>'), 'プレビューの音源非公開の曲ページの注記に反映');
+  st = (await call('GET', '/api/state')).data;
+  ok(st.changes.items.length === 5 && st.changes.items.some(c => /ヒストリーページの見出しの下の文/.test(c.label)), '変更一覧に5か所（場所の名前付き）');
+  r = await call('POST', '/api/discard', { confirm: true });
+  ok(r.status === 200 && read('content/site.json') === siteBefore && status() === '', '破棄で site.json が元通り');
+
+  console.log('8c. 配信リンク');
+  const jh = (await call('GET', '/api/item?type=track&id=job-hunting')).data;
+  const lk = jh.fields.find(f => f.path[0] === 'streamingUrl');
+  ok(!!lk && lk.kind === 'url' && lk.value === '', '配信リンクの欄がある（空）');
+  ok(!(await call('GET', '/api/item?type=track&id=itoshi-no-honey')).data.fields.some(f => f.path[0] === 'streamingUrl'), '音源非公開の曲には配信リンクの欄を出さない');
+  ok((await call('POST', '/api/item', { type: 'track', id: 'job-hunting', rev: jh.rev, changes: [{ path: lk.path, value: 'http://open.spotify.com/track/x' }] })).status === 400, 'http のURLは拒否');
+  ok((await call('POST', '/api/item', { type: 'track', id: 'job-hunting', rev: jh.rev, changes: [{ path: lk.path, value: 'https://example.com/x' }] })).status === 400, '対応外のサイトは拒否');
+  const jhBefore = read('tracks/job-hunting/track.json');
+  ok((await call('POST', '/api/item', { type: 'track', id: 'job-hunting', rev: jh.rev, changes: [{ path: lk.path, value: ' https://open.spotify.com/track/TEST123 ' }] })).status === 200, 'Spotify のURLを保存（前後の空白は除く）');
+  ok(JSON.parse(read('tracks/job-hunting/track.json')).streamingUrl === 'https://open.spotify.com/track/TEST123', '保存された値が正しい');
+  r = await call('POST', '/api/preview', { type: 'track', id: 'job-hunting' });
+  ok(r.status === 200 && read('.manager/preview/tracks/job-hunting/index.html').includes('data-service="spotify" href="https://open.spotify.com/track/TEST123"'), 'プレビューの曲ページに「Spotifyで聴く」が出る');
+  const jh2 = (await call('GET', '/api/item?type=track&id=job-hunting')).data;
+  ok((await call('POST', '/api/item', { type: 'track', id: 'job-hunting', rev: jh2.rev, changes: [{ path: lk.path, value: '' }] })).status === 200 && read('tracks/job-hunting/track.json') === jhBefore, '空欄にすると null に戻り、ファイルは元と同じ');
 
   console.log('9. 終了');
   ok((await call('POST', '/api/quit')).status === 200, '終了できる');
