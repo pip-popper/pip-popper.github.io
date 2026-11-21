@@ -4,6 +4,7 @@ import { SITE, MAX_PASSWORD, HttpError, html, json, text, redirect, sameOrigin, 
   secretVersion, guard, connection, lockMessage, wait } from './common.js';
 import { loadCatalog, commit, storeUpload, cleanup, RETIRE_GRACE, RESTORE_LIMIT, MAX_UPLOAD } from './catalog.js';
 import { adminLoginPage, adminPage, messagePage } from './pages.js';
+import { loadCredential, saveCredential, removeCredential, MIN_PASSWORD } from './credential.js';
 import { serveAudio } from './audio.js';
 
 const ADMIN_COOKIE = 'pp_admin';
@@ -47,8 +48,48 @@ async function done(env, extra = {}) {
   return json(200, { ok: true, ...extra, ...view((await loadCatalog(env)).cat) });
 }
 
+// Invitee password (manager tool). Besides the admin cookie, the screen header and the same-site check that every
+// admin API call needs, each change asks for the administrator password again and counts every attempt.
+const RESTORE_WORDS = '旧パスワードに戻す';
+async function passwordApi(request, env, path) {
+  const method = request.method;
+  if (path === 'private-password' && method === 'GET') {
+    const cred = await loadCredential(env);
+    return json(200, { mode: cred ? 'r2' : 'secret', changedAt: cred?.changedAt ?? null });
+  }
+  if (method !== 'POST' || (path !== 'private-password' && path !== 'private-password/restore')) return null;
+  const tries = guard(env, 'pw-change', 'pwChange');
+  const mine = guard(env, `admin:${connection(request)}`, 'admin');
+  const all = guard(env, 'admin-all', 'adminAll');
+  const states = [await tries('check'), await mine('check'), await all('check')];
+  if (states.some(s => s.locked)) throw new HttpError(429, lockMessage(Math.max(...states.map(s => s.retryAfter))));
+  await tries('fail');                                          // every attempt counts toward pwChange (success or not)
+  const body = await bodyJson(request);
+  const adminPassword = typeof body.adminPassword === 'string' ? body.adminPassword : '';
+  if (!adminPassword || adminPassword.length > MAX_PASSWORD || !await secretMatches(env, adminPassword, env.ADMIN_PASSWORD, 'admin-check')) {
+    await mine('fail'); await all('fail');
+    await wait(1000);
+    throw new HttpError(403, '管理者パスワードが違います。');
+  }
+  if (path === 'private-password/restore') {
+    if (body.confirm !== RESTORE_WORDS) throw new HttpError(400, `確認のため「${RESTORE_WORDS}」と入力してください。`);
+    if (!await loadCredential(env)) throw new HttpError(409, 'すでにCloudflareに登録されたパスワードを使っています。');
+    await removeCredential(env);
+    if (await loadCredential(env)) throw new HttpError(500, '元に戻せませんでした。今のパスワードのままです。');
+    return json(200, { ok: true, mode: 'secret', message: 'Cloudflareに登録されたパスワードに戻しました。招待者は全員、入り直しになります。' });
+  }
+  const pw = typeof body.newPassword === 'string' ? body.newPassword : '';
+  if (pw.length < MIN_PASSWORD || pw.length > MAX_PASSWORD) throw new HttpError(400, `新しいパスワードは${MIN_PASSWORD}〜${MAX_PASSWORD}文字にしてください。`);
+  if (pw !== pw.trim()) throw new HttpError(400, '新しいパスワードの最初と最後に空白を入れないでください。');
+  if (await secretMatches(env, pw, env.ADMIN_PASSWORD, 'admin-check')) throw new HttpError(400, '管理者パスワードとは別のパスワードにしてください。');
+  const saved = await saveCredential(env, pw);
+  return json(200, { ok: true, mode: 'r2', changedAt: saved.changedAt, message: 'パスワードを変更しました。招待者は全員、新しいパスワードで入り直しになります。' });
+}
+
 async function api(request, env, url, path) {
   const method = request.method;
+  const pw = await passwordApi(request, env, path);
+  if (pw) return pw;
   if (path === 'catalog' && method === 'GET') return json(200, view((await loadCatalog(env)).cat));
   if (path === 'works' && method === 'GET') return json(200, { works: await works(env) });
 

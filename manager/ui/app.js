@@ -73,6 +73,7 @@
     };
     $('#lists').replaceChildren(...group('楽曲', state.list.tracks), ...group('HISTORY（アルバム）', state.list.history),
       ...group('その他の作品', state.list.other), ...group('サイトの文言', state.list.site),
+      ...(q ? [] : [el('h2', { textContent: 'PRIVATE管理' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen), onclick: openPrivate }, el('span', { textContent: 'PRIVATEのパスワード' }))))]),
       ...(q ? [] : [el('h2', { textContent: '固定（変更はAIに依頼）' }), el('ul', { className: 'fixed' }, ...FIXED.map(([t, why]) => el('li', { title: why }, el('span', { textContent: t }), el('small', { textContent: why }))))]));
   }
   // what this tool does not change: kept fixed, ask an AI (Claude Code / ChatGPT Work) when a change is really needed
@@ -85,14 +86,14 @@
     ['曲の公開日・掲載順', '「最新楽曲」の選ばれ方に関わるため'],
     ['上記以外のリンク・ダウンロード', 'Spotify・YouTube・Suno・Apple Music 以外の配信先、ダウンロード'],
     ['サイト全体の検索用説明文', '曲数が自動で入る文のため'],
-    ['PRIVATE（音源）', 'PRIVATEの管理画面で操作します'],
+    ['PRIVATEの音源', '曲の追加・差し替えはPRIVATEの管理画面で操作します（パスワードは上の「PRIVATE管理」）'],
   ];
 
   async function openItem(type, id) {
     if (!await guard()) return;
     try { current = await api('GET', `/api/item?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`); }
     catch (e) { return toast(e.message, 'bad'); }
-    edits = new Map();
+    edits = new Map(); privateOpen = false;
     renderLists();
     const kind = { track: '楽曲', album: 'アルバム', site: 'サイトの文言' }[type];
     const unsavedEl = el('span', { className: 'unsaved' });
@@ -117,6 +118,57 @@
     const tip = el('p', { className: 'note', textContent: type === 'album' ? '作品のデザイン・画像・項目の数は変わりません。文字だけを直せます。改行はそのまま表示に反映されない箇所があります（プレビューで確認してください）。' : '文字だけを直せます。デザインは変わりません。' });
     $('#main').replaceChildren(head, tip, ...fields);
     $('#main').scrollTop = 0;
+  }
+
+  // ── PRIVATE: invitee password. Typed passwords are cleared when the work ends (success or not) and never stored. ──
+  let privateOpen = false;
+  async function openPrivate() {
+    if (!await guard()) return;
+    current = null; edits = new Map(); privateOpen = true;
+    renderLists();
+    const pw = (id, label, auto) => { const input = el('input', { id, type: 'password', autocomplete: auto, spellcheck: false });
+      return [el('div', { className: 'field' }, el('label', { htmlFor: id, textContent: label }), input), input]; };
+    const [fNew, iNew] = pw('pp-new', '新しいパスワード（8〜200文字）', 'new-password');
+    const [fConf, iConf] = pw('pp-conf', '新しいパスワード（確認用・もう一度）', 'new-password');
+    const [fAdm, iAdm] = pw('pp-adm', '管理者パスワード（PRIVATEの管理画面に入るときのもの）', 'off');
+    const result = el('p', { className: 'note', role: 'status', ariaLive: 'polite' });
+    const btn = el('button', { type: 'button', className: 'primary', textContent: 'パスワードを変更' });
+    const clear = (...inputs) => inputs.forEach(i => { i.value = ''; });
+    btn.onclick = async () => {
+      if (!iNew.value || iNew.value !== iConf.value) { result.className = 'err'; result.textContent = '新しいパスワードと確認用が一致しません。'; return; }
+      const ok = await ask('PRIVATEのパスワードを変更します', [el('p', { textContent: '変更すると、いま入室している招待者は全員、新しいパスワードで入り直しになります。' }),
+        el('p', { className: 'warn', textContent: '新しいパスワードを招待者に伝える方法を確認してから変更してください。' })],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '変更する', primary: true }]);
+      if (ok !== 'go') return;
+      btn.disabled = true; result.className = 'note'; result.textContent = '変更しています…';
+      try {
+        const r = await api('POST', '/api/private/password', { newPassword: iNew.value, confirmPassword: iConf.value, adminPassword: iAdm.value });
+        result.className = 'done'; result.textContent = `✔ 変更が完了しました（${new Date(r.changedAt ?? Date.now()).toLocaleString('ja-JP')}）。${r.message ?? ''}`;
+      } catch (e) { result.className = 'err'; result.textContent = `変更できませんでした：${e.message}`; }
+      finally { clear(iNew, iConf, iAdm); btn.disabled = false; }
+    };
+    const [fRAdm, iRAdm] = pw('pp-radm', '管理者パスワード', 'off');
+    const iWords = el('input', { id: 'pp-words', type: 'text', autocomplete: 'off', placeholder: '旧パスワードに戻す' });
+    const rResult = el('p', { className: 'note', role: 'status', ariaLive: 'polite' });
+    const rBtn = el('button', { type: 'button', textContent: 'Cloudflareのパスワードに戻す' });
+    rBtn.onclick = async () => {
+      const ok = await ask('Cloudflareに登録されたパスワードに戻します', [el('p', { textContent: '管理ツールで設定したパスワードは使えなくなり、Cloudflareに登録されている以前のパスワードに戻ります。招待者は全員、入り直しになります。' })],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '戻す' }]);
+      if (ok !== 'go') return;
+      rBtn.disabled = true; rResult.className = 'note'; rResult.textContent = '戻しています…';
+      try { const r = await api('POST', '/api/private/restore', { adminPassword: iRAdm.value, confirm: iWords.value.trim() }); rResult.className = 'done'; rResult.textContent = `✔ ${r.message ?? '戻しました。'}`; }
+      catch (e) { rResult.className = 'err'; rResult.textContent = `戻せませんでした：${e.message}`; }
+      finally { clear(iRAdm, iWords); rBtn.disabled = false; }
+    };
+    $('#main').replaceChildren(
+      el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: 'PRIVATE管理' }), 'PRIVATEのパスワード')),
+      el('p', { className: 'note', textContent: `招待者がPRIVATE（${state?.privateUrl ?? ''}）に入るときのパスワードを変えます。変更は直ちに反映され、入力したパスワードはこの画面にもパソコンにも残りません。` }),
+      fNew, fConf, fAdm, el('div', { className: 'field' }, btn), result,
+      el('details', { className: 'restore' }, el('summary', { textContent: '以前のパスワード（Cloudflareに登録したもの）に戻す' }),
+        el('p', { className: 'note', textContent: '管理ツールで設定したパスワードをやめて、Cloudflareのダッシュボードに登録されているパスワードに戻します。通常は使いません。確認のため、下の欄に「旧パスワードに戻す」と入力してください。' }),
+        el('div', { className: 'field' }, el('label', { htmlFor: 'pp-words', textContent: '確認の言葉' }), iWords), fRAdm, el('div', { className: 'field' }, rBtn), rResult));
+    $('#main').scrollTop = 0;
+    window.addEventListener('pagehide', () => clear(iNew, iConf, iAdm, iRAdm, iWords), { once: true });
   }
 
   async function save() {

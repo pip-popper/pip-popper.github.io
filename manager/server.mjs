@@ -29,6 +29,12 @@ const BRANCH = 'main';
 const REMOTE = 'origin';
 const EXPECTED_REMOTE = process.env.PP_MANAGER_EXPECTED_REMOTE ?? 'https://github.com/pip-popper/pip-popper.github.io.git';
 const LIVE_URL = 'https://pip-popper.github.io/';
+// PRIVATE (Cloudflare Worker). HTTPS only; plain http is accepted only for the local imitation used by the tests.
+const PRIVATE_URL = (() => {
+  const u = new URL(process.env.PP_MANAGER_PRIVATE_URL ?? 'https://pip-popper-private.pip-popper-private.workers.dev/');
+  if (u.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(u.hostname)) throw new Error('PRIVATE must be https');
+  return u;
+})();
 const COMMIT_PREFIX = '[管理ツール]';
 const TOKEN = randomBytes(24).toString('hex');
 const WORK = path.join(ROOT, '.manager');            // previews, backups, log (ignored by .gitignore: only listed files are tracked)
@@ -324,6 +330,42 @@ async function discard() {
   return r.ok ? { status: 200, body: { ok: true, count: files.length } } : { status: 500, body: { error: '元に戻せませんでした。' } };
 }
 
+// ── PRIVATE: invitee password (2026-11-22) ────────────────────────────
+// The administrator password typed on the screen is used only inside one call: sign in to the PRIVATE admin screen
+// (same as the web form, with its lockout), call the change API (which checks the administrator password again and
+// counts attempts), then sign out. Nothing is stored, logged or kept in memory afterwards. No Cloudflare API token.
+async function privateCall(adminPassword, apiPath, payload) {
+  if (typeof adminPassword !== 'string' || !adminPassword) return { status: 400, body: { error: '管理者パスワードを入力してください。' } };
+  let cookie = null;
+  try {
+    const login = await fetch(new URL('admin/login', PRIVATE_URL), { method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(20000),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ password: adminPassword }) });
+    if (login.status === 401) return { status: 403, body: { error: '管理者パスワードが違います。' } };
+    if (login.status === 429) return { status: 429, body: { error: '入力の回数が多すぎるため、一時的にロックされています。しばらく時間をおいてからお試しください。' } };
+    if (login.status === 503) return { status: 503, body: { error: 'PRIVATEの管理画面が準備中です（管理者パスワードがCloudflareに設定されていません）。' } };
+    cookie = login.status === 303 ? (login.headers.getSetCookie?.() ?? []).map(c => c.split(';')[0]).find(c => /^pp_admin=.+/.test(c)) : null;
+    if (!cookie) return { status: 502, body: { error: 'PRIVATEに入室できませんでした。時間をおいてお試しください。' } };
+    const r = await fetch(new URL(`admin/api/${apiPath}`, PRIVATE_URL), { method: 'POST', signal: AbortSignal.timeout(30000),
+      headers: { Cookie: cookie, 'X-PP-Admin': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, adminPassword }) });
+    let data = {}; try { data = await r.json(); } catch {}
+    if (r.status === 404) return { status: 501, body: { error: 'PRIVATE側がまだこの機能に対応していません（Cloudflareへの更新前）。今のパスワードのままです。' } };
+    return r.ok ? { status: 200, body: { ok: true, mode: data.mode, changedAt: data.changedAt ?? null, message: data.message } }
+      : { status: r.status, body: { error: data.error ?? 'PRIVATEで処理できませんでした。今のパスワードのままです。' } };
+  } catch {
+    return { status: 502, body: { error: 'PRIVATEに接続できませんでした（インターネット接続を確認してください）。今のパスワードのままです。' } };
+  } finally {
+    if (cookie) fetch(new URL('admin/logout', PRIVATE_URL), { method: 'POST', redirect: 'manual', headers: { Cookie: cookie } }).catch(() => {});
+  }
+}
+async function changePrivatePassword({ newPassword, confirmPassword, adminPassword }) {
+  if (typeof newPassword !== 'string' || typeof confirmPassword !== 'string') return { status: 400, body: { error: '新しいパスワードを入力してください。' } };
+  if (newPassword !== confirmPassword) return { status: 400, body: { error: '新しいパスワードと確認用が一致しません。' } };
+  if (newPassword.length < 8 || newPassword.length > 200) return { status: 400, body: { error: '新しいパスワードは8〜200文字にしてください。' } };
+  if (newPassword !== newPassword.trim()) return { status: 400, body: { error: '新しいパスワードの最初と最後に空白を入れないでください。' } };
+  return privateCall(adminPassword, 'private-password', { newPassword });
+}
+const restorePrivatePassword = ({ adminPassword, confirm }) => privateCall(adminPassword, 'private-password/restore', { confirm });
+
 // ── HTTP ──────────────────────────────────────────────────────────────
 async function log(line) { try { await mkdir(WORK, { recursive: true }); await writeFile(path.join(WORK, 'manager.log'), `${new Date().toISOString()} ${line}\n`, { flag: 'a' }); } catch {} }
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.jpg': 'image/jpeg', '.png': 'image/png', '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' };
@@ -350,14 +392,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       if (!(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: '形式が正しくありません。' });
       let raw = ''; for await (const c of req) { raw += c; if (raw.length > 2e6) return send(res, 413, { error: '大きすぎます。' }); }
-      body = JSON.parse(raw || '{}');
+      try { body = JSON.parse(raw || '{}'); } catch { return send(res, 400, { error: '形式が正しくありません。' }); }   // never logged: a body may hold a password
     }
     const route = `${req.method} ${url.pathname}`;
     if (route === 'GET /api/state') {
       const ch = await describeChanges();
       const up = unpushed();
       return send(res, 200, { list: await listItems(), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
-        pendingPush: up.tool, otherUnpushed: up.other, liveUrl: LIVE_URL, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
+        pendingPush: up.tool, otherUnpushed: up.other, liveUrl: LIVE_URL, privateUrl: PRIVATE_URL.href, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
     }
     if (route === 'GET /api/item') return send(res, 200, await loadItem(url.searchParams.get('type'), url.searchParams.get('id')));
     if (route === 'GET /api/history') return send(res, 200, { history: history() });
@@ -379,13 +421,17 @@ const server = http.createServer(async (req, res) => {
       else if (route === 'POST /api/push-pending') r = body.confirm === true ? await pushPending() : { status: 400, body: { error: '確認が必要です。' } };
       else if (route === 'POST /api/undo') r = await undo(body);
       else if (route === 'POST /api/check-publish') r = { status: 200, body: { problems: publishProblems() } };
+      else if (route === 'POST /api/private/password') r = await changePrivatePassword(body);
+      else if (route === 'POST /api/private/restore') r = await restorePrivatePassword(body);
       else if (route === 'POST /api/quit') { send(res, 200, { ok: true }); setTimeout(() => process.exit(0), 200); return; }
       else r = { status: 404, body: { error: '見つかりません。' } };
-      if (r.status === 200) log(`${route} ${JSON.stringify({ type: body.type, id: body.id, sha: body.sha })}`);
+      // the log names the operation only (for PRIVATE: whether it succeeded); input values are never written
+      if (route.startsWith('POST /api/private/')) log(`${route} status=${r.status}`);
+      else if (r.status === 200) log(`${route} ${JSON.stringify({ type: body.type, id: body.id, sha: body.sha })}`);
       return send(res, r.status, r.body);
     } finally { busy = false; }
   } catch (e) {
-    log(`error ${e?.stack ?? e}`);
+    log(`error ${req.url?.startsWith('/api/private/') ? 'in PRIVATE password operation' : (e?.stack ?? e)}`);
     return send(res, 500, { error: '処理できませんでした。もう一度お試しください。' });
   }
 });

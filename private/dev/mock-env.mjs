@@ -30,6 +30,7 @@ export function mockBucket(r2Dir, hooks = {}) {
   return {
     async head(key) { return info(key); },
     async get(key, options) {
+      if (hooks.beforeGet) await hooks.beforeGet(key);          // a test can make a read fail (R2 outage)
       const i = info(key);
       if (!i) return null;
       const f = fileOf(key);

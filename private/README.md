@@ -19,9 +19,19 @@
 
 Cloudflare 管理画面（Workers & Pages → pip-popper-private → Settings → Variables and Secrets、Type: Secret）で登録する。
 
-- `PRIVATE_PASSWORD`：招待者共通のパスワード。変更すると招待者全員が退室状態になる。
+- `PRIVATE_PASSWORD`：招待者共通のパスワード。変更すると招待者全員が退室状態になる。管理ツールでパスワードを変えた後は使われず、「戻す」ときの予備になる（下の「招待者のパスワード」）。
 - `ADMIN_PASSWORD`：管理者パスワード（12文字以上、招待者用とは別）。未設定なら管理画面は閉じたまま。
 - `SESSION_KEY`：入室Cookieの署名鍵（ランダム値、登録済み）。
+
+## 招待者のパスワード（管理ツールから変更、2026-11-22）
+
+- 初期状態（R2に下記ファイルがない間）：`PRIVATE_PASSWORD`（シークレット）で照合。これまでと同じ。
+- 管理ツールの「PRIVATE管理」で変更すると、非公開R2の `auth/private-password.json` に**照合値だけ**を保存（`HMAC-SHA256(SESSION_KEY, "pw-hash:" + 乱数salt + ":" + パスワード)`、パスワードそのものは保存しない）。以後はこちらで照合し、`PRIVATE_PASSWORD` は使わない。
+- 即時反映：入室時と毎回のCookie確認でこのファイルを読む（キャッシュなし）。変更ごとに新しい乱数IDを作り、それをCookieの版にするため、変更前のCookieは直ちに無効。
+- 読めない・壊れているときは誰も入れない（古いパスワードに勝手に戻らない）。
+- API（管理Cookie＋同一サイト＋`X-PP-Admin`、さらに本文の管理者パスワードを毎回再確認）：`GET /admin/api/private-password`（状態のみ）、`POST /admin/api/private-password`（`newPassword`、8〜200文字）、`POST /admin/api/private-password/restore`（`confirm: "旧パスワードに戻す"`、ファイルを消して `PRIVATE_PASSWORD` に戻す）。試行は全体で1時間10回まで（超えると60分ロック）、管理者パスワードの誤りは管理者ログインのロックにも数える。
+- 注意：`SESSION_KEY` を変えると保存済みの照合値は使えなくなる（入室不可）。その場合はダッシュボードのR2で `auth/private-password.json` を削除すると `PRIVATE_PASSWORD` に戻る。自動整理は `audio/` だけ、音源配信は曲目に載ったファイルだけなので、このファイルが配信・削除されることはない。
+- テスト：`node private/dev/test-password.mjs`（模擬環境）。
 
 ## 曲の管理（管理画面 `/admin`）
 

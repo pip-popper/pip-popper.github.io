@@ -38,7 +38,7 @@ PIP POPPERの作品（歌詞・ジャケット・制作秘話）を長く残す�
 - GitHubへの push・本番公開は Producer の「公開を承認」の後だけ（管理ツールでProducer本人が押す公開は本人の操作）。
 - 採用済みのアルバム特設デザイン・画像は、指示なしに作り直さない。
 - 秘密の値（PRIVATE_PASSWORD・ADMIN_PASSWORD・SESSION_KEY）は Cloudflare にだけ置く。どこにも書かない。
-- PRIVATE の本番構成・パスワードは、明示の指示なしに変更しない。
+- PRIVATE の本番構成・パスワードは、明示の指示なしに変更しない。招待者パスワードは管理ツールから変えられる（照合値は非公開R2の `auth/private-password.json`、`private/README.md`）。
 
 ## 起動方法
 
@@ -49,7 +49,7 @@ PIP POPPERの作品（歌詞・ジャケット・制作秘話）を長く残す�
 
 - 管理ツール：`node manager/test-manager.mjs`（一時フォルダーに検証用の送信先を作って保存・プレビュー・公開・取り消し・拒否条件を確認。本物のGitHubには触れない）。
 - サイト：`node build.mjs --out <一時フォルダー>` で変更前後を `diff -r` し、意図した差分だけか確認。表示確認は `preview/history-review/shoot.mjs`（Edgeのヘッドレス撮影）。
-- PRIVATE：`node private/dev/test-admin.mjs`（模擬環境）。
+- PRIVATE：`node private/dev/test-admin.mjs`・`node private/dev/test-password.mjs`（模擬環境）。
 - 作業で開いた画面・プロセスの後片付けと終了確認は Producer AI Standards の GATE-07・GATE-10。
 
 ## 重要なファイル・パス

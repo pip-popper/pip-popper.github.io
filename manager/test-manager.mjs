@@ -12,7 +12,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..');
 const TMP = mkdtempSync(path.join(os.tmpdir(), 'ppm-test-'));
 const BARE = path.join(TMP, 'remote.git'), WORK = path.join(TMP, 'work'), OTHER = path.join(TMP, 'other');
-const PORT = 18991;
+const PORT = 18991, PV_PORT = 18995;
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) { pass++; console.log(`  ok  ${name}`); } else { fail++; console.log(`  NG  ${name}`); } };
 const g = (cwd, ...a) => { const r = spawnSync('git', ['-c', 'core.quotepath=false', ...a], { cwd, encoding: 'utf8' }); return (r.stdout ?? '').trim(); };
@@ -28,7 +28,7 @@ g(WORK, 'config', 'user.name', 'Producer'); g(WORK, 'config', 'user.email', 'tes
 g(WORK, 'add', '-f', 'build.mjs', 'content', 'manager'); g(WORK, 'commit', '-q', '--allow-empty', '-m', 'test base'); g(WORK, 'push', '-q', 'origin', 'main');
 g(WORK, 'branch', '-q', '-u', 'origin/main');
 
-const env = { ...process.env, PP_MANAGER_EXPECTED_REMOTE: BARE, PP_MANAGER_PRINT_TOKEN: '1' };
+const env = { ...process.env, PP_MANAGER_EXPECTED_REMOTE: BARE, PP_MANAGER_PRINT_TOKEN: '1', PP_MANAGER_PRIVATE_URL: 'http://localhost:18995/' };
 const srv = spawn(process.execPath, [path.join(WORK, 'manager', 'server.mjs'), '--root', WORK, '--no-open', '--port', String(PORT)], { env });
 const token = await new Promise((res, rej) => { let out = ''; srv.stdout.on('data', d => { out += d; const m = out.match(/TOKEN=([0-9a-f]+)/); if (m) res(m[1]); }); setTimeout(() => rej(new Error('server did not start')), 15000); });
 const base = `http://127.0.0.1:${PORT}`;
@@ -185,6 +185,43 @@ try {
   ok(r.status === 200 && read('.manager/preview/tracks/job-hunting/index.html').includes('data-service="spotify" href="https://open.spotify.com/track/TEST123"'), 'プレビューの曲ページに「Spotifyで聴く」が出る');
   const jh2 = (await call('GET', '/api/item?type=track&id=job-hunting')).data;
   ok((await call('POST', '/api/item', { type: 'track', id: 'job-hunting', rev: jh2.rev, changes: [{ path: lk.path, value: '' }] })).status === 200 && read('tracks/job-hunting/track.json') === jhBefore, '空欄にすると null に戻り、ファイルは元と同じ');
+
+  console.log('8d. PRIVATEのパスワード（ローカルの模擬PRIVATEに対して）');
+  {
+    const OLD = 'member-old-123456', NEW = 'member-new-789012', ADM = 'admin-pass-abcdef';
+    const R2 = path.join(TMP, 'pv-r2'), VARS = path.join(TMP, 'pv.vars');
+    writeFileSync(VARS, `PRIVATE_PASSWORD=${OLD}\nSESSION_KEY=${'k'.repeat(48)}\nADMIN_PASSWORD=${ADM}\n`);
+    // first the Worker as it is in production today (the committed version in the work copy): no change API yet
+    const oldPv = spawn(process.execPath, [path.join(WORK, 'private', 'dev', 'serve.mjs'), '--vars', VARS, '--r2', R2, '--port', String(PV_PORT)]);
+    await new Promise((res, rej) => { oldPv.stdout.on('data', d => /ローカル検証/.test(String(d)) && res()); setTimeout(() => rej(new Error('old PRIVATE imitation did not start')), 15000); });
+    r = await call('POST', '/api/private/password', { newPassword: 'member-new-789012', confirmPassword: 'member-new-789012', adminPassword: ADM });
+    ok(r.status === 501 && /まだこの機能に対応していません/.test(r.data.error), '更新前のPRIVATEには「まだ対応していません」と表示（変更なし）');
+    oldPv.kill(); await new Promise(res => setTimeout(res, 500));
+    const pv = spawn(process.execPath, [path.join(REPO, 'private', 'dev', 'serve.mjs'), '--vars', VARS, '--r2', R2, '--port', String(PV_PORT)]);
+    await new Promise((res, rej) => { pv.stdout.on('data', d => /ローカル検証/.test(String(d)) && res()); setTimeout(() => rej(new Error('PRIVATE imitation did not start')), 15000); });
+    const pvLogin = async pw => (await fetch(`http://localhost:${PV_PORT}/login`, { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ password: pw }) })).status;
+    try {
+      ok(await pvLogin(OLD) === 303, '模擬PRIVATE：最初は今のパスワードで入れる');
+      ok((await call('POST', '/api/private/password', { newPassword: NEW, confirmPassword: NEW + 'x', adminPassword: ADM })).status === 400, '確認用が一致しないと送らない（400）');
+      ok((await call('POST', '/api/private/password', { newPassword: 'short', confirmPassword: 'short', adminPassword: ADM })).status === 400, '短すぎるパスワードは送らない（400）');
+      r = await call('POST', '/api/private/password', { newPassword: NEW, confirmPassword: NEW, adminPassword: 'wrong-admin-pass' });
+      ok(r.status === 403 && /管理者パスワードが違います/.test(r.data.error), '管理者パスワードが違うと「違います」と表示（変更なし）');
+      ok(await pvLogin(OLD) === 303, '失敗後も今のパスワードのまま');
+      r = await call('POST', '/api/private/password', { newPassword: NEW, confirmPassword: NEW, adminPassword: ADM });
+      ok(r.status === 200 && r.data.ok && r.data.mode === 'r2' && !!r.data.changedAt, '管理ツールから変更が完了');
+      ok(await pvLogin(NEW) === 303 && await pvLogin(OLD) === 401, '直ちに：新しいパスワードで入れて、古いパスワードでは入れない');
+      ok((await call('POST', '/api/private/restore', { adminPassword: ADM, confirm: 'ちがう言葉' })).status === 400 && await pvLogin(NEW) === 303, '確認の言葉が違うと戻さない');
+      r = await call('POST', '/api/private/restore', { adminPassword: ADM, confirm: '旧パスワードに戻す' });
+      ok(r.status === 200 && await pvLogin(OLD) === 303 && await pvLogin(NEW) === 401, 'Cloudflareのパスワードに戻せる');
+      const logText = existsSync(path.join(WORK, '.manager', 'manager.log')) ? readFileSync(path.join(WORK, '.manager', 'manager.log'), 'utf8') : '';
+      ok(!logText.includes(NEW) && !logText.includes(OLD) && !logText.includes(ADM) && /private\/password status=200/.test(logText), '記録（manager.log）にパスワードは残らない（操作名と結果だけ）');
+      // what the tool writes: .manager (previews, backups, log) and the site data — not the test script itself
+      const leaks = spawnSync('git', ['grep', '-l', '--no-index', '-e', NEW, '-e', ADM, '--', '.manager', 'content', 'tracks', 'albums', 'docs'], { cwd: WORK, encoding: 'utf8' }).stdout.trim();
+      ok(leaks === '', '管理ツールが書くフォルダー（.manager・データ・docs）にパスワードは残らない', leaks);
+      const broken = await fetch(`${base}/api/private/password`, { method: 'POST', headers: { 'X-PP-Token': token, 'Content-Type': 'application/json' }, body: `{"newPassword": "${NEW}", ` });
+      ok(broken.status === 400 && !readFileSync(path.join(WORK, '.manager', 'manager.log'), 'utf8').includes(NEW), '壊れた送信内容は処理せず、記録にも残さない');
+    } finally { pv.kill(); }
+  }
 
   console.log('9. 終了');
   ok((await call('POST', '/api/quit')).status === 200, '終了できる');

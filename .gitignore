@@ -109,3 +109,4 @@
 !/manager/ui/app.js
 !/manager/ui/app.css
 !/.gitattributes
+!/private/dev/test-password.mjs

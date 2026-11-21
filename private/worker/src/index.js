@@ -1,14 +1,16 @@
 // PIP POPPER PRIVATE — Cloudflare Worker (invitation-only audio library + administrator screen)
 //
 // Never written in code or GitHub (Worker secrets only):
-//   PRIVATE_PASSWORD  the shared password for invitees
+//   PRIVATE_PASSWORD  the shared password for invitees (used until the first change from the manager tool;
+//                     after that the check value in R2 auth/private-password.json is used — see credential.js)
 //   SESSION_KEY       random string (32+ chars) used to sign the entry cookies
 //   ADMIN_PASSWORD    administrator password (12+ chars, different from PRIVATE_PASSWORD); without it /admin stays closed
 // Bindings (wrangler.toml): BUCKET = private R2 bucket, ASSETS = ./public, LOGIN_GUARD = login lockout (Durable Object).
 // R2 layout: catalog.json (see catalog.js) and audio/*.mp3. The bucket has no public URL;
 // every audio byte goes through this Worker, which checks a signed cookie on every request.
-import { MAX_PASSWORD, html, text, redirect, secure, sameOrigin, signValue, readSigned, secretMatches, secretVersion,
+import { MAX_PASSWORD, html, text, redirect, secure, sameOrigin, signValue, readSigned,
   guard, connection, lockMessage, wait } from './common.js';
+import { loadCredential, memberPasswordMatches, memberVersion } from './credential.js';
 import { loadCatalog } from './catalog.js';
 import { serveAudio } from './audio.js';
 import { adminRoute } from './admin.js';
@@ -20,11 +22,10 @@ export { parseRange } from './audio.js';
 const COOKIE = 'pp_private';
 const SESSION_DAYS = 30;
 const cookie = (value, maxAge) => `${COOKIE}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
-const version = env => secretVersion(env, env.PRIVATE_PASSWORD, 'version');
-
+// The cookie's version follows the current password (R2 check value if set, else PRIVATE_PASSWORD): read every time.
 async function hasSession(request, env) {
   const data = await readSigned(request, env, COOKIE, 'session');
-  return !!data && data.exp > Date.now() && data.v === await version(env);
+  return !!data && data.exp > Date.now() && data.v === await memberVersion(env, await loadCredential(env));
 }
 
 async function route(request, env, url) {
@@ -43,14 +44,15 @@ async function route(request, env, url) {
     if (before.locked) return html(429, loginPage({ error: lockMessage(before.retryAfter) }), { 'Retry-After': String(before.retryAfter) });
     const form = await request.formData().catch(() => null);
     const input = String(form?.get('password') ?? '');
-    if (!input || input.length > MAX_PASSWORD || !await secretMatches(env, input, env.PRIVATE_PASSWORD, 'check')) {
+    const cred = await loadCredential(env);
+    if (!input || input.length > MAX_PASSWORD || !await memberPasswordMatches(env, input, cred)) {
       const after = await ask('fail');
       await wait(1000);                                       // slows guessing (wait time is not CPU time)
       if (after.locked) return html(429, loginPage({ error: lockMessage(after.retryAfter) }), { 'Retry-After': String(after.retryAfter) });
       return html(401, loginPage({ error: 'パスワードが違います。' }));
     }
     await ask('success');
-    const value = await signValue(env, 'session', { exp: Date.now() + SESSION_DAYS * 864e5, v: await version(env) });
+    const value = await signValue(env, 'session', { exp: Date.now() + SESSION_DAYS * 864e5, v: await memberVersion(env, cred) });
     return redirect('/', { 'Set-Cookie': cookie(value, SESSION_DAYS * 86400) });
   }
   if (pathname === '/logout' && method === 'POST') {
