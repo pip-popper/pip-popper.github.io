@@ -1219,6 +1219,107 @@
   .theme-favorite-track .fp-info th { width: 64px; padding-right: 12px; }
 }
 
+/* ── PLACE TO STAY (2012, page adopted 2026-11-21): AI-reconstructed visuals only (no people, no original
+   jacket). Night-navy with a peach accent, a little grown-up: condensed PLACE / TO STAY. on the left with the
+   lead, the AI concept jacket on the right, a sunset sky behind; then the story, three frames FROM SOUND TO
+   IMAGE, the eight tracks, and H's small note. */
+.theme-place-to-stay.has-visual { --brush: #f3a878; --gold: #f6bc9b; }
+.theme-place-to-stay .ch-feature { background: radial-gradient(50% 35% at 70% 20%, rgba(50, 64, 89, .26), transparent 70%), linear-gradient(180deg, transparent 0, #0e1625 var(--xfade, 0px), #090d15 30%, #0b1420 55%, #0b0d15 80%, #070a11 calc(100% - var(--xfade, 0px)), transparent); }
+.theme-place-to-stay .ch-feature-bg { inset: var(--xfade, 0px) -3% auto auto; width: 75%; height: min(70%, 640px); object-fit: cover; object-position: center; transform: none; filter: saturate(.86); opacity: .85;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 64%), linear-gradient(180deg, transparent 0, #000 22%, #000 66%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0, #000 64%), linear-gradient(180deg, transparent 0, #000 22%, #000 66%, transparent 100%); mask-composite: intersect; }
+.theme-place-to-stay .ch-feature::before { background: linear-gradient(90deg, #080d14 0%, rgba(8, 13, 20, .9) 30%, rgba(8, 13, 20, .3) 65%, transparent 100%); }
+.theme-place-to-stay.has-visual .ch-year { display: none; }
+.theme-place-to-stay .ch-feature-top { grid-template-columns: minmax(0, 1.12fr) minmax(260px, .65fr); gap: clamp(34px, 7vw, 130px); align-items: center; min-height: clamp(560px, 46vw, 680px); }
+.theme-place-to-stay .ch-visual { order: 2; justify-self: end; width: 100%; max-width: 425px; padding: 0; background: none; border: 1px solid rgba(242, 222, 217, .55); box-shadow: 0 48px 100px rgba(0, 0, 0, .55), 0 0 0 12px rgba(255, 255, 255, .025); transform: rotate(1deg); }
+.theme-place-to-stay .ch-visual img { filter: none; }
+.theme-place-to-stay .ch-feature-head { order: 1; padding-top: 0; gap: 0; }
+.theme-place-to-stay .ch-badge { display: flex; align-items: center; gap: 15px; padding: 0; font: 700 11px/1.3 var(--f-body); letter-spacing: .32em; color: #f6bc9b; background: none; clip-path: none; transform: none; }
+.theme-place-to-stay .ch-badge::before { content: ""; flex: none; width: 42px; height: 2px; background: #f3a878; }
+.theme-place-to-stay .ch-titlerow { flex-direction: column; align-items: stretch; gap: 0; }
+.theme-place-to-stay.has-visual .ch-title { display: block; margin: 44px 0 0; text-align: left; font: 800 clamp(84px, 10.4vw, 178px)/.8 "Barlow Condensed", Anton, Impact, "Arial Narrow", sans-serif; letter-spacing: -.035em; text-transform: uppercase; color: #fff; transform: none; text-shadow: 0 13px 33px rgba(0, 0, 0, .24); }
+.theme-place-to-stay .ch-title-line { display: block; width: 100%; }
+.theme-place-to-stay .ch-title-line + .ch-title-line { color: #e5e7e9; }
+.theme-place-to-stay .ch-title-line + .ch-title-line::after { content: "."; }
+.theme-place-to-stay .ch-kindline { display: flex; width: 100%; align-items: center; gap: 25px; margin: 31px 0 34px; font: 600 17px/1.3 var(--f-body); letter-spacing: .3em; color: #f3a878; transform: none; text-shadow: none; white-space: nowrap; }
+.theme-place-to-stay .ch-kindline::before { display: none; }
+.theme-place-to-stay .ch-kindline::after { content: ""; width: 140px; height: 1px; background: rgba(255, 255, 255, .45); opacity: 1; }
+.theme-place-to-stay .ch-origin { gap: 20px; }
+.theme-place-to-stay .ch-origin h3 { max-width: 17em; border: 0; padding: 0; font: 700 clamp(18px, 1.7vw, 28px)/1.85 var(--f-body); font-style: normal; letter-spacing: .07em; color: #f6f5f0; text-wrap: balance; word-break: auto-phrase; }
+.theme-place-to-stay .ch-origin-text { max-width: 535px; border: 0; padding: 0; gap: 0; font: 400 14px/2.12 var(--f-body); letter-spacing: .04em; color: #d4d8e1; text-shadow: none; }
+.theme-place-to-stay .ch-column { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); column-gap: clamp(50px, 8vw, 140px); align-content: start; margin: clamp(60px, 8vw, 100px) 0 0; padding: 0; border: 0; outline: 0; background: none; box-shadow: none; }
+.theme-place-to-stay .ch-column::before { content: "01 / THE STORY"; grid-column: 1 / -1; margin-bottom: 36px; font: 700 10px/1.3 var(--f-body); letter-spacing: .3em; color: #f3a878; }
+.theme-place-to-stay .ch-column h3 { grid-column: 1; grid-row: 2 / span 8; margin: 0; font: 800 clamp(30px, 3.4vw, 53px)/1.48 var(--f-body); letter-spacing: .045em; color: #f6f5f0; text-wrap: balance; word-break: auto-phrase; }
+.theme-place-to-stay .ch-column p { grid-column: 2; margin: 0 0 18px; font: 400 15px/2.35 var(--f-body); letter-spacing: .04em; color: #d0d7df; }
+.theme-place-to-stay .ch-column p:nth-of-type(3) { font-weight: 700; color: #fff; }
+.theme-place-to-stay .ch-quote { grid-column: 2; margin: 20px 0 0; padding: 0 0 0 24px; border-left: 2px solid #f3a878; font: 400 clamp(19px, 2.3vw, 32px)/1.95 Georgia, "Yu Mincho", serif; letter-spacing: .02em; color: #f2c5b3; text-shadow: none; }
+.theme-place-to-stay .ch-quote small { display: none; }
+.theme-place-to-stay .ch-feature-panels { order: 2; grid-template-columns: minmax(0, 1fr); margin-top: clamp(60px, 8vw, 100px); padding-top: clamp(60px, 8vw, 100px); border-top: 1px solid rgba(255, 255, 255, .1); }
+.theme-place-to-stay .fp-info { display: none; }
+.theme-place-to-stay .ch-film { order: 1; margin-top: clamp(60px, 8vw, 100px); padding-top: clamp(60px, 8vw, 90px); border-top: 1px solid rgba(255, 255, 255, .1); }
+.ch-film-kicker { display: flex; align-items: center; gap: 18px; margin: 0 0 36px; font: 700 10px/1.3 var(--f-body); letter-spacing: .3em; color: var(--brush); }
+.ch-film-kicker::after { content: ""; width: 60px; height: 1px; background: currentColor; opacity: .5; }
+.ch-film-title { margin: 0 0 34px; font: 800 clamp(30px, 3.4vw, 53px)/1.22 var(--f-body); letter-spacing: .045em; color: #f6f5f0; }
+.ch-film-title em { font: 400 1.11em Georgia, serif; color: var(--brush); }
+.theme-place-to-stay .ch-strip { gap: 18px; margin: 0; padding: 0; background: none; box-shadow: none; }
+.theme-place-to-stay .ch-strip figure { min-width: 0; border: 0; }
+.theme-place-to-stay .ch-strip img { aspect-ratio: 1.66; filter: saturate(.8) contrast(1.08); border: 1px solid rgba(255, 255, 255, .13); }
+.ch-strip figcaption { display: flex; justify-content: space-between; gap: 15px; margin-top: 13px; padding-top: 13px; border-top: 1px solid rgba(255, 255, 255, .15); font: 400 11px/1.4 var(--f-body); letter-spacing: .1em; color: #b7c0cd; }
+.ch-strip figcaption b { font-weight: 600; color: #f2b998; }
+.ch-film-note { max-width: 850px; margin: 35px 0 0; font: 400 14px/2.1 var(--f-body); color: #ced4df; }
+.theme-place-to-stay .fp-tracks { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); grid-template-rows: auto 1fr; column-gap: clamp(50px, 8vw, 140px); align-items: start; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.theme-place-to-stay .fp-head { grid-column: 1; margin: 0; padding: 0; transform: none; clip-path: none; background: none; font: 700 clamp(58px, 6.3vw, 92px)/.89 "Barlow Condensed", Anton, Impact, "Arial Narrow", sans-serif; font-style: normal; letter-spacing: .02em; text-transform: uppercase; color: #f6f5f0; }
+.theme-place-to-stay .fp-head em { display: block; font-style: normal; color: #f3a878; }
+.theme-place-to-stay .fp-kicker { display: flex; margin-bottom: 36px; font: 700 10px/1.3 var(--f-body); letter-spacing: .3em; color: #f3a878; text-transform: none; }
+.theme-place-to-stay .fp-kicker::before { display: none; }
+.theme-place-to-stay .fp-kicker::after { content: ""; flex: none; width: 60px; height: 1px; background: currentColor; opacity: .5; margin-left: 18px; align-self: center; }
+.theme-place-to-stay .fp-tracks-aside { position: static; grid-column: 1; max-width: 335px; margin: 30px 0 0; text-align: left; font: 400 14px/2.2 var(--f-body); letter-spacing: .05em; color: #bbc4d1; }
+.theme-place-to-stay .fp-tracks ol { grid-column: 2; grid-row: 1 / span 2; columns: 1; column-rule: 0; border-top: 1px solid rgba(255, 255, 255, .32); }
+.theme-place-to-stay .fp-tracks ol::after { content: "8 TRACKS / 2012 / PIP POPPER"; display: block; margin-top: 20px; text-align: right; font: 400 10px/1.4 var(--f-body); letter-spacing: .2em; color: #afbac7; }
+.theme-place-to-stay .fp-tracks li { grid-template-columns: 52px minmax(0, 1fr); align-items: baseline; padding: 17px 6px 17px 4px; border-bottom: 1px solid rgba(255, 255, 255, .16); font: 400 clamp(19px, 2.1vw, 29px)/1.3 Georgia, var(--f-body), serif; letter-spacing: .02em; color: #f6f5f0; overflow-wrap: anywhere; }
+.theme-place-to-stay .fp-tracks li::before { content: counter(tr, decimal-leading-zero); font: 600 12px/1 var(--f-body); color: #f3a878; }
+.theme-place-to-stay .ch-afterword { order: 3; }
+.ch-afterword { width: min(100%, 790px); margin: clamp(80px, 10vw, 116px) auto 0; padding: clamp(60px, 8vw, 100px) 32px 0; border-top: 1px solid rgba(255, 255, 255, .12); }
+.ch-after-label { margin: 0 0 32px; font: 600 10px/1.4 var(--f-body); letter-spacing: .26em; color: #aa9b9a; }
+.ch-after-text p { margin: 0 0 18px; font: 400 13.5px/2.55 var(--f-body); letter-spacing: .047em; color: #c4c6cf; }
+.ch-after-sign { margin: 40px 0 0; text-align: right; font: italic 400 24px/1 Georgia, serif; letter-spacing: .16em; color: #e4d9d5; }
+@media (max-width: 1000px) {
+  .theme-place-to-stay .ch-feature-top { grid-template-columns: minmax(0, 1.05fr) minmax(0, .75fr); gap: 35px; }
+  .theme-place-to-stay.has-visual .ch-title { font-size: clamp(72px, 10.5vw, 120px); }
+  .theme-place-to-stay .ch-visual { max-width: 360px; }
+}
+@media (max-width: 760px) {
+  .theme-place-to-stay .ch-feature-bg { inset: var(--xfade, 0px) 0 auto; width: 100%; height: 390px; opacity: .95; object-position: 65% top; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 25%, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 25%, #000 55%, transparent 100%); }
+  .theme-place-to-stay .ch-feature::before { background: linear-gradient(180deg, rgba(8, 13, 20, .2) 0, rgba(8, 13, 20, .32) 200px, rgba(8, 13, 20, .9) 380px, rgba(8, 13, 20, .2) 100%); }
+  .theme-place-to-stay .ch-feature-top { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-top: 170px; gap: 54px; }
+  .theme-place-to-stay .ch-visual { order: 2; justify-self: center; width: min(75%, 370px); }
+  .theme-place-to-stay.has-visual .ch-title { font-size: clamp(72px, 16vw, 122px); margin-top: 24px; }
+  .theme-place-to-stay .ch-kindline { font-size: 13px; margin: 20px 0 29px; }
+  .theme-place-to-stay .ch-kindline::after { width: 85px; }
+  .theme-place-to-stay .ch-origin h3 { font-size: 21px; }
+  .theme-place-to-stay .ch-origin-text { font-size: 13px; }
+  .theme-place-to-stay .ch-column { grid-template-columns: minmax(0, 1fr); }
+  .theme-place-to-stay .ch-column h3 { grid-column: 1; grid-row: auto; margin-bottom: 34px; }
+  .theme-place-to-stay .ch-column p, .theme-place-to-stay .ch-quote { grid-column: 1; }
+  .theme-place-to-stay .ch-column p { font-size: 14px; }
+  .theme-place-to-stay .ch-strip { gap: 9px; }
+  .ch-strip figcaption { font-size: 8px; letter-spacing: 0; }
+  .ch-film-note { font-size: 13px; }
+  .theme-place-to-stay .fp-tracks { grid-template-columns: minmax(0, 1fr); }
+  .theme-place-to-stay .fp-head { font-size: 72px; }
+  .theme-place-to-stay .fp-tracks-aside { margin: 22px 0 34px; }
+  .theme-place-to-stay .fp-tracks ol { grid-column: 1; grid-row: auto; }
+  .theme-place-to-stay .fp-tracks li { font-size: 19px; grid-template-columns: 40px minmax(0, 1fr); }
+  .ch-afterword { padding-inline: 4%; }
+  .ch-after-text p { font-size: 12.5px; line-height: 2.45; }
+}
+@media (max-width: 400px) {
+  .theme-place-to-stay.has-visual .ch-title { font-size: 66px; }
+  .theme-place-to-stay .ch-strip { gap: 5px; }
+  .ch-strip figcaption b { display: none; }
+  .theme-place-to-stay .fp-head { font-size: 62px; }
+  .theme-place-to-stay .ch-visual { width: 85%; }
+}
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by

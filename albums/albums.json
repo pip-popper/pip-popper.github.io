@@ -1535,6 +1535,132 @@
       "archive": false
     },
     {
+      "id": "place-to-stay",
+      "no": "PIP POPPER / 2012",
+      "kind": "Album",
+      "kindLabel": "2012 / ALBUM",
+      "year": "2012",
+      "date": null,
+      "dateLabel": null,
+      "title": "PLACE TO STAY",
+      "titleLines": [
+        "PLACE",
+        "TO STAY"
+      ],
+      "subtitle": null,
+      "accent": "#f3a878",
+      "visual": {
+        "source": "PIP_POPPER_PLACE_TO_STAY_2012_HISTORY_AI改訂試作_曲名修正版.html（Producer確認済みHTMLのAI再構成ビジュアル5点：夕焼けの空・AIコンセプトジャケット・録音卓・ドラム・撮影機材。人物・当時のジャケットなし。JPEG化のみ）",
+        "adopted": "2026-11-21 Producer正式反映指示"
+      },
+      "episode": {
+        "title": "曲を作る時間から、一緒に過ごした時間を残す制作へ。",
+        "text": [
+          "かつてはスタジオに集まり、何曲も録音していた。",
+          "やがて一曲ずつ映像を撮り、編集し、残していくようになった。",
+          "これは、その頃のPIP POPPERを記録したアルバム。"
+        ]
+      },
+      "column": {
+        "title": "曲が減ったのは、作ることをやめたからじゃない。",
+        "text": [
+          "『Blood Necks』の頃には、気軽に集まって長時間使える安いスタジオがあった。そこがなくなってから、録音は主にHの自宅になり、以前のようなペースで制作することが難しくなっていった。",
+          "そんな中、『PRIVATE LIVES』の頃から、別の考えが生まれていた。",
+          "「どうせ思い出に残すなら、映像にも残したい。」",
+          "一曲のために撮影場所を考え、出かけ、撮って、編集する。当時の映像制作は、今よりずっと手間のかかるものだった。",
+          "でも、そこには音だけでは残しきれなかった、仲間それぞれの表情や個性が残る。"
+        ],
+        "quote": {
+          "label": "",
+          "lines": [
+            "一曲にかかる時間は増えた。",
+            "一曲に残せるものも増えていった。"
+          ]
+        }
+      },
+      "strip": [
+        "録音卓のイメージ",
+        "スタジオ機材のイメージ",
+        "夕暮れの映像撮影機材のイメージ"
+      ],
+      "stripHead": {
+        "kicker": "02 / FROM SOUND TO IMAGE",
+        "lines": [
+          "More than music.",
+          "Music, and memories."
+        ],
+        "em": "music.",
+        "captions": [
+          [
+            "RECORD",
+            "01 / SOUND"
+          ],
+          [
+            "CREATE",
+            "02 / SESSION"
+          ],
+          [
+            "FILM",
+            "03 / MEMORY"
+          ]
+        ],
+        "note": "作品を残すことは、仲間と過ごした時間を残すことでもあった。映像の中には、歌だけでは伝わらない、それぞれの個性や、その場の空気が残っている。"
+      },
+      "tracksHead": {
+        "kicker": "03 / ORIGINAL TRACK ARCHIVE",
+        "title": "THE",
+        "sub": "TRACKS.",
+        "aside": [
+          "『PLACE TO STAY』2012年。",
+          "当時のCD制作資料に掲載された8曲を、曲順に沿って記録する。"
+        ]
+      },
+      "tracks": [
+        {
+          "title": "Showtime2010"
+        },
+        {
+          "title": "Message"
+        },
+        {
+          "title": "Anniversary"
+        },
+        {
+          "title": "Top 2011"
+        },
+        {
+          "title": "Loveless"
+        },
+        {
+          "title": "Rapgocco"
+        },
+        {
+          "title": "Syusyokukatsudo"
+        },
+        {
+          "title": "My Way"
+        }
+      ],
+      "afterword": {
+        "label": "A SMALL NOTE / H",
+        "text": [
+          "このアルバムが最後になるなんて、当時は思っていなかった。",
+          "また曲を作って、撮影に出かけて、いつものように続いていくと思っていた。",
+          "でも、時間がたつにつれて、みんなの生活も少しずつ変わっていった。",
+          "結婚したり、子供ができたり、仕事や家庭があったり。",
+          "昔のように、何時間も集まって遊ぶことは、だんだん難しくなっていった。",
+          "誰かが終わりを決めたわけでもなく、ただ時間の流れの中で、いつしか活動は止まっていた。",
+          "振り返ってみれば、俺がやりたいと言い出したことに、みんながずっと付き合ってくれた。",
+          "曲を作って、歌って、笑って、あちこちに撮影に行って。",
+          "今では忘れてしまったこともあるだろうけど、そんな時間が確かにあった。",
+          "その記録を、ここに残しておきたいと思う。",
+          "いつかみんながこれを見て、少しでも懐かしく思い出してくれたらいいと思う。"
+        ],
+        "sign": "H"
+      },
+      "archive": false
+    },
+    {
       "id": "forever-love",
       "section": "other",
       "no": "SOLO WORK",
