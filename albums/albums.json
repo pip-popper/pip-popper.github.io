@@ -1410,6 +1410,131 @@
       "archiveNote": "人物・建物などの背景ビジュアルは新規に制作したイメージで、当時の実写写真ではありません。"
     },
     {
+      "id": "error",
+      "no": "PIP POPPER · 2009",
+      "kind": "Album",
+      "kindLabel": "2009 / ORIGINAL ALBUM",
+      "year": "2009",
+      "date": null,
+      "dateLabel": "2009年",
+      "title": "ERROR",
+      "subtitle": null,
+      "accent": "#ef4256",
+      "visual": {
+        "source": "PIP_POPPER_ERROR_HISTORY_2009_最終改訂版.html（Producer採用HTMLの背景画像 1672×941＝深紅の薔薇とダークなスタジオ、文字なし。無加工）",
+        "adopted": "2026-11-21 Producer正式採用（採用HTML）"
+      },
+      "info": [
+        [
+          "参加",
+          "H · T · G · Y"
+        ],
+        [
+          "Y",
+          "女性ボーカル"
+        ]
+      ],
+      "episode": {
+        "title": "面白さより、リアルを。",
+        "text": [
+          "ネタとして作る面白さでは、もう満足できなくなった。",
+          "本当にあったこと、その時に感じたことを、飾らず曲にしていく。",
+          "それはPIP POPPERにとって、ひとつの「ERROR」だった。"
+        ]
+      },
+      "credit": {
+        "label": "PARTICIPATING ARTISTS",
+        "who": "H · T · G · Y",
+        "role": "Y — 女性ボーカル"
+      },
+      "column": {
+        "title": "作られた面白さから、目の前にある現実へ。",
+        "text": [
+          "それまでのPIP POPPERは、わざと面白いものを考え、ネタとして曲にしてきた。けれど、そんな「作られた面白さ」だけでは満足できなくなっていた。",
+          "『ERROR』では、実際の出来事やその時の感情を、そのまま曲にしていく。参加したのはH・T・G、そして新たに加わった女性ボーカルY。",
+          "誰かを笑わせるために出来事を作るのではなく、現実に起きたことを曲にする。そんな制作の方向へ変わった作品だった。"
+        ],
+        "focus": {
+          "after": 1,
+          "letter": "G",
+          "title": "A STRONGER PRESENCE",
+          "text": "このアルバムでは、Gの存在感を強く出したかった。"
+        },
+        "notes": [
+          {
+            "title": "WEDDING GIFT",
+            "text": "Tの知り合いの結婚を祝うために作った曲。Hにとっては、会ったこともない相手へのお祝いだった。"
+          },
+          {
+            "title": "2008.3.30",
+            "text": "その日にGが実際に経験した出来事から生まれた曲。"
+          }
+        ],
+        "quote": {
+          "label": "WHY \"ERROR\"?",
+          "lines": [
+            "PIP POPPERとしては、",
+            "それがバグであり、エラーだった。"
+          ]
+        }
+      },
+      "tracksHead": {
+        "kicker": "02 / ORIGINAL CD TRACK LIST",
+        "title": "TRACKLIST",
+        "sub": "14 songs",
+        "aside": [
+          "H · T · G · Y",
+          "ERROR / 2009"
+        ]
+      },
+      "tracks": [
+        {
+          "title": "PIPPOPPER ENTERTAINMENT"
+        },
+        {
+          "title": "LIFE GOES ON"
+        },
+        {
+          "title": "Lost days"
+        },
+        {
+          "title": "2008.3.30"
+        },
+        {
+          "title": "WEDDING GIFT"
+        },
+        {
+          "title": "TOP SECRET"
+        },
+        {
+          "title": "I remember you"
+        },
+        {
+          "title": "ONE LOVE"
+        },
+        {
+          "title": "EVERLASTING"
+        },
+        {
+          "title": "SING OUT"
+        },
+        {
+          "title": "TO BE WITH YOU"
+        },
+        {
+          "title": "KIZUNA -絆-"
+        },
+        {
+          "title": "manner -2009remix-"
+        },
+        {
+          "title": "ALIVE"
+        }
+      ],
+      "audioNote": "曲名・曲順はCD原本に基づく全14曲。『2008.3.30』は曲名であり、アルバムの制作年はProducerが確定した2009年です。背景は作品の世界観を表現する新規制作イメージです。当時の実写写真やCD原本画像は使用していません。",
+      "archive": false
+    },
+    {
       "id": "forever-love",
       "section": "other",
       "no": "SOLO WORK",

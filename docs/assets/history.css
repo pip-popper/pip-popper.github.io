@@ -1037,6 +1037,96 @@
   .theme-private-lives .fp-tracks li { min-height: 52px; }
 }
 
+/* ── ERROR (adopted HTML 2026-11-21, 2009): no jacket and no original-artwork card — the deep red rose and
+   dark studio (no text, fictional) spreads behind the whole chapter: once at the top (rose on the left, the
+   title block on the right) and once more, mirrored and fainter, behind the story card and the track list.
+   Italic serif ERROR, the members line, a story card with the G box, two song notes and WHY "ERROR"?,
+   then the 14 tracks in two columns. Near-black, crimson and pale rose. */
+.theme-error.has-visual { --brush: #ef4256; --gold: #f6bac2; }
+.theme-error .ch-feature { background: radial-gradient(60% 40% at 85% 58%, rgba(78, 11, 24, .27), transparent 70%), linear-gradient(180deg, transparent 0, #0c080a var(--xfade, 0px), #0c080a calc(100% - var(--xfade, 0px)), transparent); }
+.theme-error .ch-feature-bg { inset: 0 0 auto; width: 100%; height: min(100%, calc(1210px + var(--xfade, 0px))); object-fit: cover; object-position: 38% 18%; transform: none; filter: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--xfade, 0px), #000 60%, transparent); mask-image: linear-gradient(180deg, transparent 0, #000 var(--xfade, 0px), #000 60%, transparent); }
+.theme-error .ch-feature::after { /* the same scene again, mirrored, behind the story and the track list */
+  content: ""; position: absolute; z-index: -2; left: 0; right: 0; top: calc(980px + var(--xfade, 0px)); bottom: var(--xfade, 0px);
+  background: url("history/error-backdrop.jpg") 30% 45% / cover no-repeat; transform: scaleX(-1); opacity: .76;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 23%, #000 67%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 23%, #000 67%, transparent 100%); }
+.theme-error .ch-feature::before { background: linear-gradient(90deg, rgba(3, 2, 3, .18) 0%, rgba(4, 2, 3, .36) 33%, rgba(9, 5, 7, .8) 61%, rgba(7, 4, 5, .55) 100%), linear-gradient(180deg, rgba(3, 2, 3, .07), rgba(6, 3, 4, .24) 19%, rgba(3, 2, 3, .44) 44%, rgba(3, 2, 3, .16) 68%, rgba(5, 2, 3, .7) 100%); }
+.theme-error .ch-visual, .theme-error.has-visual .ch-year, .theme-error .fp-info { display: none; }
+.theme-error .ch-feature-top { grid-template-columns: minmax(0, 1fr); min-height: clamp(520px, 45vw, 645px); align-items: center; }
+.theme-error .ch-feature-head { justify-self: end; width: min(59%, 700px); padding-top: 0; gap: 0; }
+.theme-error .ch-badge { display: flex; align-items: center; gap: 12px; padding: 0; font: 800 11px/1.3 var(--f-body); letter-spacing: .23em; color: #f6bac2; background: none; clip-path: none; transform: none; }
+.theme-error .ch-badge::before { content: ""; flex: none; width: 29px; height: 2px; background: #ef4256; }
+.theme-error .ch-titlerow { flex-direction: column; align-items: flex-start; gap: 0; }
+.theme-error.has-visual .ch-title { display: block; margin: 8px 0 0; text-align: left; font: italic 700 clamp(90px, 10.8vw, 165px)/1 Georgia, "Times New Roman", serif; letter-spacing: -.065em; color: #fff; transform: none; text-shadow: 0 11px 26px #000b; }
+.theme-error .ch-kindline { display: block; width: 100%; margin: 14px 0 25px; font: 400 18px/1.4 Georgia, serif; letter-spacing: .23em; color: #ef7e8a; transform: none; text-shadow: none; }
+.theme-error .ch-kindline::before, .theme-error .ch-kindline::after { display: none; }
+.theme-error .ch-origin { gap: 18px; }
+.theme-error .ch-origin h3 { border: 0; padding: 0; font: 700 clamp(27px, 3.2vw, 44px)/1.55 "Shippori Mincho B1", "Yu Mincho", serif; font-style: normal; letter-spacing: .12em; color: #fff2ea; text-shadow: 0 3px 18px #000c; }
+.theme-error .ch-origin-text { border: 0; padding: 0; gap: 0; max-width: 600px; font: 400 15px/2.15 var(--f-body); letter-spacing: .02em; color: #f0dcda; text-shadow: 0 3px 10px #000d; }
+.ch-credit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 29px 0 0; padding-top: 19px; border-top: 1px solid rgba(216, 155, 160, .31); font: 400 12px/1.5 var(--f-body); color: #eed9d7; }
+.ch-credit-dot { padding: 0 7px; color: var(--brush); }
+.ch-credit-who { font: 700 20px/1.2 Georgia, serif; letter-spacing: .12em; color: #fff; }
+.ch-credit-role { margin-left: 10px; font-size: 11px; color: #e9b3b9; }
+.theme-error .ch-column { width: min(100%, 990px); margin: clamp(30px, 5vw, 55px) auto 0; padding: 47px 62px 45px; border: 1px solid rgba(245, 190, 192, .13); outline: 0; background: linear-gradient(110deg, rgba(8, 5, 6, .67), rgba(23, 11, 16, .73)); box-shadow: 0 18px 85px #0006; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.theme-error .ch-column::before { content: "01 / THE STORY"; display: flex; align-items: center; gap: 12px; font: 800 11px/1.3 var(--f-body); letter-spacing: .23em; color: #f6bac2; }
+.theme-error .ch-column h3 { margin: 20px 0 21px; font: 700 clamp(25px, 3.1vw, 40px)/1.6 "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .045em; color: #fff2ea; text-wrap: balance; word-break: auto-phrase; }
+.theme-error .ch-column p { margin: 0 0 18px; font: 400 15px/2.18 var(--f-body); letter-spacing: .02em; color: #e8d6d4; }
+.ch-focus { display: grid; grid-template-columns: 130px minmax(0, 1fr); align-items: center; gap: 24px; margin: 30px 0 24px; padding: 23px 26px; background: linear-gradient(100deg, rgba(116, 28, 44, .53), rgba(24, 10, 13, .61)); border-left: 3px solid var(--brush); }
+.ch-focus-letter { font: italic 700 97px/.9 Georgia, serif; text-align: center; color: #f6ccd1; text-shadow: 0 4px 15px #100508; }
+.ch-column p.ch-focus-title { margin: 0; font: 700 11px/1.4 var(--f-body); letter-spacing: .23em; color: #f2aab3; }
+.ch-column p.ch-focus-text { margin: 10px 0 0; font: 800 19px/1.7 var(--f-body); color: #fff2ea; }
+.ch-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 28px 0 22px; }
+.ch-note { padding: 19px 17px 12px 0; border-top: 1px solid rgba(190, 107, 120, .36); }
+.ch-note h4 { margin: 0 0 10px; font: 700 18px/1.3 Georgia, serif; letter-spacing: .03em; color: #fff; }
+.ch-column .ch-note p { margin: 0; font-size: 13px; line-height: 2; color: #d8c4c5; }
+.ch-quote { margin: 35px 0 5px; padding: 15px 0 15px 26px; border-left: 4px solid var(--brush); font: 700 clamp(24px, 2.8vw, 36px)/1.6 "Shippori Mincho B1", "Yu Mincho", serif; letter-spacing: .06em; color: #fff; text-shadow: 0 3px 10px #000a; }
+.ch-quote small { display: block; margin-bottom: 7px; font: 700 10px/1.4 Georgia, serif; letter-spacing: .3em; color: #e99eac; }
+.theme-error .ch-feature-panels { grid-template-columns: minmax(0, 1fr); margin-top: clamp(40px, 6vw, 65px); }
+.theme-error .fp-tracks { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.theme-error .fp-head { display: block; margin: 0 0 34px; padding: 0; transform: none; clip-path: none; background: none; font: 400 clamp(44px, 6vw, 74px)/1.1 Georgia, serif; font-style: normal; letter-spacing: .03em; color: #fff2ea; }
+.theme-error .fp-head em { margin-left: 14px; font-size: .32em; font-style: italic; letter-spacing: .04em; color: #f06a7c; }
+.fp-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font: 800 11px/1.3 var(--f-body); letter-spacing: .23em; color: #f6bac2; }
+.fp-kicker::before { content: ""; flex: none; width: 29px; height: 2px; background: var(--brush); }
+.fp-tracks-aside { position: absolute; right: 0; top: 54px; text-align: right; font: 400 12px/1.7 var(--f-body); letter-spacing: .1em; color: #dcc0c3; }
+.theme-error .fp-tracks ol { column-gap: 48px; column-rule: 0; }
+.theme-error .fp-tracks li { grid-template-columns: 2.6em minmax(0, 1fr); align-items: baseline; min-height: 66px; padding: 18px 5px 17px 0; border-top: 1px solid rgba(231, 200, 204, .26); background: linear-gradient(90deg, rgba(14, 7, 9, .46), transparent); font: 750 15px/1.5 var(--f-body); letter-spacing: .03em; color: #fff2ea; overflow-wrap: anywhere; }
+.theme-error .fp-tracks li:nth-child(7), .theme-error .fp-tracks li:nth-child(14) { border-bottom: 1px solid rgba(231, 200, 204, .26); }
+.theme-error .fp-tracks li::before { content: counter(tr, decimal-leading-zero); font: 700 14px/1 Georgia, serif; letter-spacing: .09em; color: #f05268; }
+.theme-error .fp-audio-note { max-width: 880px; margin: 28px 0 0; padding: 0; transform: none; background: none; box-shadow: none; clip-path: none; font: 400 12px/2 var(--f-body); letter-spacing: .02em; color: #dbc3c4; }
+@media (max-width: 900px) {
+  .theme-error .ch-feature-top { align-items: end; min-height: 0; padding-top: 240px; }
+  .theme-error .ch-feature-head { justify-self: start; width: 100%; max-width: 700px; }
+  .theme-error .ch-feature-bg { height: min(100%, calc(1200px + var(--xfade, 0px))); object-position: 24% 0; }
+  .theme-error .ch-feature::before { background: linear-gradient(180deg, rgba(7, 4, 5, .2) 0%, rgba(8, 6, 7, .67) 20%, rgba(10, 6, 9, .78) 47%, rgba(8, 4, 5, .54) 77%, rgba(8, 4, 5, .93) 100%); }
+  .theme-error .ch-column { padding: 34px 33px; }
+  .ch-notes { gap: 26px; }
+}
+@media (max-width: 600px) {
+  .theme-error .ch-feature-top { padding-top: 210px; }
+  .theme-error .ch-feature-bg { height: min(100%, calc(950px + var(--xfade, 0px))); object-position: 27% 0; }
+  .theme-error .ch-feature::after { top: calc(810px + var(--xfade, 0px)); background-size: auto 970px; background-position: 36% center; opacity: .46; }
+  .theme-error.has-visual .ch-title { font-size: clamp(75px, 19vw, 107px); }
+  .theme-error .ch-kindline { font-size: 13px; }
+  .theme-error .ch-origin h3 { font-size: 26px; }
+  .theme-error .ch-origin-text { font-size: 14px; line-height: 1.9; }
+  .ch-credit { font-size: 11px; }
+  .ch-credit-role { flex-basis: 100%; margin: 5px 0 0; }
+  .theme-error .ch-column { margin-top: 24px; padding: 27px 20px; background: rgba(9, 6, 8, .76); }
+  .theme-error .ch-column h3 { font-size: 26px; }
+  .theme-error .ch-column p { font-size: 14px; line-height: 2; }
+  .ch-focus { grid-template-columns: 66px minmax(0, 1fr); gap: 14px; padding: 19px 15px; }
+  .ch-focus-letter { font-size: 70px; }
+  .ch-column p.ch-focus-text { font-size: 16px; }
+  .ch-notes { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .ch-quote { padding-left: 17px; font-size: 24px; }
+  .theme-error .fp-head { font-size: clamp(42px, 11vw, 60px); }
+  .theme-error .fp-head em { margin-left: 8px; }
+  .fp-tracks-aside { position: static; margin: -22px 0 22px; text-align: left; }
+  .theme-error .fp-tracks ol { columns: 1; }
+  .theme-error .fp-tracks li { min-height: 55px; padding: 16px 4px; font-size: 14px; }
+  .theme-error .fp-tracks li:nth-child(7) { border-bottom: 0; }
+}
+
 /* ── Scene transitions between albums (2026-11-20) ──────────────────────────────────────────
    Before: each chapter was a hard-edged full-width box, with a 90–190px gap between them in which
    the page's ambient light showed as a horizontal band. Now the chapters touch and overlap by
