@@ -1305,6 +1305,111 @@
       "archiveNote": "2007年のCD資料と、新たに制作したイメージを組み合わせたHISTORYデザインです。画像の人物は当時の実在メンバーの写真ではありません。制作当時のPSD・原画は非公開の保存資料です。"
     },
     {
+      "id": "private-lives",
+      "no": "THE FOUR / A MEMORY ON THE ROAD",
+      "kind": "Album",
+      "kindLabel": "H · T · G · トド",
+      "year": "—",
+      "date": null,
+      "dateLabel": null,
+      "title": "PRIVATE LIVES",
+      "titleLines": true,
+      "subtitle": null,
+      "accent": "#e9c83d",
+      "visual": {
+        "source": "PIP_POPPER_PRIVATE_LIVES_HISTORY_最終受渡版.html（Producer採用HTMLの背景画像 1672×941＝森・ペンション・線路・滝と、撮影に出かける架空の4人。無加工）",
+        "adopted": "2026-11-21 Producer正式採用（採用HTML）"
+      },
+      "info": [
+        [
+          "参加",
+          "H · T · G · トド"
+        ],
+        [
+          "時系列",
+          "Blood Necks の後"
+        ],
+        [
+          "制作時期",
+          "2008年頃（仮）"
+        ],
+        [
+          "撮影の記憶",
+          "4人でペンションへ"
+        ]
+      ],
+      "episode": {
+        "title": "4人で出かけた、あの日の撮影。",
+        "text": [
+          "『Blood Necks』に続く、4人のPIP POPPER。",
+          "ジャケットの撮影のため、仲間とペンションへ。",
+          "音楽も、写真も、あの頃の遊びの続きだった。"
+        ]
+      },
+      "column": {
+        "title": "FOUR ON THE ROAD.",
+        "text": [
+          "『Blood Necks』のあとも、H・T・G・トドの4人は作品づくりを続けた。",
+          "この頃、4人でペンションへ出かけた記憶がある。目的は撮影。原本のジャケットには、旅先の自然や線路、4人の写真が切り取られ、斜めに重なるように並べられている。",
+          "トドは、この作品まで参加していた。CDの原本には、写真とデザインでも名前が残っている。そんな4人の時間が、全16曲の『PRIVATE LIVES』に重なっている。"
+        ],
+        "closing": "音楽を作る時間も、一緒に出かけた時間も、ちゃんと作品に残っていた。"
+      },
+      "tracks": [
+        {
+          "title": "intro2008"
+        },
+        {
+          "title": "We Love Music"
+        },
+        {
+          "title": "gimme your LUV"
+        },
+        {
+          "title": "Dear My Friend"
+        },
+        {
+          "title": "MENKUI"
+        },
+        {
+          "title": "WEEK"
+        },
+        {
+          "title": "いいわけ"
+        },
+        {
+          "title": "Distance-Episode1-"
+        },
+        {
+          "title": "Honey -Remix-"
+        },
+        {
+          "title": "最後の夜 -Episode2-"
+        },
+        {
+          "title": "SunnyDay"
+        },
+        {
+          "title": "Choice"
+        },
+        {
+          "title": "Close My Heart -Episode3-"
+        },
+        {
+          "title": "ONE NIGHT GIGOLO"
+        },
+        {
+          "title": "Check 1.2"
+        },
+        {
+          "title": "your place"
+        }
+      ],
+      "audioNote": "曲順は当時のCD原本の掲載順を採用。配信や試聴へのリンクは、現在確認できた情報だけを今後追加する。",
+      "archive": false,
+      "archiveNote": "「2008年頃」は収録曲「intro2008」からの推定で、発売年を確定したものではありません。人物・建物などの背景ビジュアルは新規に制作したイメージで、当時の実写写真ではありません。"
+    },
+    {
       "id": "forever-love",
       "section": "other",
       "no": "SOLO WORK",
