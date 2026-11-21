@@ -1,0 +1,2 @@
+# Launcher BATs must keep UTF-8 BOM + CRLF byte-for-byte (PAS Launcher Script Standard): no line-ending conversion.
+*.bat -text
