@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PIP POPPER 管理ツール</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="bar">
+  <h1 class="brand"><span class="b-pip">PIP</span><span class="b-popper">POPPER</span><small>管理ツール</small></h1>
+  <p class="status" id="status" aria-live="polite">読み込み中…</p>
+  <nav class="bar-actions">
+    <button type="button" id="btn-publish" class="primary" disabled>公開する</button>
+    <button type="button" id="btn-discard" disabled>変更を破棄</button>
+    <button type="button" id="btn-history">公開履歴・取り消し</button>
+    <button type="button" id="btn-quit" class="quiet">終了</button>
+  </nav>
+</header>
+<div class="layout">
+  <aside class="side" aria-label="編集するもの">
+    <input type="search" id="filter" placeholder="曲名・作品名でさがす" aria-label="さがす">
+    <div id="lists"></div>
+  </aside>
+  <main class="main" id="main">
+    <section class="welcome">
+      <h2>使い方</h2>
+      <ol>
+        <li>左の一覧から、直したい曲・アルバム・ページを選びます。</li>
+        <li>文字を直して <b>保存</b> を押します（この時点ではまだ公開されません）。</li>
+        <li><b>プレビュー</b> で、実際のページと同じ見た目で確認します。</li>
+        <li>よければ上の <b>公開する</b> を押し、内容を確認して公開します（1〜3分で公式サイトに反映）。</li>
+        <li>間違えたときは、公開前なら <b>変更を破棄</b>、公開後なら <b>公開履歴・取り消し</b> から元に戻せます。</li>
+      </ol>
+      <p class="note">デザインや画像、PRIVATE（音源）はここでは変わりません。音源の管理はPRIVATEの管理画面で行います。</p>
+    </section>
+  </main>
+</div>
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <form method="dialog">
+    <h2 id="dlg-title"></h2>
+    <div id="dlg-body"></div>
+    <div class="dlg-actions" id="dlg-actions"></div>
+  </form>
+</dialog>
+<script src="app.js"></script>
+</body>
+</html>

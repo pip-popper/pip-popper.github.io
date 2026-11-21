@@ -95,6 +95,10 @@ async function jpegSize(url) {
   }
   throw new Error(`JPEGの大きさを読めません: ${fileURLToPath(url)}`);
 }
+// Site texts edited from the manager (content/site.json): short copy that is not part of a song or an album.
+const SITE = JSON.parse(await readFile(new URL('content/site.json', root), 'utf8'));
+for (const [k, v] of Object.entries({ 'home.statement': SITE.home?.statement, 'home.historyLead': SITE.home?.historyLead, 'history.lead': SITE.history?.lead, 'history.description': SITE.history?.description, 'otherWorks.lead': SITE.otherWorks?.lead, 'otherWorks.description': SITE.otherWorks?.description, 'about.text': SITE.about?.text }))
+  if (!(Array.isArray(v) ? v.length && v.every(t => typeof t === 'string' && t.trim()) : typeof v === 'string' && v.trim())) throw new Error(`サイトの文言がありません: content/site.json の ${k}`);
 const songById = new Map(songs.map(s => [s.id, s]));
 const originOf = new Map();          // song id → album (only confirmed same songs)
 for (const a of albums) {
@@ -434,7 +438,7 @@ ${topbar(r, true)}
   </section>
 
   <section class="statement" aria-label="PIP POPPERについて">
-    <p class="reveal"><span>選んだ一曲を、いまの音で。</span><span>歌詞と物語ごと、届ける。</span></p>
+    <p class="reveal">${SITE.home.statement.map(t => `<span>${esc(t)}</span>`).join('')}</p>
   </section>
 
   <section class="latest" id="latest" data-light="${latest.id}" aria-labelledby="latest-title">
@@ -463,7 +467,7 @@ ${topbar(r, true)}
   <section class="history-teaser" aria-labelledby="history-teaser-title">
     <div class="ht-head reveal">
       <p class="section-label"><span class="label-en">History</span><span class="label-ja" id="history-teaser-title">ヒストリー</span></p>
-      <p class="ht-lead">1999年から2001年へ。仲間と遊びながら作ったアルバムで、PIP POPPERの歴史をたどる。</p>
+      <p class="ht-lead">${esc(SITE.home.historyLead)}</p>
       <div class="ht-links">
         <a class="more" href="${historyUrl(r)}">アルバムの歴史を見る <span aria-hidden="true">→</span></a>
         <a class="more" href="${otherUrl(r)}">その他の作品を見る <span aria-hidden="true">→</span></a>
@@ -540,11 +544,7 @@ await write('tracks/index.html', `<!doctype html>
 
 // ── About page: about/index.html ─────────────────────────────────────
 // Producer-approved text (unchanged from the previous site).
-const ABOUT = [
-  '日々の経験や社会への疑問、皮肉やユーモアを、歌詞と音楽にしています。',
-  '作品の原点は、本人が書いた歌詞と楽曲です。過去に作った曲も、AIなど現代の制作手段を使いながら再制作しています。',
-  'このサイトは、自分の頭から生まれた作品を、できるだけ長く世の中に残すための公式アーカイブです。',
-];
+const ABOUT = SITE.about.text;
 {
   const r = '../';
   await write('about/index.html', `${head(r, 'アーティスト紹介｜PIP POPPER', ' page-track page-about', { path: 'about/', description: `PIP POPPER（${NAME_KANA}）のアーティスト紹介。${ABOUT[0]}`, third: true })}
@@ -691,7 +691,7 @@ const HISTORY_FONTS = `<link rel="stylesheet" href="https://fonts.googleapis.com
   const glows = glowsOf(historyAlbums);
   // Old links to a work that moved to OTHER WORKS (history/#independence etc.) land on its new place.
   const movedScript = `<script>(() => { const id = decodeURIComponent(location.hash.slice(1)); const moved = ${JSON.stringify(otherAlbums.map(a => a.id))}; if (moved.some(m => id === m || id.startsWith(m + '-'))) location.replace('${otherUrl(r)}' + location.hash); })();</script>`;
-  await write('history/index.html', `${head(r, 'ヒストリー｜PIP POPPER', ' page-track page-history', { path: 'history/', description: `PIP POPPER（${NAME_KANA}）のヒストリー。1999年の1stアルバム『PIP POPPER』から2001年の『PROFESSIONAL』まで、収録曲と参加メンバー、制作のエピソードでたどります。`, fonts: HISTORY_FONTS })}
+  await write('history/index.html', `${head(r, 'ヒストリー｜PIP POPPER', ' page-track page-history', { path: 'history/', description: SITE.history.description, fonts: HISTORY_FONTS })}
 ${movedScript}
 <a class="skip" href="#chapters">本文へ移動</a>
 ${world(glows)}
@@ -700,7 +700,7 @@ ${topbar(r, false)}
   <header class="hist-hero">
     <p class="section-label reveal"><span class="label-en">History</span><span class="label-ja">ヒストリー</span></p>
     <h1 class="hist-title reveal"><span class="tw">アルバムでたどる</span><wbr><span class="tw">PIP POPPER</span></h1>
-    <p class="hist-lead reveal">1999年から2001年へ。仲間と遊びながら作ったアルバムを、収録曲と制作のエピソードでたどります。</p>
+    <p class="hist-lead reveal">${esc(SITE.history.lead)}</p>
     <nav class="hist-index reveal" aria-label="アルバム">
       ${historyAlbums.map(a => `<a href="#${a.id}"><span class="hi-year">${esc(a.year)}</span><span class="hi-title">${esc(a.title)}</span></a>`).join('\n      ')}
     </nav>
@@ -727,7 +727,7 @@ ${sharedScript}
   const cards = otherAlbums.flatMap(a => a.works
     ? a.works.map((w, n) => ({ href: `#${a.id}-w${n + 1}`, img: `${r}assets/history/${a.id}-jacket-${n + 1}.jpg`, title: w.title, kind: w.kind, date: null, count: w.tracks.length }))
     : [{ href: `#${a.id}`, img: albumVisual(r, a.id, true), title: a.title, kind: a.kind, date: a.sideLabel ?? a.dateLabel ?? (/\d/.test(a.year ?? '') ? a.year : null), count: a.tracks.length }]);
-  await write('other-works/index.html', `${head(r, 'その他の作品｜PIP POPPER', ' page-track page-history page-other', { path: 'other-works/', description: `PIP POPPER（${NAME_KANA}）のメンバーによるソロ作品や、個別に制作したアルバムを、ジャケット・収録曲・制作のエピソードとともに作品ごとに紹介します。`, fonts: HISTORY_FONTS })}
+  await write('other-works/index.html', `${head(r, 'その他の作品｜PIP POPPER', ' page-track page-history page-other', { path: 'other-works/', description: SITE.otherWorks.description, fonts: HISTORY_FONTS })}
 <a class="skip" href="#chapters">本文へ移動</a>
 ${world(glowsOf(otherAlbums))}
 ${topbar(r, false)}
@@ -735,7 +735,7 @@ ${topbar(r, false)}
   <header class="hist-hero">
     <p class="section-label reveal"><span class="label-en">Other Works</span><span class="label-ja">その他の作品</span></p>
     <h1 class="hist-title reveal"><span class="tw">ソロ作品と</span><wbr><span class="tw">個別制作の作品</span></h1>
-    <p class="hist-lead reveal">メンバーのソロ作品や、個別に制作したアルバムを、作品ごとに紹介します。</p>
+    <p class="hist-lead reveal">${esc(SITE.otherWorks.lead)}</p>
   </header>
   <ol class="ow-gallery reveal" aria-label="作品">
     ${cards.map(c => `<li><a href="${c.href}">

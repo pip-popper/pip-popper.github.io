@@ -90,3 +90,21 @@
 !/albums/*/backdrop.png
 !/albums/*/title.png
 !/albums/*/title-web.png
+# Site texts edited from the manager, AI/handover entry points, and the manager tool v1 (2026-11-22).
+!/content/
+/content/**
+!/content/site.json
+!/README.md
+!/CLAUDE.md
+!/AGENTS.md
+!/HANDOVER.md
+!/PIP POPPER管理ツールを起動.bat
+!/manager/
+/manager/**
+!/manager/server.mjs
+!/manager/test-manager.mjs
+!/manager/README.md
+!/manager/ui/
+!/manager/ui/index.html
+!/manager/ui/app.js
+!/manager/ui/app.css
