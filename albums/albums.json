@@ -94,6 +94,7 @@
     },
     {
       "id": "togetherness",
+      "section": "other",
       "no": "SOLO WORK",
       "kind": "N Solo Project",
       "kindLabel": "Nのためのソロアルバム",
@@ -883,6 +884,7 @@
     },
     {
       "id": "independence",
+      "section": "other",
       "no": "H SOLO WORK",
       "kind": "H 1st Solo Album",
       "kindLabel": "H 1ST SOLO ALBUM",
@@ -1304,6 +1306,7 @@
     },
     {
       "id": "forever-love",
+      "section": "other",
       "no": "SOLO WORK",
       "kind": "T Solo Album",
       "kindLabel": "T SOLO ALBUM",
@@ -1401,6 +1404,7 @@
     },
     {
       "id": "marriageable",
+      "section": "other",
       "no": "FEMALE SOLO WORK",
       "kind": "女性ボーカル・ソロアルバム",
       "kindLabel": "PRODUCED BY H",
@@ -1488,6 +1492,7 @@
     },
     {
       "id": "solo-works",
+      "section": "other",
       "no": "SOLO WORKS",
       "kind": "Solo Works（3作品）",
       "year": "SOLO",

@@ -978,3 +978,30 @@
   .chapters { --xfade: 96px; }
   .chapter.has-visual > .ch-feature { padding-top: calc(30px + var(--xfade)); padding-bottom: calc(34px + var(--xfade)); }
 }
+
+/* ── OTHER WORKS page (2026-11-21): a gallery to compare the works, then each adopted chapter ── */
+.ht-links { display: flex; flex-wrap: wrap; gap: 4px 28px; }
+.ow-gallery { list-style: none; margin: 0 0 clamp(90px, 16svh, 190px); padding: clamp(22px, 3svh, 34px) 0 0; border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: clamp(22px, 3vw, 40px) clamp(14px, 2vw, 28px); }
+.ow-gallery li { min-width: 0; }
+.ow-gallery a { display: grid; gap: 6px; }
+.ow-jacket { display: block; aspect-ratio: 1; overflow: hidden; background: #14151c; box-shadow: 0 14px 30px #0006; margin-bottom: 8px; }
+.ow-jacket img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.2,1), filter .3s; }
+.ow-gallery a:hover img { transform: scale(1.04); }
+.ow-gallery a:active img { filter: brightness(.84); }
+.ow-kind { font: 400 12px/1.5 var(--f-body); letter-spacing: .08em; color: var(--red); }
+.ow-title { font: 700 clamp(17px, 1.5vw, 21px)/1.35 var(--f-head); letter-spacing: .03em; overflow-wrap: anywhere; }
+.ow-gallery a:hover .ow-title { text-decoration: underline; text-decoration-color: var(--red); text-underline-offset: .25em; }
+.ow-meta { font-size: 13px; color: var(--muted); }
+.sw-work { scroll-margin-top: 80px; }
+@media (max-width: 760px) {
+  .ow-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ow-title { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .ow-jacket img { transition: none; } }
+/* その他の作品 added to the menu: tablets drop 最新楽曲 (and アーティスト紹介 on sub-pages), as phones already do;
+   sub-pages on phones up to 520px show メッセージ in the footer (as ≤380px did). */
+@media (min-width: 761px) and (max-width: 1023px) {
+  .topbar nav .nav-latest, .page-track .topbar nav .nav-about { display: none; }
+}
+@media (max-width: 520px) { .page-track .topbar nav .nav-message { display: none; } }
