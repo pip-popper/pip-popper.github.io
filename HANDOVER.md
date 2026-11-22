@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producerの指示でChatGPT Workから交代、2026-11-22） |
-| 状態 | PRIVATE一覧改善を検証・ローカル保存済み。本番反映（Worker デプロイ）はProducer承認待ち |
+| 状態 | PRIVATE一覧改善を本番反映済み（c44a4e36）。Producerの実機確認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | 3f103e2（ChatGPT Workの未コミット差分＝PRIVATE一覧改善とEXE化を受領） |
@@ -17,6 +17,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 更新日 | 2026-11-22 |
 
 ## 進捗
+
+- 2026-11-22 Producerの承認でPRIVATE一覧改善を本番デプロイ（5639c9c、Version `c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`、復元点 `299d45f8-71aa-4520-b0e1-83b3c1274433`）。更新は private.css・private.js・pages.js のみ。本番の配信物がcommitと一致、入口200・未ログイン音源401・管理画面200・管理API401。R2はデプロイで変更なし（曲目 rev 78・23曲は当日10:09までの管理画面での追加、照合ファイルあり＝管理ツールでの変更済み）。
 
 - 2026-11-22 Claude Code：PRIVATE一覧改善を検証（模擬環境の実ブラウザで PC・タブレット・スマホ幅、架空30曲、実音声の再生・一時停止・位置変更・切替、認証・管理への影響なし）。小修正1件（開いた直後の状態表示）。テスト：一覧・PRIVATE既存61・パスワード53 合格。PRIVATE分だけ commit（EXE化の差分は未commitのまま保護）。本番未反映。
 
