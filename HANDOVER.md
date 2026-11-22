@@ -7,16 +7,20 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 | 項目 | 内容 |
 |---|---|
-| 担当AI | Claude Code |
-| 状態 | 担当作業完了・Producer実機確認待ち（担当は継続。交代する場合は下の手順で「停止・引渡し可」にしてから） |
+| 担当AI | Claude Code（Producerの指示でChatGPT Workから交代、2026-11-22） |
+| 状態 | PRIVATE一覧改善を検証・ローカル保存済み。本番反映（Worker デプロイ）はProducer承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
-| 開始時HEAD | `1a0b059`（PLACE TO STAY 公開） |
+| 開始時HEAD | 3f103e2（ChatGPT Workの未コミット差分＝PRIVATE一覧改善とEXE化を受領） |
 | 復元点 | `1a0b059`（管理ツール導入前）。バックアップ bundle は `..\PIP POPPER保守バックアップ\GitHubリポジトリ` |
-| 未コミット差分と所有者 | なし（作業はこの記録と同じcommitに含める） |
+| 未コミット差分と所有者 | EXE化（ChatGPT Workの成果、未commitのまま保護・未検証の部分あり）：.gitignore の EXE 許可行、README.md、build.mjs、manager/README.md・server.mjs・test-manager.mjs、manager/EXE-VERIFICATION.md・Launcher.cs・build-launcher.ps1・test-launcher.mjs、HANDOVER.md の EXE 記録2件。PRIVATE一覧改善は commit 済み |
 | 更新日 | 2026-11-22 |
 
 ## 進捗
+
+- 2026-11-22 Claude Code：PRIVATE一覧改善を検証（模擬環境の実ブラウザで PC・タブレット・スマホ幅、架空30曲、実音声の再生・一時停止・位置変更・切替、認証・管理への影響なし）。小修正1件（開いた直後の状態表示）。テスト：一覧・PRIVATE既存61・パスワード53 合格。PRIVATE分だけ commit（EXE化の差分は未commitのまま保護）。本番未反映。
+
+- 2026-11-22 PRIVATE一覧改善：招待者ページだけPC3列／1050px以下2列／379px以下1列。上部に選択曲と既存のネイティブaudioを集約しsticky表示（低い横向き画面では通常配置）。選択・再生中を赤い枠と文字で表示。曲・順序・音源URL・認証・管理処理は不変。変更は private/worker/src/pages.js、public/assets/private.css・private.js、private/dev/test-library.mjs、許可行の.gitignore、本記録とprivate/README.md。既存EXE差分は保護。管理61・パスワード53の模擬テスト合格、50曲と長い曲名のHTML・DOM模擬操作テスト合格。PC・スマホの実描画／実音声の再生・シークは未確認（Edgeのheadless出力取得不可）。既知のHTTP／Git権限制限は再試行せず、未コミット・未push・未デプロイ。Claudeへの残工程はprivate/README.md末尾。担当交代はProducerの指示後にPACS-10で行う。
 
 - 2026-11-22 管理ツール v1（文字情報の編集・保存・プレビュー・公開・取り消し）を実装。`content/site.json` を新設し、`build.mjs` 内の通常編集する文言を移動（生成されるサイトは全167ファイルが変更前と同一）。README・CLAUDE.md・AGENTS.md・本ファイルを整備。自動テスト 44項目合格、検証用の送信先で公開・取り消しを確認。本物の GitHub への公開は未実施（Producerの承認待ち）。
 

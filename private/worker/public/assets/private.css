@@ -48,3 +48,34 @@
   .pv-audio { width: 100%; }
   .pv-dl { justify-self: stretch; justify-content: space-between; }
 }
+
+/* Compact invitee library only; admin and password screens keep their layout. */
+.pv-library-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.pv-library-list .pv-item { grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; padding: 16px; border: 1px solid var(--line); background: rgba(10,10,12,.78); min-width: 0; }
+.pv-library-list .pv-jacket { width: 56px; grid-row: auto; box-shadow: none; }
+.pv-library-list .pv-body { display: grid; gap: 8px; min-width: 0; }
+.pv-library-list .pv-body > * { grid-column: auto; }
+.pv-library-list .pv-no { font-size: 16px; align-self: auto; }
+.pv-library-list .pv-song { font-size: 17px; line-height: 1.5; word-break: normal; overflow-wrap: anywhere; letter-spacing: .02em; }
+.pv-library-list .pv-dl { min-height: 44px; padding: 0; border: 0; font-size: 11px; letter-spacing: 0; gap: 4px; justify-self: start; }
+.pv-select { min-height: 44px; text-align: left; padding: 8px 12px; color: var(--ink); border: 1px solid var(--line); background: #181619; font: 500 14px/1.4 var(--f-body); cursor: pointer; }
+.pv-select:hover { border-color: var(--red); }
+.pv-library-list .is-current { border-color: var(--red); background: #301619; }
+.pv-library-list .is-playing .pv-no::after { content: ' ● 再生中'; font: 500 12px/1.5 var(--f-body); }
+.pv-enhanced .pv-library-list .pv-audio { display: none; }
+.pv-player { position: sticky; top: calc(76px + env(safe-area-inset-top)); z-index: 10; padding: 14px 18px; margin-top: 18px; border: 1px solid var(--red); background: #151315; box-shadow: 0 8px 24px #0008; }
+.pv-player-state { margin: 0 0 4px; color: var(--red); font: 500 12px/1.5 var(--f-body); }
+.pv-player-title { margin: 0 0 8px; font: 700 18px/1.5 var(--f-body); overflow-wrap: anywhere; }
+.pv-player .pv-audio { display: block; width: 100%; max-width: 100%; }
+@media (max-width: 1050px) { .pv-library-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .pv-library-list .pv-item { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 8px; }
+  .pv-library-list .pv-jacket { display: none; }
+  .pv-library-list .pv-song { font-size: 16px; }
+  .pv-library-list .pv-dl { font-size: 10px; }
+  .pv-player { padding: 12px; }
+  .pv-player-title { font-size: 16px; }
+}
+@media (max-width: 379px) { .pv-library-list { grid-template-columns: minmax(0, 1fr); } }
+/* Leave room for the list in short landscape windows. */
+@media (max-height: 500px) { .pv-player { position: static; } }

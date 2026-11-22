@@ -63,12 +63,18 @@ export const libraryPage = ({ songs }) => page('ライブラリ｜PIP POPPER PRI
     <p class="section-label"><span class="label-en">${LOCK}Private Library</span><span class="label-ja">招待者専用ライブラリ</span></p>
     <p class="works-count"><span>${songs.length}</span> 曲</p>
   </header>
-  ${songs.length ? `<ol class="pv-list">
+  ${songs.length ? `<section class="pv-player" aria-label="選択中の曲と再生操作" hidden>
+    <p class="pv-player-state" role="status" aria-live="polite">曲を選んで再生</p>
+    <h2 class="pv-player-title"></h2>
+    <div class="pv-player-controls"></div>
+  </section>
+  <ol class="pv-list pv-library-list" aria-label="楽曲一覧">
     ${songs.map((s, i) => `<li class="pv-item">
       <span class="pv-jacket"><span class="jacket-fallback">${esc(s.title)}</span>${s.cover ? `<img src="${esc(s.cover)}" width="640" height="640" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">` : ''}</span>
       <div class="pv-body">
         <p class="pv-no"><span>${no(i)}</span></p>
         <h2 class="pv-song">${esc(s.title)}</h2>
+        <button class="pv-select" type="button" hidden aria-label="${esc(s.title)}を再生">再生する</button>
         <audio class="pv-audio" controls preload="none" src="/audio/${esc(s.id)}?v=${esc(audioVersion(s))}">お使いのブラウザでは再生できません。</audio>
         <a class="pv-dl" href="/audio/${esc(s.id)}?download=1&amp;v=${esc(audioVersion(s))}" download>MP3をダウンロード <span aria-hidden="true">↓</span></a>
       </div>
