@@ -131,6 +131,10 @@
     const [fNew, iNew] = pw('pp-new', '新しいパスワード（8〜200文字）', 'new-password');
     const [fConf, iConf] = pw('pp-conf', '新しいパスワード（確認用・もう一度）', 'new-password');
     const [fAdm, iAdm] = pw('pp-adm', '管理者パスワード（PRIVATEの管理画面に入るときのもの）', 'off');
+    // show / hide the three passwords together (starts hidden; switching keeps what was typed)
+    const iShow = el('input', { id: 'pp-show', type: 'checkbox' });
+    iShow.onchange = () => [iNew, iConf, iAdm].forEach(i => { i.type = iShow.checked ? 'text' : 'password'; });
+    const fShow = el('div', { className: 'field check' }, iShow, el('label', { htmlFor: 'pp-show', textContent: 'パスワードを表示' }));
     const result = el('p', { className: 'note', role: 'status', ariaLive: 'polite' });
     const btn = el('button', { type: 'button', className: 'primary', textContent: 'パスワードを変更' });
     const clear = (...inputs) => inputs.forEach(i => { i.value = ''; });
@@ -163,7 +167,7 @@
     $('#main').replaceChildren(
       el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: 'PRIVATE管理' }), 'PRIVATEのパスワード')),
       el('p', { className: 'note', textContent: `招待者がPRIVATE（${state?.privateUrl ?? ''}）に入るときのパスワードを変えます。変更は直ちに反映され、入力したパスワードはこの画面にもパソコンにも残りません。` }),
-      fNew, fConf, fAdm, el('div', { className: 'field' }, btn), result,
+      fNew, fConf, fAdm, fShow, el('div', { className: 'field' }, btn), result,
       el('details', { className: 'restore' }, el('summary', { textContent: '以前のパスワード（Cloudflareに登録したもの）に戻す' }),
         el('p', { className: 'note', textContent: '管理ツールで設定したパスワードをやめて、Cloudflareのダッシュボードに登録されているパスワードに戻します。通常は使いません。確認のため、下の欄に「旧パスワードに戻す」と入力してください。' }),
         el('div', { className: 'field' }, el('label', { htmlFor: 'pp-words', textContent: '確認の言葉' }), iWords), fRAdm, el('div', { className: 'field' }, rBtn), rResult));
