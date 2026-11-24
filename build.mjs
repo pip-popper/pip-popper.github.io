@@ -37,7 +37,7 @@ const ids = (await readdir(trackDir, { withFileTypes: true })).filter(e => e.isD
 // First time each track.json entered Git history = the date it was listed on the site.
 function gitListedAt(id) {
   try {
-    const first = execFileSync('git', ['log', '--diff-filter=A', '--reverse', '--format=%aI', '--', `tracks/${id}/track.json`],
+    const first = execFileSync('git', ['-c', `safe.directory=${fileURLToPath(root).replace(/\\/g, '/').replace(/\/$/, '')}`, 'log', '--diff-filter=A', '--reverse', '--format=%aI', '--', `tracks/${id}/track.json`],
       { cwd: fileURLToPath(root), windowsHide: true, encoding: 'utf8' }).trim().split('\n')[0];
     return first || null;
   } catch { return null; }
@@ -72,7 +72,7 @@ const hiddenSongs = new Set();
 // The private manager records and R2 catalog are never read by this builder.
 const priorArchive = new Set(JSON.parse(await readFile(new URL('works.json', published),'utf8')).map(s=>s.id));
 // a song that was published before and then 掲載停止 is not in works.json any more: Git's history of its page says it was public
-const wasPublished = id => { try { return !!execFileSync('git', ['log', '-1', '--format=%H', '--', `docs/tracks/${id}/index.html`], { cwd: fileURLToPath(root), windowsHide: true, encoding: 'utf8' }).trim(); } catch { return false; } };
+const wasPublished = id => { try { return !!execFileSync('git', ['-c', `safe.directory=${fileURLToPath(root).replace(/\\/g, '/').replace(/\/$/, '')}`, 'log', '-1', '--format=%H', '--', `docs/tracks/${id}/index.html`], { cwd: fileURLToPath(root), windowsHide: true, encoding: 'utf8' }).trim(); } catch { return false; } };
 for (const id of ids) if (!priorArchive.has(id) && wasPublished(id)) priorArchive.add(id);
 for (const id of ids) {
   if (!/^[a-z0-9-]+$/.test(id)) throw new Error(`曲IDは英小文字・数字・ハイフンのみ: ${id}`);

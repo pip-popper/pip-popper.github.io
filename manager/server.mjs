@@ -57,9 +57,10 @@ const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|alb
 
 // ── Git ───────────────────────────────────────────────────────────────
 function git(args, opts = {}) {
-  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd: ROOT, windowsHide: true, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, maxBuffer: 64 << 20, ...opts });
+  const r = spawnSync('git', ['-c', 'core.quotepath=false', '-c', `safe.directory=${SAFE_DIR}`, ...args], { cwd: ROOT, windowsHide: true, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, maxBuffer: 64 << 20, ...opts });
   return { ok: r.status === 0, out: (r.stdout ?? '').replace(/\s+$/, ''), err: (r.stderr ?? '').trim() };   // keep leading spaces (status codes)
 }
+const SAFE_DIR = ROOT.replace(/\\/g, '/');   // the folder may be moved or copied to another drive (2026-11-24)
 const changedFiles = () => {
   const r = git(['status', '--porcelain=v1', '-uall']);
   return r.out ? r.out.split('\n').map(l => ({ code: l.slice(0, 2), file: l.slice(3).replace(/^"|"$/g, '').split(' -> ').pop() })) : [];
@@ -358,8 +359,8 @@ async function undo({ sha: s }) {
   if (!h || !h.undoable) return { status: 400, body: { error: 'この保存点は管理ツールでは取り消せません。' } };
   if (changedFiles().length) return { status: 409, body: { error: '公開していない変更があります。先に「公開する」か「変更を破棄」をしてください。' } };
   const files = git(['show', '--name-only', '--format=', s]).out.split('\n').filter(f => DATA_RE.test(f));
-  const patch = spawnSync('git', ['-c', 'core.quotepath=false', 'diff', '--binary', `${s}^`, s, '--', ...files], { cwd: ROOT, windowsHide: true, encoding: 'utf8', maxBuffer: 64 << 20 }).stdout;
-  const a = spawnSync('git', ['apply', '-R', '--binary', '--whitespace=nowarn'], { cwd: ROOT, windowsHide: true, input: patch, encoding: 'utf8' });
+  const patch = spawnSync('git', ['-c', 'core.quotepath=false', '-c', `safe.directory=${SAFE_DIR}`, 'diff', '--binary', `${s}^`, s, '--', ...files], { cwd: ROOT, windowsHide: true, encoding: 'utf8', maxBuffer: 64 << 20 }).stdout;
+  const a = spawnSync('git', ['-c', `safe.directory=${SAFE_DIR}`, 'apply', '-R', '--binary', '--whitespace=nowarn'], { cwd: ROOT, windowsHide: true, input: patch, encoding: 'utf8' });
   if (a.status !== 0) return { status: 409, body: { error: 'その後に同じ箇所が変更されているため、自動では取り消せません。' } };
   return { status: 200, body: { ok: true, message: '取り消した内容を「公開していない変更」に入れました。プレビューで確認してから公開してください。' } };
 }
@@ -636,6 +637,18 @@ if (process.argv.includes('--launcher')) {
   process.stdin.resume();
   process.stdin.on('end', () => process.exit(0));
 }
+// 2026-11-24: the manager folder can be copied (PIP POPPER管理ツール一式). When this copy has no unpublished
+// changes and nothing unsent, take in what was published from elsewhere (fast-forward only, never a merge).
+function syncFromGitHub() {
+  if (process.env.PP_MANAGER_NO_SYNC) return;
+  if (changedFiles().length || currentBranch() !== BRANCH || normUrl(remoteUrl()) !== normUrl(EXPECTED_REMOTE)) return;
+  if (!git(['fetch', REMOTE, BRANCH], { timeout: 15000 }).ok) return;
+  if (git(['rev-list', '--count', `${REMOTE}/${BRANCH}..HEAD`]).out !== '0') return;
+  if (git(['rev-list', '--count', `HEAD..${REMOTE}/${BRANCH}`]).out === '0') return;
+  const m = git(['merge', '--ff-only', '-q', `${REMOTE}/${BRANCH}`]);
+  log(`sync from GitHub ${m.ok ? 'ok' : 'failed'}`);
+}
+try { syncFromGitHub(); } catch {}
 server.listen(PORT, '127.0.0.1', () => {
   PORT = server.address().port;
   const open = `http://127.0.0.1:${PORT}/#t=${TOKEN}`;
