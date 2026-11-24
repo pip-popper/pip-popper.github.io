@@ -228,6 +228,60 @@ try {
     } finally { pv.kill(); }
   }
 
+  console.log('8b. 新曲：登録 → 公式HPへ取り込み → 破棄 → 再取り込み → 公開 → 取り消し');
+  {
+    const b64 = rel => readFileSync(path.join(REPO, rel)).toString('base64');
+    const image = { original: { mime: 'image/png', data: b64('tracks/anniversary/cover.png') }, web: { mime: 'image/jpeg', data: b64('tracks/anniversary/cover-web.jpg') }, thumb: { mime: 'image/jpeg', data: b64('tracks/anniversary/cover-640.jpg') } };
+    const fields = { title: '架空の新曲テスト', reading: 'かくうのしんきょくてすと', artist: 'PIP POPPER', lyrics: '公開する歌詞\n\n二行目', impression: '公開する感想', classification: 'general',
+      lyricsScope: 'public', impressionScope: 'public', channels: { hp: true, listen: false, private: false }, state: 'draft', urls: [], memo: 'MEMO_NOT_PUBLIC' };
+    const reg = (a, b) => call('POST', `/api/song-registration/${a}`, b);
+    let r = await reg('save', { fields, image, confirm: true });
+    const id = r.data.record.id;
+    ok(r.status === 200 && r.data.publication.state === 'not-adopted', '下書きを保存（未取り込み）');
+    ok((await reg('adopt', { id, rev: r.data.record.rev, slug: 'kakuu-test', confirm: true })).status === 400, '下書きのままでは取り込めない');
+    r = await reg('save', { id, rev: r.data.record.rev, fields: { ...fields, state: 'ready' }, confirm: true });
+    const rev = r.data.record.rev;
+    ok(r.status === 200, '公開準備完了で保存');
+    ok((await reg('adopt', { id, rev, slug: 'kakuu-test' })).status === 400, '確認なしの取り込みは拒否');
+    ok((await reg('adopt', { id, rev, slug: 'Bad Name', confirm: true })).status === 400, '不正なURL名は拒否');
+    ok((await reg('adopt', { id, rev, slug: 'manner', confirm: true })).status === 409, '既存の曲と同じURL名は拒否（既存の曲は変わらない）');
+    ok(status() === '', 'ここまで公式データは変わらない');
+    r = await reg('adopt', { id, rev, slug: 'kakuu-test', confirm: true });
+    const t = JSON.parse(read('tracks/kakuu-test/track.json'));
+    ok(r.status === 200 && r.data.publication.state === 'adopted' && existsSync(path.join(WORK, 'tracks/kakuu-test/cover-web.jpg')) && existsSync(path.join(WORK, 'tracks/kakuu-test/cover-640.jpg')), '取り込み：track.json と表示用画像2枚');
+    ok(t.title === fields.title && t.lyrics === fields.lyrics && t.aiImpression === fields.impression && t.publicArchiveApproved === true && t.audio === null && !read('tracks/kakuu-test/track.json').includes('MEMO_NOT_PUBLIC'), '取り込んだ内容は承認済みの公開項目だけ（管理メモなし）');
+    ok((await reg('adopt', { id, rev, slug: 'kakuu-test2', confirm: true })).status === 409, '二重の取り込みは拒否');
+    let st = (await call('GET', '/api/state')).data;
+    ok(st.changes.other.length === 0 && st.changes.items.some(c => c.item === '曲「架空の新曲テスト」' && c.label === 'ジャケット画像'), '公開していない変更に新曲（文字と画像）が並ぶ・管理ツール以外の変更なし');
+    ok((await call('POST', '/api/discard', { confirm: true })).status === 200 && !existsSync(path.join(WORK, 'tracks/kakuu-test')) && status() === '', '「変更を破棄」で取り込みを取り消せる');
+    ok((await reg('get', { id })).data.publication.state === 'withdrawn', '登録側は「取り込み取消済み」');
+    ok((await reg('adopt', { id, rev, slug: 'kakuu-test', confirm: true })).status === 200, 'もう一度取り込める');
+    r = await call('POST', '/api/preview', { type: 'track', id: 'kakuu-test' });
+    ok(r.status === 200, 'プレビューを作れる');
+    r = await call('POST', '/api/publish', { confirm: true, summary: '新曲：架空の新曲テスト' });
+    const remoteFiles = g(BARE, 'ls-tree', '-r', '--name-only', 'main');
+    ok(r.status === 200 && ['tracks/kakuu-test/track.json', 'tracks/kakuu-test/cover-web.jpg', 'tracks/kakuu-test/cover-640.jpg', 'docs/tracks/kakuu-test/index.html', 'docs/assets/covers/kakuu-test.jpg'].every(f => remoteFiles.split('\n').includes(f)), '公開：新曲のページと画像が送信先に届く');
+    ok(g(BARE, 'show', 'main:docs/index.html').includes('data-order-kana'), '公開されたトップに表示順の切替がある');
+    ok((await reg('get', { id })).data.publication.state === 'published', '登録側は「公開済み」（送信先にある時だけ）');
+    const h = (await call('GET', '/api/history')).data.history;
+    ok(h[0].undoable, '新曲の公開も管理ツールで取り消せる対象');
+    ok((await call('POST', '/api/undo', { sha: h[0].sha })).status === 200 && !existsSync(path.join(WORK, 'tracks/kakuu-test/cover-web.jpg')), '取り消し：新曲のファイルが「公開していない変更（削除）」になる');
+    st = (await call('GET', '/api/state')).data;
+    ok(st.changes.items.some(c => c.label === 'ジャケット画像（削除）') && st.changes.other.length === 0, '削除も公開前の一覧に出る');
+    ok((await call('POST', '/api/discard', { confirm: true })).status === 200 && existsSync(path.join(WORK, 'tracks/kakuu-test/cover-web.jpg')) && status() === '', '取り消しを破棄すると元に戻る');
+  }
+
+  console.log('8c. 既存の曲によみがなを付ける（あいうえお順用）');
+  {
+    const it = (await call('GET', '/api/item?type=track&id=manner')).data;
+    const fi = it.fields.findIndex(f => f.path[0] === 'reading');
+    ok(fi >= 0 && it.fields[fi].value === '', 'よみがな欄がある（未設定は空欄）');
+    ok((await call('POST', '/api/item', { type: 'track', id: 'manner', rev: it.rev, changes: [{ path: ['reading'], value: '漢字' }] })).status === 400, 'ひらがな・カタカナ・英数字以外は拒否');
+    const r = await call('POST', '/api/item', { type: 'track', id: 'manner', rev: it.rev, changes: [{ path: ['reading'], value: 'まなー' }] });
+    ok(r.status === 200 && JSON.parse(read('tracks/manner/track.json')).reading === 'まなー' && JSON.parse(read('tracks/manner/track.json')).lyrics === JSON.parse(g(WORK, 'show', 'HEAD:tracks/manner/track.json')).lyrics, 'よみがなを保存（他の項目は不変）');
+    ok((await call('POST', '/api/discard', { confirm: true })).status === 200 && status() === '', '破棄で元に戻る');
+  }
+
   console.log('9. 終了');
   ok((await call('POST', '/api/quit')).status === 200, '終了できる');
 } catch (e) {

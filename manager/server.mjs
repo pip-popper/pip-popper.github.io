@@ -15,13 +15,14 @@
 import http from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes, createHash } from 'node:crypto';
-import { readFile, writeFile, rename, mkdir, readdir, stat, copyFile, rm } from 'node:fs/promises';
+import { readFile, writeFile, rename, mkdir, readdir, stat, copyFile, rm, rmdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { privateLyricsCall } from './private-lyrics.mjs';
 import { listReleaseStatus, saveReleaseStatus, sanitizePrivateRows } from './release-status.mjs';
 import { registrationAction, listRegistrations } from './song-registration.mjs';
+import { validReading } from '../private/worker/src/song-order.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
@@ -45,8 +46,9 @@ const PREVIEW = path.join(WORK, 'preview');
 const UI = path.join(HERE, 'ui');
 
 // ── files the tool may change ─────────────────────────────────────────
-const DATA_RE = /^(tracks\/[a-z0-9-]+\/track\.json|albums\/albums\.json|content\/site\.json)$/;
-const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/track\.json|albums\/albums\.json|content\/site\.json|docs\/.+)$/;
+const DATA_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|content\/site\.json)$/;
+const IMAGE_RE = /^tracks\/[a-z0-9-]+\/cover-(web|640)\.jpg$/;   // only the display JPEGs a new song needs (2026-11-24)
+const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|content\/site\.json|docs\/.+)$/;
 
 // ── Git ───────────────────────────────────────────────────────────────
 function git(args, opts = {}) {
@@ -82,7 +84,7 @@ async function writeJsonAtomic(rel, data, indent, eol = '\n') {
 }
 
 // ── what can be edited (text values only; ids, colours, image settings, links stay as they are) ──
-const TRACK_FIELDS = [['title', '曲名', 'line', true], ['artist', 'アーティスト名', 'line'], ['aiImpression', '紹介文', 'text'], ['lyrics', '歌詞', 'lyrics'], ['background', '制作背景', 'text'],
+const TRACK_FIELDS = [['title', '曲名', 'line', true], ['reading', '曲名のよみがな（あいうえお順の並び替えに使う。ひらがな。空欄なら曲名で並ぶ）', 'reading'], ['artist', 'アーティスト名', 'line'], ['aiImpression', '紹介文', 'text'], ['lyrics', '歌詞', 'lyrics'], ['background', '制作背景', 'text'],
   ['streamingUrl', '配信リンク（Spotify・YouTube・Suno・Apple Music のURL。空欄なら表示なし）', 'url']];
 // the services build.mjs shows as a "…で聴く" button (other sites need a label, which v1 does not edit)
 const LINK_HOSTS = ['open.spotify.com', 'spotify.link', 'suno.com', 'www.suno.com', 'app.suno.ai', 'suno.ai', 'www.youtube.com', 'youtube.com', 'youtu.be', 'music.youtube.com', 'music.apple.com'];
@@ -157,7 +159,7 @@ async function loadItem(type, id) {
   let base, fields;
   if (type === 'track') {
     base = [];
-    fields = TRACK_FIELDS.filter(([k]) => k in f.data && (f.data[k] === null || typeof f.data[k] === 'string') && !(k === 'streamingUrl' && f.data.audioRelease === 'private'))
+    fields = TRACK_FIELDS.filter(([k]) => (k in f.data || k === 'reading') && (f.data[k] == null || typeof f.data[k] === 'string') && !(k === 'streamingUrl' && f.data.audioRelease === 'private'))
       .map(([k, label, kind, required]) => ({ path: [k], label, kind, required: !!required, nullable: f.data[k] === null || !required, value: f.data[k] ?? '' }));
   } else if (type === 'album') {
     const i = f.data.albums.findIndex(a => a.id === id);
@@ -190,6 +192,7 @@ async function saveItem({ type, id, rev, changes }) {
     if (fd.required && !value.trim()) return { status: 400, body: { error: `「${fd.label}」は空にできません。` } };
     if (value.length > 20000) return { status: 400, body: { error: `「${fd.label}」が長すぎます。` } };
     if (fd.kind === 'url' && value.trim() && linkProblem(value.trim())) return { status: 400, body: { error: linkProblem(value.trim()) } };
+    if (fd.kind === 'reading') { if (!validReading(value)) return { status: 400, body: { error: 'よみがなは、ひらがな・カタカナ・英数字で入力してください。' } }; f.data.reading = value.trim() || null; continue; }
     setAt(f.data, [...item.base, ...c.path], (fd.kind === 'url' ? value.trim() : value) === '' && fd.nullable && type === 'track' ? null : (fd.kind === 'url' ? value.trim() : value));
   }
   const newRev = await writeJsonAtomic(rel, f.data, f.indent, f.eol);
@@ -221,7 +224,13 @@ async function describeChanges() {
   const data = files.filter(f => DATA_RE.test(f.file));
   const other = files.filter(f => !DATA_RE.test(f.file));
   const items = [];
-  for (const { file } of data) {
+  for (const { file, code } of data) {
+    if (IMAGE_RE.test(file)) {
+      let title = file.split('/')[1]; try { title = JSON.parse(await readFile(path.join(ROOT, path.dirname(file), 'track.json'), 'utf8')).title; } catch {}
+      items.push({ path: [file], before: code.includes('?') || code.includes('A') ? '' : '（以前の画像）', after: file.endsWith('640.jpg') ? '一覧用の画像' : '曲ページ用の画像', item: `曲「${title}」`, label: code.includes('D') ? 'ジャケット画像（削除）' : 'ジャケット画像' });
+      continue;
+    }
+    if (code.includes('D')) { items.push({ path: [file], before: file, after: '（削除）', item: file, label: 'ファイル' }); continue; }
     const now = JSON.parse(await readFile(path.join(ROOT, file), 'utf8'));
     const before = await headJson(file);
     const diffs = [];
@@ -319,8 +328,8 @@ async function undo({ sha: s }) {
   if (!h || !h.undoable) return { status: 400, body: { error: 'この保存点は管理ツールでは取り消せません。' } };
   if (changedFiles().length) return { status: 409, body: { error: '公開していない変更があります。先に「公開する」か「変更を破棄」をしてください。' } };
   const files = git(['show', '--name-only', '--format=', s]).out.split('\n').filter(f => DATA_RE.test(f));
-  const patch = spawnSync('git', ['-c', 'core.quotepath=false', 'diff', `${s}^`, s, '--', ...files], { cwd: ROOT, windowsHide: true, encoding: 'utf8', maxBuffer: 64 << 20 }).stdout;
-  const a = spawnSync('git', ['apply', '-R', '--whitespace=nowarn'], { cwd: ROOT, windowsHide: true, input: patch, encoding: 'utf8' });
+  const patch = spawnSync('git', ['-c', 'core.quotepath=false', 'diff', '--binary', `${s}^`, s, '--', ...files], { cwd: ROOT, windowsHide: true, encoding: 'utf8', maxBuffer: 64 << 20 }).stdout;
+  const a = spawnSync('git', ['apply', '-R', '--binary', '--whitespace=nowarn'], { cwd: ROOT, windowsHide: true, input: patch, encoding: 'utf8' });
   if (a.status !== 0) return { status: 409, body: { error: 'その後に同じ箇所が変更されているため、自動では取り消せません。' } };
   return { status: 200, body: { ok: true, message: '取り消した内容を「公開していない変更」に入れました。プレビューで確認してから公開してください。' } };
 }
@@ -328,8 +337,11 @@ async function discard() {
   const files = changedFiles().filter(f => DATA_RE.test(f.file)).map(f => f.file);
   if (!files.length) return { status: 400, body: { error: '破棄する変更はありません。' } };
   const bk = path.join(WORK, 'backup', `discard-${new Date().toISOString().replace(/[:.]/g, '-')}`);
-  for (const f of files) { await mkdir(path.dirname(path.join(bk, f)), { recursive: true }); await copyFile(path.join(ROOT, f), path.join(bk, f)); }
-  const r = git(['checkout', 'HEAD', '--', ...files]);
+  const added = new Set(changedFiles().filter(f => DATA_RE.test(f.file) && (f.code.includes('?') || f.code.includes('A'))).map(f => f.file));
+  for (const f of files) { if (!existsSync(path.join(ROOT, f))) continue; await mkdir(path.dirname(path.join(bk, f)), { recursive: true }); await copyFile(path.join(ROOT, f), path.join(bk, f)); }
+  if (added.size) { git(['reset', '-q', '--', ...added]); for (const f of added) await rm(path.join(ROOT, f), { force: true }); for (const d of new Set([...added].map(f => path.dirname(path.join(ROOT, f))))) { try { await rmdir(d); } catch {} } }
+  const tracked = files.filter(f => !added.has(f));
+  const r = tracked.length ? git(['checkout', 'HEAD', '--', ...tracked]) : { ok: true };
   return r.ok ? { status: 200, body: { ok: true, count: files.length } } : { status: 500, body: { error: '元に戻せませんでした。' } };
 }
 
@@ -382,6 +394,9 @@ async function releaseStatusList(body) {
   return { status: 200, body: await listReleaseStatus(ROOT, releasePrivateRows) };
 }
 
+// a song counts as published only when GitHub's main (as last fetched) has its track.json
+const registrationCtx = { isPublished: async slug => git(['cat-file', '-e', `${REMOTE}/${BRANCH}:tracks/${slug}/track.json`]).ok };
+
 // ── HTTP ──────────────────────────────────────────────────────────────
 async function log(line) { try { await mkdir(WORK, { recursive: true }); await writeFile(path.join(WORK, 'manager.log'), `${new Date().toISOString()} ${line}\n`, { flag: 'a' }); } catch {} }
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.jpg': 'image/jpeg', '.png': 'image/png', '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' };
@@ -415,7 +430,7 @@ const server = http.createServer(async (req, res) => {
     if (route === 'GET /api/state') {
       const ch = await describeChanges();
       const up = unpushed();
-      return send(res, 200, { list: await listItems(), registrations:await listRegistrations(ROOT), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
+      return send(res, 200, { list: await listItems(), registrations:await listRegistrations(ROOT,registrationCtx), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
         pendingPush: up.tool, otherUnpushed: up.other, liveUrl: LIVE_URL, privateUrl: PRIVATE_URL.href, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
     }
     if (route === 'GET /api/item') return send(res, 200, await loadItem(url.searchParams.get('type'), url.searchParams.get('id')));
@@ -450,7 +465,7 @@ const server = http.createServer(async (req, res) => {
       }
       else if (route === 'POST /api/release-status/list') r = await releaseStatusList(body);
       else if (route === 'POST /api/release-status/save') r = await saveReleaseStatus(ROOT, releasePrivateRows, body);
-      else if (route.startsWith('POST /api/song-registration/')) r = await registrationAction(ROOT,url.pathname.slice('/api/song-registration/'.length),body);
+      else if (route.startsWith('POST /api/song-registration/')) r = await registrationAction(ROOT,url.pathname.slice('/api/song-registration/'.length),body,registrationCtx);
       else if (route === 'POST /api/quit') { send(res, 200, { ok: true }); setTimeout(() => process.exit(0), 200); return; }
       else r = { status: 404, body: { error: '見つかりません。' } };
       // the log names the operation only (for PRIVATE: whether it succeeded); input values are never written

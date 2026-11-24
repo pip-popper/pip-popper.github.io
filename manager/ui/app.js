@@ -110,7 +110,7 @@
     const fields = current.fields.map((f, i) => {
       const id = `f${i}`;
       const input = f.kind === 'url' ? el('input', { id, type: 'url', value: f.value, placeholder: 'https://open.spotify.com/…' })
-        : f.kind === 'line' ? el('input', { id, type: 'text', value: f.value }) : el('textarea', { id, value: f.value, className: f.kind === 'lyrics' ? 'lyrics' : '' });
+        : f.kind === 'line' || f.kind === 'reading' ? el('input', { id, type: 'text', value: f.value }) : el('textarea', { id, value: f.value, className: f.kind === 'lyrics' ? 'lyrics' : '' });
       if (f.kind === 'text') input.rows = Math.min(14, Math.max(3, Math.ceil(f.value.length / 60) + (f.value.match(/\n/g) || []).length));
       const box = el('div', { className: 'field' }, el('label', { htmlFor: id, textContent: f.label }, ...(f.required ? [el('span', { className: 'req', textContent: '（必須）' })] : [])), input);
       input.addEventListener('input', () => {
@@ -361,7 +361,8 @@
     clearPrivateLyricsPassword();current=null;edits=new Map();privateOpen='registration';registrationId=id;privateLyricsDirty=releaseDirty=registrationDirty=false;renderLists();
     const classLabels={unknown:'未設定・要確認',general:'一般公開',site:'このサイトのみ',private:'PRIVATEのみ'},scopeLabels={public:'一般公開',private:'PRIVATEのみ',hidden:'非表示'},stateLabels={draft:'下書き',registered:'登録済み',ready:'公開準備完了',published:'公開済み（実反映確認後のみ）'};
     const empty={title:'',reading:'',artist:'PIP POPPER',lyrics:'',impression:'',classification:'unknown',lyricsScope:'hidden',impressionScope:'hidden',channels:{hp:false,listen:false,private:false},state:'draft',links:[],memo:''};
-    let saved=null,pendingImage=null,history=[],previewData=null;
+    let saved=null,pendingImage=null,history=[],previewData=null,publication={state:'not-adopted'};
+    const pubLabels={'not-adopted':'未公開（公式HPへ未取り込み）',adopted:'公式HPへ取り込み済み・まだ公開していない（画面上部の「公開する」で公開）',published:'公式HPで公開済み',withdrawn:'取り込みを取り消し済み（未公開）'};
     const controls={}, status=el('p',{role:'status',ariaLive:'polite',className:'note'}), idLabel=el('p',{className:'note'}), form=el('section',{}), imagePreview=el('img',{className:'registration-jacket',alt:'登録するジャケット',hidden:true}), imageInput=el('input',{type:'file',accept:'image/png,image/jpeg',id:'reg-image'}), previewBox=el('section',{className:'registration-preview'}), historySelect=el('select',{id:'reg-history'});
     const show=(message,kind='note')=>{status.textContent=message;status.className=kind;};
     const dirty=()=>{registrationDirty=true;previewData=null;previewBox.replaceChildren(el('p',{textContent:'保存してから掲載イメージを確認してください。'}));};
@@ -371,10 +372,11 @@
     const title=input('title','曲名（必須）','text',150),reading=input('reading','曲名のよみがな（任意）','text',100),artist=input('artist','アーティスト名','text',100),lyrics=input('lyrics','歌詞全文','textarea',100000),impression=input('impression','AIの感想','textarea',100000),classification=select('classification','公開区分',classLabels),lyricScope=select('lyricsScope','歌詞の公開範囲',scopeLabels),impressionScope=select('impressionScope','AIの感想の公開範囲',scopeLabels),recordState=select('state','登録状態',stateLabels),hp=check('hp','一般公開HPへの掲載を許可'),listen=check('listen','一般視聴ページへの掲載を許可'),privateCheck=check('private','PRIVATEへの掲載を許可'),urls=input('urls','外部配信先URL（任意・1行1件）','textarea',40000),memo=input('memo','公開メモ（管理用・非公開）','textarea',10000);
     function syncChannels(){const allowed=['general','site'].includes(controls.classification.value);controls.hp.disabled=controls.listen.disabled=!allowed;if(!allowed){controls.hp.checked=false;controls.listen.checked=false;}}
     controls.classification.onchange=()=>{syncChannels();dirty();};
-    function fill(response){saved=response?.record??null;pendingImage=null;previewData=null;history=response?.history??[];const r=saved??empty;registrationId=saved?.id??null;
+    function fill(response){saved=response?.record??null;publication=response?.publication??{state:'not-adopted'};pendingImage=null;previewData=null;history=response?.history??[];const r=saved??empty;registrationId=saved?.id??null;
       for(const key of ['title','reading','artist','lyrics','impression','classification','lyricsScope','impressionScope','state','memo'])controls[key].value=r[key];
       for(const a of ['hp','listen','private'])controls[a].checked=r.channels[a];controls.urls.value=r.links.map(l=>l.url).join('\n');syncChannels();
-      idLabel.textContent=saved?`楽曲ID：${saved.id} ／ 実際の公開：未公開 ／ 音源：未登録`:'楽曲ID：初回保存時に自動発行 ／ 実際の公開：未公開 ／ 音源：未登録';
+      idLabel.textContent=saved?`楽曲ID：${saved.id} ／ 実際の公開：${pubLabels[publication.state]??'未公開'}${publication.slug?`（tracks/${publication.slug}）`:''} ／ 音源：未登録`:'楽曲ID：初回保存時に自動発行 ／ 実際の公開：未公開 ／ 音源：未登録';
+      paintAdopt();
       imagePreview.hidden=!response?.thumbnail;if(response?.thumbnail)imagePreview.src=response.thumbnail;else imagePreview.removeAttribute?.('src');imageInput.value='';
       historySelect.replaceChildren(...history.filter(h=>h.rev!==saved?.rev).map(h=>el('option',{value:h.rev,textContent:`${new Date(h.updatedAt).toLocaleString('ja-JP')}　${h.title}`})));historySelect.disabled=history.length<2;registrationDirty=false;renderLists();
     }
@@ -402,7 +404,19 @@
     width.onchange=paintPreview;previewMode.onchange=()=>{previewData=null;previewBox.replaceChildren(el('p',{textContent:'この掲載先のプレビューを表示してください。'}));};
     const previewButton=el('button',{type:'button',textContent:'掲載イメージを見る',onclick:async()=>{if(!saved||registrationDirty)return show('先に登録内容を保存してください。','err');registrationBusy=true;form.inert=true;try{previewData=await api('POST','/api/song-registration/preview',{id:saved.id,audience:previewMode.value});paintPreview();show('掲載許可に従ったプレビューです。実際の公開ではありません。');}catch(e){show(e.message,'err');}finally{registrationBusy=false;form.inert=false;}}});
     const restoreButton=el('button',{type:'button',textContent:'以前の保存版を復元',onclick:async()=>{if(!saved||!historySelect.value||registrationDirty)return show('保存済みの版を選んでください。未保存の入力は先に保存してください。','err');const answer=await ask('以前の保存版を復元します',el('p',{textContent:'現在の内容も履歴に残したまま、新しい保存版として復元します。'}),[{value:'cancel',label:'キャンセル'},{value:'go',label:'復元する',primary:true}]);if(answer!=='go')return;registrationBusy=true;form.inert=true;try{fill(await api('POST','/api/song-registration/restore',{id:saved.id,rev:saved.rev,restoreRev:historySelect.value,confirm:true}));await refreshRegistrationList();previewData=null;previewBox.replaceChildren(el('p',{textContent:'復元した内容を確認してください。'}));show('✔ 復元しました。','done');}catch(e){show(e.message,'err');}finally{registrationBusy=false;form.inert=false;}}});
-    form.replaceChildren(idLabel,el('div',{className:'release-fields'},title,reading),artist,el('div',{className:'field'},el('label',{htmlFor:imageInput.id,textContent:'ジャケット画像（PNG/JPEG・任意）'}),imageInput,imagePreview),lyrics,impression,classification,el('div',{className:'release-fields'},lyricScope,impressionScope),hp,listen,privateCheck,urls,memo,recordState,saveButton,el('h3',{textContent:'掲載イメージ（保存後）'}),el('div',{className:'registration-actions'},previewMode,width,previewButton),previewBox,el('h3',{textContent:'保存履歴・復元'}),el('div',{className:'registration-actions'},historySelect,restoreButton));
+    const slugInput=el('input',{type:'text',id:'reg-slug',maxLength:60,placeholder:'例：we-love-music',spellcheck:false,autocomplete:'off'}),adoptNote=el('p',{className:'note'});
+    const adoptButton=el('button',{type:'button',textContent:'公式HPの掲載データへ取り込む',onclick:async()=>{
+      if(registrationBusy)return;if(!saved||registrationDirty)return show('先に登録内容を保存してください。','err');
+      const slug=slugInput.value.trim();if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug))return show('ページのURL名は英小文字・数字・ハイフンで入力してください（例：we-love-music）。','err');
+      const answer=await ask('公式HPの掲載データへ取り込みます',[el('p',{textContent:`「${saved.title}」を tracks/${slug} として公式HPの掲載データに加えます。`}),el('p',{textContent:`取り込むもの：曲名・アーティスト名${saved.reading?'・よみがな':''}${saved.lyricsScope==='public'?'・歌詞（一般公開）':''}${saved.impressionScope==='public'?'・AIの感想（一般公開）':''}・ジャケット画像`}),el('p',{className:'warn',textContent:'まだ公開されません。プレビューで確認し、画面上部の「公開する」を押したときに公開されます。公開前なら「変更を破棄」で取り消せます。'})],[{value:'cancel',label:'キャンセル'},{value:'go',label:'取り込む',primary:true}]);if(answer!=='go')return;
+      registrationBusy=true;form.inert=true;show('取り込んでいます…');try{fill(await api('POST','/api/song-registration/adopt',{id:saved.id,rev:saved.rev,slug,confirm:true}));await refresh();show('✔ 取り込みました。まだ公開されていません。「プレビュー」で確認してから「公開する」を押してください。','done');}catch(e){show(`取り込めませんでした：${e.message}`,'err');}finally{registrationBusy=false;form.inert=false;}
+    }});
+    function paintAdopt(){
+      const ready=saved&&saved.state==='ready'&&saved.channels.hp&&['general','site'].includes(saved.classification)&&saved.image;const done=['adopted','published'].includes(publication.state);
+      adoptButton.disabled=slugInput.disabled=!ready||done;if(publication.slug&&!slugInput.value)slugInput.value=publication.slug;
+      adoptNote.textContent=done?`取り込み済み（tracks/${publication.slug}）。この後の修正は、左の「曲」の一覧から行ってください。`:ready?'ページのURL名を決めて取り込むと、公式HPの掲載データ（tracks）に加わります。公開は画面上部の「公開する」で行います。':'取り込めるのは「公開準備完了」で保存し、公式HPへの掲載を許可し、ジャケットを登録した曲です。';
+    }
+    form.replaceChildren(idLabel,el('div',{className:'release-fields'},title,reading),artist,el('div',{className:'field'},el('label',{htmlFor:imageInput.id,textContent:'ジャケット画像（PNG/JPEG・任意）'}),imageInput,imagePreview),lyrics,impression,classification,el('div',{className:'release-fields'},lyricScope,impressionScope),hp,listen,privateCheck,urls,memo,recordState,saveButton,el('h3',{textContent:'掲載イメージ（保存後）'}),el('div',{className:'registration-actions'},previewMode,width,previewButton),previewBox,el('h3',{textContent:'保存履歴・復元'}),el('div',{className:'registration-actions'},historySelect,restoreButton),el('h3',{textContent:'公式HPへの取り込み（公開前の最終段階）'}),adoptNote,el('div',{className:'field'},el('label',{htmlFor:'reg-slug',textContent:'ページのURL名（英小文字・数字・ハイフン。公開後は変えない）'}),slugInput),el('div',{className:'registration-actions'},adoptButton));
     $('#main').replaceChildren(el('div',{className:'edit-head'},el('h2',{},el('span',{className:'kind',textContent:'楽曲管理'}),'新曲を登録')),el('p',{className:'note',textContent:'完成した画像・歌詞・AIの感想を登録し、公開先ごとの掲載準備を行います。ここから本番公開はされません。'}),form,status);$('#main').scrollTop=0;
     registrationBusy=true;form.inert=true;let loadFailed=false;try{fill(id?await api('POST','/api/song-registration/get',{id}):null);}catch(e){loadFailed=true;show(e.message,'err');}finally{registrationBusy=false;form.inert=loadFailed;}
   }

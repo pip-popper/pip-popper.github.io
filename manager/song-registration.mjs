@@ -1,7 +1,7 @@
 // Local, non-public song registration. The only writable tree is .manager/song-registrations.
 import path from 'node:path';
 import { randomUUID, randomBytes } from 'node:crypto';
-import { mkdir, readdir, readFile, writeFile, rename, copyFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile, rename, copyFile, rm, access } from 'node:fs/promises';
 import { validReading } from '../private/worker/src/song-order.js';
 
 const ID=/^new-[a-f0-9]{24}$/;const REV=/^[a-f0-9-]{36}$/;
@@ -34,10 +34,58 @@ function images(input){if(!input)return null;const original=decodeImage(input.or
 async function current(root,id){try{const p=await readJson(file(root,id,'current.json'));if(!REV.test(p.rev))throw new Error('保存記録を確認できません。');return p.rev;}catch(e){if(e.code==='ENOENT')return null;throw e;}}
 async function record(root,id,rev){if(!REV.test(rev))throw new Error('保存版を確認してください。');const r=await readJson(file(root,id,'versions',rev,'record.json'));if(r.id!==id||r.rev!==rev)throw new Error('曲と保存版が一致しません。');return r;}
 async function thumbData(root,r){if(!r.image)return null;const b=await readFile(file(root,r.id,'versions',r.rev,'cover-640.jpg'));return `data:image/jpeg;base64,${b.toString('base64')}`;}
+// ── Official-site adoption (2026-11-24, Claude Code) ──────────────────
+// "Adopt" copies the approved public candidate of the CURRENT saved version into tracks/<slug>/ (track.json and the two
+// display JPEGs). Nothing is published here: the existing "公開する" button (build, commit, push after a confirmation)
+// does that. The state shown to the Producer is derived from the files, never typed in:
+//   not-adopted → adopted (tracks/<slug> exists on this PC, not yet on GitHub) → published (GitHub main has it).
+const SLUG=/^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const exists=f=>access(f).then(()=>true,()=>false);
+const tracksDir=root=>path.join(root,'tracks');
+async function adoption(root,id){try{const a=await readJson(file(root,id,'adopted.json'));return SLUG.test(a?.slug)?a:null;}catch(e){if(e.code==='ENOENT')return null;throw e;}}
+async function publicationOf(root,id,ctx={}){
+  const a=await adoption(root,id);
+  if(!a)return {state:'not-adopted'};
+  const here=await exists(path.join(tracksDir(root),a.slug,'track.json'));
+  const live=ctx.isPublished?await ctx.isPublished(a.slug):false;
+  return {state:live?'published':here?'adopted':'withdrawn',slug:a.slug,rev:a.rev,at:a.at};
+}
+async function adopt(root,input,ctx){
+  if(input.confirm!==true)return problem(400,'取り込み前の確認が必要です。');
+  const id=input.id,rev=await current(root,id);
+  if(!rev||rev!==input.rev)return problem(409,'対象曲の保存版が変わりました。再読み込みしてください。');
+  const r=await record(root,id,rev);
+  if(r.state!=='ready'||!r.channels.hp||!['general','site'].includes(r.classification)||!r.image)
+    return problem(400,'公式HPへ取り込めるのは「公開準備完了」で、公式HPへの掲載を許可し、ジャケットを登録した曲だけです。');
+  const slug=String(input.slug??'').trim();
+  if(!SLUG.test(slug)||slug.length>60)return problem(400,'ページのURL名は英小文字・数字・ハイフンで入力してください（例：we-love-music）。');
+  const now=await publicationOf(root,id,ctx);
+  if(now.state==='adopted'||now.state==='published')return problem(409,`この曲はすでに取り込み済みです（tracks/${now.slug}）。内容の修正は曲の一覧から行ってください。`);
+  const target=path.join(tracksDir(root),slug);
+  if(await exists(target))return problem(409,'同じURL名の曲がすでにあります。別の名前にしてください。');
+  const candidate=file(root,id,'versions',rev,'public-candidate');
+  let track;try{track=await readJson(path.join(candidate,'track.json'));}catch{return problem(400,'公開候補がありません。「公開準備完了」で保存し直してください。');}
+  // Same gate the site builder applies: only explicitly approved public text goes to the public source.
+  if(track.publicArchiveApproved!==true||!['general','site'].includes(track.publicationClass))return problem(400,'公開候補の承認内容を確認できません。');
+  let listOrder=0;
+  for(const e of await readdir(tracksDir(root),{withFileTypes:true})){if(!e.isDirectory())continue;try{const t=await readJson(path.join(tracksDir(root),e.name,'track.json'));if(Number.isInteger(t.listOrder))listOrder=Math.max(listOrder,t.listOrder);}catch{}}
+  const {artwork,...rest}=track;
+  const out={title:rest.title,artist:rest.artist,...(rest.reading?{reading:rest.reading}:{}),listOrder:listOrder+1,publicationClass:rest.publicationClass,publicArchiveApproved:true,
+    ...(rest.aiImpression?{impressionScope:rest.impressionScope,aiImpression:rest.aiImpression}:{}),artwork:'cover-web.jpg',audio:null,releaseDate:null,
+    ...(rest.lyrics?{lyricsScope:rest.lyricsScope,lyrics:rest.lyrics}:{}),background:null,streamingUrl:null,downloadUrl:null,...(rest.links?.length?{links:rest.links}:{})};
+  await mkdir(target);
+  try{
+    for(const name of ['cover-web.jpg','cover-640.jpg'])await copyFile(path.join(candidate,name),path.join(target,name));
+    await writeFile(path.join(target,'track.json'),JSON.stringify(out,null,2)+'\n',{flag:'wx'});
+  }catch(e){await rm(target,{recursive:true,force:true});throw e;}
+  const pointer=file(root,id,'adopted.json'),tmp=file(root,id,`adopted-${randomUUID()}.tmp`);
+  await writeFile(tmp,JSON.stringify({slug,rev,at:new Date().toISOString()})+'\n',{flag:'wx'});await rename(tmp,pointer);
+  return get(root,id,ctx);
+}
 async function history(root,id){const rows=[];for(const rev of await readdir(file(root,id,'versions'))){if(!REV.test(rev))continue;try{const r=await record(root,id,rev);rows.push({rev,updatedAt:r.updatedAt,title:r.title});}catch{}}return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
-export async function listRegistrations(root){let ids;try{ids=await readdir(dir(root));}catch(e){if(e.code==='ENOENT')return [];throw e;}const rows=[];for(const id of ids){if(!ID.test(id))continue;const rev=await current(root,id);if(!rev)continue;const r=await record(root,id,rev);rows.push({id,rev,title:r.title,reading:r.reading,classification:r.classification,lyricsScope:r.lyricsScope,links:r.links,state:r.state,channels:r.channels,image:!!r.image,updatedAt:r.updatedAt});}return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
-async function get(root,id){const rev=await current(root,id);if(!rev)return problem(404,'新曲の登録が見つかりません。');const r=await record(root,id,rev);return result({record:r,thumbnail:await thumbData(root,r),history:await history(root,id)});}
-async function writeVersion(root,id,expected,data,source,upload){
+export async function listRegistrations(root,ctx={}){let ids;try{ids=await readdir(dir(root));}catch(e){if(e.code==='ENOENT')return [];throw e;}const rows=[];for(const id of ids){if(!ID.test(id))continue;const rev=await current(root,id);if(!rev)continue;const r=await record(root,id,rev);rows.push({id,rev,title:r.title,reading:r.reading,classification:r.classification,lyricsScope:r.lyricsScope,links:r.links,state:r.state,channels:r.channels,image:!!r.image,updatedAt:r.updatedAt,publication:await publicationOf(root,id,ctx)});}return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
+async function get(root,id,ctx={}){const rev=await current(root,id);if(!rev)return problem(404,'新曲の登録が見つかりません。');const r=await record(root,id,rev);return result({record:r,thumbnail:await thumbData(root,r),history:await history(root,id),publication:await publicationOf(root,id,ctx)});}
+async function writeVersion(root,id,expected,data,source,upload,ctx={}){
   const rev=randomUUID(),base=file(root,id,'versions',rev);await mkdir(base,{recursive:true});
   let image=null;
   if(upload){const originalName=upload.original.mime==='image/png'?'original.png':'original.jpg';await writeFile(path.join(base,originalName),upload.original.bytes,{flag:'wx'});await writeFile(path.join(base,'cover-web.jpg'),upload.web.bytes,{flag:'wx'});await writeFile(path.join(base,'cover-640.jpg'),upload.thumb.bytes,{flag:'wx'});image={originalName,width:upload.original.width,height:upload.original.height};}
@@ -64,23 +112,24 @@ async function writeVersion(root,id,expected,data,source,upload){
   }
   if(await current(root,id)!==expected)return problem(409,'別の画面で変更されています。再読み込みしてください。');
   const pointer=file(root,id,`current-${rev}.tmp`);await writeFile(pointer,JSON.stringify({rev}),{flag:'wx'});await rename(pointer,file(root,id,'current.json'));
-  return get(root,id);
+  return get(root,id,ctx);
 }
-export async function registrationAction(root,action,input={}){
+export async function registrationAction(root,action,input={},ctx={}){
   try{
-    if(action==='list')return result({songs:await listRegistrations(root)});
-    if(action==='get')return await get(root,input.id);
+    if(action==='list')return result({songs:await listRegistrations(root,ctx)});
+    if(action==='get')return await get(root,input.id,ctx);
+    if(action==='adopt')return await adopt(root,input,ctx);
     if(action==='save'){
       if(input.confirm!==true)return problem(400,'保存前の確認が必要です。');const data=fields(input),upload=images(input.image);
       const id=input.id??`new-${randomBytes(12).toString('hex')}`;if(!ID.test(id))return problem(400,'曲IDが正しくありません。');const rev=await current(root,id);
       if(input.id&&(!rev||input.rev!==rev))return problem(409,'対象曲または保存版が変わりました。再読み込みしてください。');if(!input.id&&rev)return problem(409,'新しい曲IDを作れませんでした。');
       const old=rev?await record(root,id,rev):null;
       if(data.state==='ready'&&(!upload&&!old?.image||data.classification==='unknown'||!Object.values(data.channels).some(Boolean)))return problem(400,'公開準備完了にはジャケット・公開区分・掲載先の設定が必要です。');
-      return await writeVersion(root,id,rev,data,old,upload);
+      return await writeVersion(root,id,rev,data,old,upload,ctx);
     }
     if(action==='restore'){
       if(input.confirm!==true)return problem(400,'復元前の確認が必要です。');const rev=await current(root,input.id);if(!rev||rev!==input.rev)return problem(409,'対象曲の保存版が変わりました。');const old=await record(root,input.id,input.restoreRev);const {id,rev:oldRev,image,actualPublication,audioStatus,updatedAt,...data}=old;
-      return await writeVersion(root,input.id,rev,data,old,null);
+      return await writeVersion(root,input.id,rev,data,old,null,ctx);
     }
     if(action==='preview'){
       if(!audiences.includes(input.audience))return problem(400,'掲載先を確認してください。');const rev=await current(root,input.id);if(!rev)return problem(404,'新曲の登録が見つかりません。');const r=await record(root,input.id,rev),isPrivate=input.audience==='private';
