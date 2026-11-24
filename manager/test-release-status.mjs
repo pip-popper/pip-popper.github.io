@@ -72,7 +72,7 @@ try {
   };
   vm.runInNewContext(readFileSync(new URL('./ui/app.js',import.meta.url),'utf8'),{document,window:{addEventListener(){}},location:{hash:'#t=fixture',pathname:'/'},history:{replaceState(){}},sessionStorage:{setItem(){},getItem(){}},URLSearchParams,fetch:request,setTimeout:()=>{},console});
   await new Promise(r=>setImmediate(r));
-  const menu=find(roots.get('#lists'),e=>e.tag==='button'&&e.children?.[0]?.textContent==='全楽曲の公開状況');assert.ok(menu);await menu.onclick();
+  const menu=find(roots.get('#menu'),e=>e.tag==='button'&&e.children?.[1]?.textContent==='楽曲の公開状況');assert.ok(menu);await menu.onclick();
   const main=roots.get('#main'),field=id=>find(main,e=>e.id===id),button=text=>find(main,e=>e.tag==='button'&&e.textContent===text);
   assert.ok(button('すべて 3曲')); // public rows + the existing saved-only private record
   field('rs-password').value='fixture-only';await button('PRIVATE曲一覧も読み込む').onclick();

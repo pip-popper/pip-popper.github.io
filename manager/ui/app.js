@@ -57,7 +57,27 @@
     $('#btn-discard').disabled = !n;
     renderLists();
   }
+  // 2026-11-24: the side bar = 管理メニュー (always visible) + 曲・アルバム・ページの一覧 (folded, scrolls on its own)
+  const openGroups = new Set();
+  // on a narrow screen the side bar is above the work area: bring the opened screen into view
+  const showMainOnPhone = () => { if (window.matchMedia?.('(max-width: 800px)').matches) $('#main').scrollIntoView?.({ block: 'start' }); };
+  function renderMenu() {
+    const regs = state.registrations ?? [], albums = state.albumRegistrations ?? [], deleted = (state.deletedRegistrations ?? []).length + (state.archived ?? []).length;
+    const item = (icon, label, action, current, extra = '') => el('li', {}, el('button', { type: 'button', className: 'menu-btn', ariaCurrent: String(!!current), onclick: async () => { await action(); showMainOnPhone(); } },
+      el('span', { className: 'menu-ic', ariaHidden: 'true', textContent: icon }), el('span', { className: 'menu-label', textContent: label }), extra ? el('span', { className: 'menu-count', textContent: extra }) : ''));
+    $('#menu').replaceChildren(el('h2', { textContent: '管理メニュー' }), el('ul', {},
+      item('＋', '新曲を登録', () => openRegistration(), privateOpen === 'registration' && !registrationId),
+      item('＋', 'アルバムを登録', () => openAlbumRegistration(), privateOpen === 'album' && !albumRegId),
+      item('✎', '下書き・登録中の曲とアルバム', openDrafts, privateOpen === 'drafts' || (privateOpen === 'registration' && registrationId) || (privateOpen === 'album' && albumRegId), String(regs.length + albums.length)),
+      item('◎', '楽曲の公開状況', openReleaseStatus, privateOpen === 'release'),
+      item('♪', 'PRIVATE音源の登録・管理 ↗', openPrivateAudio, false),
+      item('✍', 'PRIVATE歌詞・よみがな', openPrivateLyrics, privateOpen === 'lyrics'),
+      item('🔑', 'PRIVATEパスワード', openPrivate, privateOpen === 'password'),
+      item('↺', '公開履歴・取り消し', () => $('#btn-history').click(), false),
+      ...(deleted ? [item('♻', '削除済み・一覧から外したもの', openDeleted, privateOpen === 'deleted', String(deleted))] : [])));
+  }
   function renderLists() {
+    renderMenu();
     const q = $('#filter').value.trim().toLowerCase();
     const changedFiles = new Set(state.changes.files);
     const mark = it => {
@@ -65,25 +85,46 @@
       if (it.type === 'site') return changedFiles.has('content/site.json');
       return state.changes.items.some(c => c.item === `アルバム『${it.title}』`);
     };
-    const group = (title, items) => {
+    const group = (key, title, items) => {
       const shown = items.filter(it => !q || `${it.title} ${it.id}`.toLowerCase().includes(q));
       if (!shown.length) return [];
-      return [el('h2', { textContent: title }), el('ul', {}, ...shown.map(it => el('li', {}, el('button', {
-        type: 'button', ariaCurrent: String(!!current && current.type === it.type && current.id === it.id),
-        onclick: () => openItem(it.type, it.id),
-      }, el('span', { textContent: `${mark(it) ? '● ' : ''}${it.title}${it.hidden ? '（掲載停止中）' : ''}` }), el('span', { className: 'yr', textContent: it.year ?? '' })))))];
+      const holdsCurrent = !!current && shown.some(it => current.type === it.type && current.id === it.id);
+      const d = el('details', { className: 'side-group', open: !!q || holdsCurrent || openGroups.has(key) },
+        el('summary', {}, el('span', { textContent: title }), el('span', { className: 'menu-count', textContent: String(shown.length) })),
+        el('ul', {}, ...shown.map(it => el('li', {}, el('button', {
+          type: 'button', ariaCurrent: String(!!current && current.type === it.type && current.id === it.id),
+          onclick: async () => { await openItem(it.type, it.id); showMainOnPhone(); },
+        }, el('span', { textContent: `${mark(it) ? '● ' : ''}${it.title}${it.hidden ? '（掲載停止中）' : ''}` }), el('span', { className: 'yr', textContent: it.year ?? '' }))))));
+      d.addEventListener('toggle', () => { if (!q) d.open ? openGroups.add(key) : openGroups.delete(key); });
+      return [d];
     };
-    $('#lists').replaceChildren(...group('楽曲', state.list.tracks), ...group('HISTORY（アルバム）', state.list.history),
-      ...group('その他の作品', state.list.other), ...group('サイトの文言', state.list.site),
-      ...(q?[]:[el('h2',{textContent:'新曲・アルバムの登録'}),el('ul',{},el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&!registrationId),onclick:()=>openRegistration()},el('span',{textContent:'＋ 新曲を登録'}))),el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='album'&&!albumRegId),onclick:()=>openAlbumRegistration()},el('span',{textContent:'＋ アルバムを登録'}))))]),
-      ...((state.albumRegistrations??[]).length&&!q?[el('h2',{textContent:'登録中のアルバム（未公開）'}),el('ul',{},...state.albumRegistrations.map(r=>el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='album'&&albumRegId===r.id),onclick:()=>openAlbumRegistration(r.id)},el('span',{textContent:r.title}),el('span',{className:'yr',textContent:{'not-adopted':'下書き','adopted':'取り込み済み','published':'公開済み','withdrawn':'取り消し済み'}[r.publication?.state]??''})))))]:[]),
-      ...((state.registrations??[]).filter(r=>!q||`${r.title} ${r.id}`.toLowerCase().includes(q)).length?[el('h2',{textContent:'登録中の楽曲（未公開）'}),el('ul',{},...(state.registrations??[]).filter(r=>!q||`${r.title} ${r.id}`.toLowerCase().includes(q)).map(r=>el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&registrationId===r.id),onclick:()=>openRegistration(r.id)},el('span',{textContent:r.title})))) )]:[]),
-      ...(!q && ((state.deletedRegistrations??[]).length || (state.archived??[]).length) ? [el('h2', { textContent: '削除済み・一覧から外したもの' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'deleted'), onclick: openDeleted }, el('span', { textContent: `復元する（${(state.deletedRegistrations??[]).length + (state.archived??[]).length}件）` }))))] : []),
-      ...(q ? [] : [el('h2', { textContent: '楽曲公開状況' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'release'), onclick: openReleaseStatus }, el('span', { textContent: '全楽曲の公開状況' }))))]),
-      ...(q ? [] : [el('h2', { textContent: 'PRIVATE管理' }), el('ul', {},
-        el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'lyrics'), onclick: openPrivateLyrics }, el('span', { textContent: 'PRIVATE楽曲の歌詞・よみがな' }))),
-        el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'password'), onclick: openPrivate }, el('span', { textContent: 'PRIVATEのパスワード' }))))]),
-      ...(q ? [] : [el('h2', { textContent: '固定（変更はAIに依頼）' }), el('ul', { className: 'fixed' }, ...FIXED.map(([t, why]) => el('li', { title: why }, el('span', { textContent: t }), el('small', { textContent: why }))))]));
+    $('#lists').replaceChildren(el('h2', { textContent: '曲・アルバム・ページの一覧（選んで編集）' }),
+      ...group('tracks', '楽曲', state.list.tracks), ...group('history', 'HISTORY（アルバム）', state.list.history),
+      ...group('other', 'その他の作品', state.list.other), ...group('site', 'サイトの文言', state.list.site),
+      ...(q ? [] : [el('details', { className: 'side-group fixed-group', open: openGroups.has('fixed') }, el('summary', {}, el('span', { textContent: '固定（変更はAIに依頼）' })),
+        el('ul', { className: 'fixed' }, ...FIXED.map(([t, why]) => el('li', { title: why }, el('span', { textContent: t }), el('small', { textContent: why })))))]));
+  }
+  // PRIVATE audio is managed on the PRIVATE admin screen (web, administrator password); the manager only opens it
+  function openPrivateAudio() {
+    const url = new URL('admin', state?.privateUrl ?? 'https://pip-popper-private.pip-popper-private.workers.dev/').href;
+    window.open(url, '_blank', 'noopener');
+    toast('PRIVATEの管理画面を別のタブで開きました（音源の追加・差し替え・並べ替え。管理者パスワードで入ります）。');
+  }
+  // drafts and registrations of new songs and albums, in one place
+  async function openDrafts() {
+    if (!await guard()) return;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'drafts'; renderLists();
+    const pub = { 'not-adopted': '未公開', adopted: '取り込み済み・未公開', published: '公開済み', withdrawn: '取り込み取消' };
+    const st = { draft: '下書き', registered: '下書き', ready: '公開準備完了' };
+    const rows = (list, open, kind) => list.length ? el('ul', { className: 'changes drafts' }, ...list.map(r => el('li', {},
+      el('button', { type: 'button', className: 'draft-open', onclick: () => open(r.id) }, el('span', { className: 'what', textContent: r.title }),
+        el('span', { className: 'draft-meta', textContent: `${kind}／${st[r.state] ?? r.state}／${pub[r.publication?.state] ?? '未公開'}／${r.updatedAt ? new Date(r.updatedAt).toLocaleString('ja-JP') : ''}` }))))) : el('p', { className: 'note', textContent: 'ありません。' });
+    $('#main').replaceChildren(el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: '管理メニュー' }), '下書き・登録中の曲とアルバム')),
+      el('p', { className: 'note', textContent: '登録した新曲・アルバムの一覧です。選ぶと登録画面が開き、続きの編集・公開準備・公式HPへの取り込みができます。「公開済み」は実際に公式サイトに出ているときだけ自動で表示されます。' }),
+      el('div', { className: 'registration-actions' }, el('button', { type: 'button', textContent: '＋ 新曲を登録', onclick: () => openRegistration() }), el('button', { type: 'button', textContent: '＋ アルバムを登録', onclick: () => openAlbumRegistration() })),
+      el('h3', { textContent: '新曲' }), rows(state.registrations ?? [], id => openRegistration(id), '新曲'),
+      el('h3', { textContent: 'アルバム' }), rows(state.albumRegistrations ?? [], id => openAlbumRegistration(id), 'アルバム'));
+    $('#main').scrollTop = 0;
   }
   // what this tool does not change: kept fixed, ask an AI (Claude Code / ChatGPT Work) when a change is really needed
   const FIXED = [
@@ -471,7 +512,7 @@
         el('td',{},el('button',{type:'button',textContent:row.title,onclick:async()=>{if(!await guard())return;drawEditor(row);drawRows();}}),el('small',{textContent:row.id})),
         el('td',{textContent:labels[row.classification]}),el('td',{textContent:lyricLabels[row.lyricsScope]}),
         el('td',{},el('small',{textContent:observed(row)}),el('small',{textContent:observedLyrics(row)})),
-        el('td',{textContent:`${row.links.length}件${row.warnings.length?' ⚠':''}`}),el('td',{textContent:row.registrationState?({draft:'下書き',registered:'登録済み',ready:'公開準備完了'}[row.registrationState]+'・未公開'):row.savedOnly?'一覧未確認':row.saved?'記録済':'要確認'}))));
+        el('td',{textContent:`${row.links.length}件${row.warnings.length?' ⚠':''}`}),el('td',{textContent:row.registrationState?({draft:'下書き',registered:'下書き',ready:'公開準備完了'}[row.registrationState]+'・未公開'):row.savedOnly?'一覧未確認':row.saved?'記録済':'要確認'}))));
       if(!rows.length)table.replaceChildren(el('tr',{},el('td',{colSpan:6,textContent:'該当する楽曲はありません。'})));
     }
     function drawEditor(row){
@@ -534,7 +575,7 @@
   async function openRegistration(id=null) {
     if(!await guard())return;
     clearPrivateLyricsPassword();current=null;edits=new Map();privateOpen='registration';registrationId=id;privateLyricsDirty=releaseDirty=registrationDirty=false;renderLists();
-    const classLabels={unknown:'未設定・要確認',general:'一般公開',site:'このサイトのみ',private:'PRIVATEのみ'},scopeLabels={public:'一般公開',private:'PRIVATEのみ',hidden:'非表示'},stateLabels={draft:'下書き',registered:'登録済み',ready:'公開準備完了',published:'公開済み（実反映確認後のみ）'};
+    const classLabels={unknown:'未設定・要確認',general:'一般公開',site:'このサイトのみ',private:'PRIVATEのみ'},scopeLabels={public:'一般公開',private:'PRIVATEのみ',hidden:'非表示'},stateLabels={draft:'下書き',ready:'公開準備完了'};   // 公開済み is shown from the real state, never chosen (2026-11-24)
     const empty={title:'',reading:'',artist:'PIP POPPER',lyrics:'',impression:'',classification:'unknown',lyricsScope:'hidden',impressionScope:'hidden',channels:{hp:false,listen:false,private:false},state:'draft',links:[],memo:''};
     let saved=null,pendingImage=null,history=[],previewData=null,publication={state:'not-adopted'};
     const pubLabels={'not-adopted':'未公開（公式HPへ未取り込み）',adopted:'公式HPへ取り込み済み・まだ公開していない（画面上部の「公開する」で公開）',published:'公式HPで公開済み',withdrawn:'取り込みを取り消し済み（未公開）'};
@@ -548,7 +589,7 @@
     function syncChannels(){const allowed=['general','site'].includes(controls.classification.value);controls.hp.disabled=controls.listen.disabled=!allowed;if(!allowed){controls.hp.checked=false;controls.listen.checked=false;}}
     controls.classification.onchange=()=>{syncChannels();dirty();};
     function fill(response){saved=response?.record??null;publication=response?.publication??{state:'not-adopted'};pendingImage=null;previewData=null;history=response?.history??[];const r=saved??empty;registrationId=saved?.id??null;
-      for(const key of ['title','reading','artist','lyrics','impression','classification','lyricsScope','impressionScope','state','memo'])controls[key].value=r[key];
+      for(const key of ['title','reading','artist','lyrics','impression','classification','lyricsScope','impressionScope','state','memo'])controls[key].value=r[key];if(!['draft','ready'].includes(controls.state.value))controls.state.value='draft';   // an old 登録済み is shown as 下書き
       for(const a of ['hp','listen','private'])controls[a].checked=r.channels[a];controls.urls.value=r.links.map(l=>l.url).join('\n');syncChannels();
       idLabel.textContent=saved?`楽曲ID：${saved.id} ／ 実際の公開：${pubLabels[publication.state]??'未公開'}${publication.slug?`（tracks/${publication.slug}）`:''} ／ 音源：未登録`:'楽曲ID：初回保存時に自動発行 ／ 実際の公開：未公開 ／ 音源：未登録';
       paintAdopt();

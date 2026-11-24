@@ -123,3 +123,26 @@ details.restore summary { cursor: pointer; color: var(--muted); }
 .album-track > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .album-track button { min-width: 44px; min-height: 36px; }
 #main h3 { margin: 26px 0 8px; }
+/* 2026-11-24: side bar = 管理メニュー (fixed) + folded lists (scroll on their own) */
+.layout { grid-template-columns: 320px minmax(0, 1fr); }
+.side { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+#menu { flex: none; padding: 14px 12px 12px; border-bottom: 1px solid var(--line); background: var(--bg); }
+#menu h2 { margin: 0 0 8px; color: var(--ink); font-size: 13px; letter-spacing: .12em; }
+#menu ul { display: grid; gap: 4px; }
+.side #menu li button.menu-btn { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-weight: 700; }
+.side #menu li button.menu-btn:hover { border-color: var(--red); background: var(--panel2); }
+.side #menu li button.menu-btn[aria-current="true"] { border-color: var(--red); box-shadow: inset 3px 0 0 var(--red); }
+.menu-ic { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: var(--red); color: #fff; font-size: 14px; }
+.menu-count { min-width: 22px; padding: 0 7px; border-radius: 10px; background: var(--panel2); color: var(--muted); font-size: 12px; text-align: center; }
+.side-lists { flex: 1; min-height: 0; overflow: auto; padding: 12px 12px 40px; }
+.side-lists > h2 { margin: 4px 0 8px; }
+#lists > h2 { margin: 14px 0 6px; }
+.side-group { margin: 0 0 6px; border: 1px solid var(--line); border-radius: 6px; }
+.side-group > summary { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; }
+.side-group[open] > summary { border-bottom: 1px solid var(--line); color: var(--ink); }
+.side-group > ul { padding: 4px; }
+.drafts li { padding: 0; }
+.draft-open { display: grid; gap: 2px; width: 100%; padding: 10px 12px; border: 0; background: none; text-align: left; }
+.draft-open:hover { background: var(--panel2); }
+.draft-meta { color: var(--muted); font-size: 12px; }
+@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .side { max-height: none; overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); } #menu ul { grid-template-columns: 1fr 1fr; } .side-lists { max-height: 50vh; } }

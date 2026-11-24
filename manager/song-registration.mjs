@@ -6,7 +6,7 @@ import { validReading } from '../private/worker/src/song-order.js';
 import { displayText } from '../private/worker/src/display-text.js';
 
 const ID=/^new-[a-f0-9]{24}$/;const REV=/^[a-f0-9-]{36}$/;
-const classes=['unknown','general','site','private'], scopes=['public','private','hidden'], states=['draft','registered','ready'];
+const classes=['unknown','general','site','private'], scopes=['public','private','hidden'], states=['draft','ready'];   // 2026-11-24: 登録済み retired (it had no effect); old records are still read
 const audiences=['hp','listen','private'];
 const dir=root=>path.join(root,'.manager','song-registrations');
 const file=(root,id,...parts)=>{if(!ID.test(id))throw new Error('曲IDが正しくありません。');return path.join(dir(root),id,...parts);};

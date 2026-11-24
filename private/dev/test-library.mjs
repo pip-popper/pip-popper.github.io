@@ -209,7 +209,7 @@ vm.runInNewContext(readFileSync(new URL('../../manager/ui/app.js',import.meta.ur
   document:fakeDocument,window:{addEventListener(){}},location:{hash:'#t=fixture',pathname:'/'},history:{replaceState(){}},sessionStorage:{setItem(){},getItem(){}},URLSearchParams,fetch:fakeApi,setTimeout:()=>{},console,
 });
 await new Promise(r=>setImmediate(r));
-const menu=find(roots.get('#lists'),e=>e.tag==='button'&&e.children?.[0]?.textContent==='PRIVATE楽曲の歌詞・よみがな');
+const menu=find(roots.get('#menu'),e=>e.tag==='button'&&e.children?.[1]?.textContent==='PRIVATE歌詞・よみがな');
 assert.ok(menu);await menu.onclick();
 const main=roots.get('#main'), field=id=>find(main,e=>e.id===id), button=text=>find(main,e=>e.tag==='button'&&e.textContent===text);
 field('pl-password').value=adminPassword;await button('PRIVATE曲一覧を読み込む').onclick();
