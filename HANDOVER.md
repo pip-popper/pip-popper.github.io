@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 一般視聴機能を実装・検証済み（ローカル）。本番反映（push・PRIVATE Worker デプロイ）は Producer 承認待ち。実際の楽曲公開は Producer が管理ツールで行う |
+| 状態 | **予定の機能開発は一区切り**（2026-11-25 一般視聴まで本番反映：公式HP 126b034・PRIVATE Worker 5db87a90）。Producer が「PIP POPPER管理ツール一式」で運用中 |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-25 **一般視聴機能を本番反映（Producer 承認）・予定の機能開発を一区切り**。PRIVATE Worker：Version `5db87a90-8e7f-48f8-9c48-ace8a374e7a1`（復元点 `1d66ecec-be29-4fcf-bfae-a760e0ceaf02`）。公式HP：push b9f686a..126b034、公開中179ファイルが docs と全一致（復元点 b9f686a）。確認：メニュー「LISTEN｜音楽を聴く」→ /listen/（パスワードなし、0曲で「準備中」）、PRIVATE 入口200・未入室の音源401・管理API 401・/listen/ から管理記録や PRIVATE 音源は404、R2 の PRIVATE 曲目 rev 78・23曲のまま・公開カタログ未作成。一式：起動時に 126b034 を自動取得、公開前チェック0件、曲27・登録2を保持。未実施（承認外）：楽曲の一般公開・R2 書込み・PRIVATE 音源コピー・公開範囲／パスワード変更。
 
 - 2026-11-25 Claude Code：**一般視聴機能の完成**（e7e481c＋本記録の commit）。管理メニュー「一般視聴の管理」：公式サイトの曲を選び、一般視聴用MP3（短縮版・編集版可）を登録（登録前に手元で試聴）、PRIVATE の完全版は対象を確認したときだけ別ファイルとしてコピー、歌詞・ジャケット・AIの感想の公開可否（中身は公式サイトのもの）、公開前の試聴、内容確認つき公開、差し替え（公開中は前の音源のまま）、停止・再開、以前の版に戻す、一覧から外す・戻す。各操作後に画面・件数を自動更新。仕組み：PRIVATE Worker の管理API `/admin/api/listen/...`（管理者の入室が必要）→ 既存R2（public-audio/ に版ごとの名前で保存し消さない、管理記録 public-manage.json は一般から読めない、公開カタログ public-catalog.json は公開した曲だけ）。新しい Worker・R2・費用なし、音源は GitHub に置かない。公式HP：メインメニューに「LISTEN｜音楽を聴く」（狭い画面は「LISTEN」）、楽曲一覧に「一般視聴ページ →」（content/public-listening.json を有効化、docs 再生成：メニュー1行・CSS・案内リンクのみ）。/listen/ は0曲のとき「準備中」の案内。テスト：Worker 管理API 29・管理ツール161（一般視聴12を追加）・既存の PRIVATE／一般視聴／UI テスト合格。実ブラウザ（模擬 PRIVATE Worker＋本番から読み取った1曲のMP3、確認後削除）：0曲の準備中→PRIVATE からコピー（確認画面）→公開項目→試聴→公開（確認画面）→パスワードなしで再生・シーク・歌詞・ジャケット（感想・ダウンロードなし）→停止で準備中→再開→MP3差し替え→公開→以前の版に戻す、PC・スマホ幅、PRIVATE の音源・管理記録・管理APIは一般から取得不可。
 
@@ -115,7 +117,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 次の一手
 
-Producer が push と PRIVATE Worker のデプロイを承認 → 担当AIが反映・確認 → Producer が一式の管理ツール「一般視聴の管理」で曲を登録・公開。
+Producer が一式の管理ツールで運用（新曲・アルバムの登録と公開、一般視聴の曲の登録と公開）。機能の追加・変更は Producer の指示があったときだけ。
 
 ## 交代の手順（PACS-10）
 
