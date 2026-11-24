@@ -24,7 +24,8 @@ export function mockBucket(r2Dir, hooks = {}) {
   const toBuffer = async body => {
     if (body == null) return Buffer.alloc(0);
     if (typeof body === 'string') return Buffer.from(body);
-    if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) return Buffer.from(body.buffer ? body.buffer : body);
+    if (ArrayBuffer.isView(body)) return Buffer.from(body.buffer, body.byteOffset, body.byteLength);   // a small Buffer can be a view of a shared pool
+    if (body instanceof ArrayBuffer) return Buffer.from(body);
     return Buffer.from(await new Response(body).arrayBuffer());
   };
   return {

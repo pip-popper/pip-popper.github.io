@@ -23,7 +23,9 @@ const listeningUrl = option('--public-listening-url') ?? (listeningConfig.enable
 if (listeningConfig.enabled===true && !listeningUrl) throw new Error('一般視聴の承認済みURLを設定してください。');
 if (listeningUrl && !(outArg && listeningUrl === '/listen/')) {
   const target = new URL(listeningUrl);
-  if (target.protocol !== 'https:' || target.username || target.password || target.hostname === 'pip-popper-private.pip-popper-private.workers.dev') throw new Error('一般視聴には承認済みの独立したHTTPS URLを指定してください。');
+  // the listening page lives at /listen/ of the PRIVATE Worker (no password there); any other path on that host is refused
+  const privateHost = target.hostname === 'pip-popper-private.pip-popper-private.workers.dev';
+  if (target.protocol !== 'https:' || target.username || target.password || (privateHost && target.pathname !== '/listen/')) throw new Error('一般視聴には承認済みのHTTPS URL（PRIVATE Worker の /listen/）を指定してください。');
 }
 const exists = url => access(url).then(() => true, () => false);
 const write = async (path, text) => { const u = new URL(path, out); await mkdir(new URL('./', u), { recursive: true }); await writeFile(u, text, 'utf8'); };

@@ -8,6 +8,7 @@
 // Bindings (wrangler.toml): BUCKET = private R2 bucket, ASSETS = ./public, LOGIN_GUARD = login lockout (Durable Object).
 // R2 layout: catalog.json (see catalog.js) and audio/*.mp3. The bucket has no public URL;
 // every audio byte goes through this Worker, which checks a signed cookie on every request.
+import { publicListening } from '../../../public-listening/worker.mjs';
 import { MAX_PASSWORD, html, text, redirect, secure, sameOrigin, signValue, readSigned,
   guard, connection, lockMessage, wait } from './common.js';
 import { loadCredential, memberPasswordMatches, memberVersion } from './credential.js';
@@ -36,6 +37,16 @@ async function route(request, env, url) {
   // Fail closed: without both secrets nobody can enter.
   if (!env.PRIVATE_PASSWORD || !env.SESSION_KEY || env.SESSION_KEY.length < 32 || !env.LOGIN_GUARD) return html(503, messagePage('準備中です。しばらくしてからお越しください。'));
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return adminRoute(request, env, url);
+
+  // General listening (2026-11-24): no password. It is handed a bucket that can only read the public catalog
+  // and the approved public copies (public-catalog.json, public-audio/, public-jackets/). PRIVATE audio,
+  // the PRIVATE catalog, credentials and the admin API are out of its reach.
+  if (pathname === '/listen') return redirect('/listen/');
+  if (pathname.startsWith('/listen/')) {
+    const inner = new URL(request.url);
+    inner.pathname = pathname.slice('/listen'.length);
+    return publicListening(new Request(inner, { method, headers: request.headers }), { ASSETS: env.ASSETS, PUBLIC_BUCKET: publicOnly(env.BUCKET) }, { base: '/listen' });
+  }
 
   if (pathname === '/login' && method === 'POST') {
     if (!sameOrigin(request, url)) return text(403, '受け付けられないリクエストです。');
@@ -86,6 +97,10 @@ async function route(request, env, url) {
   }
   return html(404, messagePage('ページが見つかりません。'));
 }
+
+const PUBLIC_KEY = /^(?:public-catalog\.json|public-audio\/[a-z0-9-]+\.(?:mp3|wav)|public-jackets\/[a-z0-9-]+\.(?:jpg|png|webp))$/;
+// read-only view of the bucket limited to the public objects
+export const publicOnly = bucket => ({ get: (key, options) => PUBLIC_KEY.test(key) ? bucket.get(key, options) : Promise.resolve(null) });
 
 export default {
   async fetch(request, env) {

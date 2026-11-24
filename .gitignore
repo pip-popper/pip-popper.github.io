@@ -24,6 +24,7 @@
 !/public-listening/worker.mjs
 !/public-listening/approval.mjs
 !/public-listening/test.mjs
+!/public-listening/stage.mjs
 !/public-listening/README.md
 !/src/stage.jpg
 !/tools/
@@ -132,3 +133,4 @@
 !/private/dev/test-password.mjs
 !/private/dev/test-library.mjs
 !/private/dev/test-display-text.mjs
+!/private/dev/test-listen.mjs
