@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 正式運用中（Producer は「PIP POPPER管理ツール一式」の EXE を使用）。次の開発対象：一般視聴機能の完成・管理ツールと公式HPの一括連携（別途指示） |
+| 状態 | 一般視聴機能を実装・検証済み（ローカル）。本番反映（push・PRIVATE Worker デプロイ）は Producer 承認待ち。実際の楽曲公開は Producer が管理ツールで行う |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-25 Claude Code：**一般視聴機能の完成**（e7e481c＋本記録の commit）。管理メニュー「一般視聴の管理」：公式サイトの曲を選び、一般視聴用MP3（短縮版・編集版可）を登録（登録前に手元で試聴）、PRIVATE の完全版は対象を確認したときだけ別ファイルとしてコピー、歌詞・ジャケット・AIの感想の公開可否（中身は公式サイトのもの）、公開前の試聴、内容確認つき公開、差し替え（公開中は前の音源のまま）、停止・再開、以前の版に戻す、一覧から外す・戻す。各操作後に画面・件数を自動更新。仕組み：PRIVATE Worker の管理API `/admin/api/listen/...`（管理者の入室が必要）→ 既存R2（public-audio/ に版ごとの名前で保存し消さない、管理記録 public-manage.json は一般から読めない、公開カタログ public-catalog.json は公開した曲だけ）。新しい Worker・R2・費用なし、音源は GitHub に置かない。公式HP：メインメニューに「LISTEN｜音楽を聴く」（狭い画面は「LISTEN」）、楽曲一覧に「一般視聴ページ →」（content/public-listening.json を有効化、docs 再生成：メニュー1行・CSS・案内リンクのみ）。/listen/ は0曲のとき「準備中」の案内。テスト：Worker 管理API 29・管理ツール161（一般視聴12を追加）・既存の PRIVATE／一般視聴／UI テスト合格。実ブラウザ（模擬 PRIVATE Worker＋本番から読み取った1曲のMP3、確認後削除）：0曲の準備中→PRIVATE からコピー（確認画面）→公開項目→試聴→公開（確認画面）→パスワードなしで再生・シーク・歌詞・ジャケット（感想・ダウンロードなし）→停止で準備中→再開→MP3差し替え→公開→以前の版に戻す、PC・スマホ幅、PRIVATE の音源・管理記録・管理APIは一般から取得不可。
 
 - 2026-11-25 Claude Code：**公開後の自動更新と「↻ 更新」ボタン**（ffdddf2、Producer 合格・push 承認）。公開直後に開いている画面を読み直す（入力途中があれば一覧と件数だけ）、「更新」は GitHub の公開状況を読み取り（ファイルは変えない）登録データと一覧を読み直す（入力途中は確認して保持）。「下書き・登録中」と件数は未公開のものだけ、公開済みは別欄で公開中の曲・アルバムを開く。取り込み済み・公開済みの登録は「公開準備完了」で固定（サーバーも下書きへの保存を拒否）。背景：Producer が 2026-11-24 に新曲2曲（低所得層サラリーマンより・WE LOVE MUSIC）を一式から公開（181806c、tracks は27曲）。テスト：管理ツール149（曲数を固定値でなく実データから数えるよう修正）・UIテスト3本合格。実ブラウザ（検証用コピー＋一式の登録の複製）で公開直後の切替・件数・入力保持を確認。push：181806c..ffdddf2。一式の EXE 起動で ffdddf2 を自動取得（ahead 0・behind 0・公開前チェック0件・曲27・登録2を保持）。
 
@@ -113,7 +115,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 次の一手
 
-次の開発対象「一般視聴機能の完成・管理ツールと公式HPの一括連携」（Producer が別途提示）。自動更新（ffdddf2）・新曲/アルバム登録・掲載停止・一式の仕組みは完成済みのため再実装せず引き継ぐ。一般視聴の現状：PRIVATE Worker の /listen/ は本番にあり0曲（公開カタログ未作成）、公開手順は `public-listening/README.md`「本番方式」と `public-listening/stage.mjs`。
+Producer が push と PRIVATE Worker のデプロイを承認 → 担当AIが反映・確認 → Producer が一式の管理ツール「一般視聴の管理」で曲を登録・公開。
 
 ## 交代の手順（PACS-10）
 

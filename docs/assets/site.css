@@ -410,3 +410,6 @@ main { position: relative; z-index: 1; }
   .topbar nav { gap: 0 11px; }
   .topbar-brand { font-size: 15px; }
 }
+/* 2026-11-25: LISTEN｜音楽を聴く in the main menu — on narrow screens only "LISTEN" */
+@media (max-width: 760px) { .topbar .nav-listen-ja { display: none; } }
+@media (max-width: 400px) { .topbar nav[aria-label] { column-gap: 6px !important; } }   /* room for LISTEN beside PRIVATE on 360px phones (page styles set the gap later) */
