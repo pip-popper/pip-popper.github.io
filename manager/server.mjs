@@ -244,15 +244,35 @@ async function describeChanges() {
     const now = JSON.parse(await readFile(path.join(ROOT, file), 'utf8'));
     const before = await headJson(file);
     const diffs = [];
+    // every kind of value counts (text, yes/no such as 掲載停止, numbers); objects are compared field by field
+    const isObj = v => v !== null && typeof v === 'object';
+    const show = (v, p) => p.at(-1) === 'hidden' ? (v === true ? '掲載停止' : '掲載中') : v === undefined || v === null ? '' : isObj(v) ? '（項目）' : typeof v === 'boolean' ? (v ? 'はい' : 'いいえ') : valueLabel(String(v));
     const walk = (a, b, p) => {
-      if (typeof b === 'string' || b === null || typeof a === 'string') { if ((a ?? null) !== (b ?? null)) diffs.push({ path: p, before: valueLabel(a) ?? '', after: valueLabel(b) ?? '' }); return; }
-      if (b && typeof b === 'object') for (const k of new Set([...Object.keys(a ?? {}), ...Object.keys(b)])) walk(a?.[k], b[k], [...p, Array.isArray(b) ? Number(k) : k]);
+      if (!isObj(a) && isObj(b)) a = Array.isArray(b) ? [] : {};
+      if (isObj(a) && !isObj(b) && b === undefined) b = Array.isArray(a) ? [] : {};
+      if (!isObj(a) || !isObj(b)) { if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)) diffs.push({ path: p, before: show(a, p), after: show(b, p) }); return; }
+      for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) walk(a[k], b[k], [...p, Array.isArray(b) ? Number(k) : k]);
     };
+    if (file === 'albums/albums.json') {
+      // albums are matched by their ID, so adding or moving one does not make every later album look changed
+      const byId = d => new Map((d?.albums ?? []).map(a => [a.id, a]));
+      const B = byId(before), N = byId(now);
+      for (const [id, a] of N) {
+        if (!B.has(id)) { items.push({ path: ['albums', id], before: '', after: `${a.section === 'other' ? 'その他の作品' : 'HISTORY'} に追加（収録曲 ${(a.tracks ?? []).length} 曲）`, item: `アルバム『${a.title}』`, label: '新しいアルバム' }); continue; }
+        diffs.length = 0; walk(B.get(id), a, []);
+        items.push(...diffs.map(d => ({ ...d, item: `アルバム『${a.title}』`, label: d.path.at(-1) === 'hidden' ? '掲載' : labelOf(d.path) })));
+      }
+      for (const [id, a] of B) if (!N.has(id)) items.push({ path: ['albums', id], before: a.title, after: '（データから削除）', item: `アルバム『${a.title}』`, label: 'アルバム' });
+      for (const sec of ['history', 'other']) {
+        const order = d => (d?.albums ?? []).filter(a => (a.section === 'other' ? 'other' : 'history') === sec && B.has(a.id) && N.has(a.id)).map(a => a.title);
+        if (order(before).join('\n') !== order(now).join('\n')) items.push({ path: ['order', sec], before: order(before).join(' → '), after: order(now).join(' → '), item: sec === 'other' ? 'その他の作品の掲載順' : 'HISTORY の掲載順', label: '並び順' });
+      }
+      continue;
+    }
     walk(before, now, []);
     const named = diffs.map(d => {
-      if (file === 'albums/albums.json') { const al = now.albums[d.path[1]]; return { ...d, item: `アルバム『${al?.title ?? '?'}』`, label: labelOf(d.path.slice(2)) }; }
       if (file === 'content/site.json') return { ...d, item: `サイトの文言（${LABEL[d.path[0]] ?? d.path[0]}）`, label: siteLabel(d.path[0], d.path.slice(1)) };
-      return { ...d, item: `曲「${now.title}」`, label: (TRACK_FIELDS.find(t => t[0] === d.path[0]) ?? [, TRACK_EXTRA_LABEL[d.path[0]] ?? d.path.join('.')])[1] };
+      return { ...d, item: `曲「${now.title}」`, label: d.path[0] === 'hidden' ? '掲載' : (TRACK_FIELDS.find(t => t[0] === d.path[0]) ?? [, TRACK_EXTRA_LABEL[d.path[0]] ?? d.path.join('.')])[1] };
     });
     items.push(...named);
   }

@@ -313,7 +313,7 @@ try {
     ok(entry.tracks.length === 2 && entry.tracks[0].music === 'manner' && entry.episode.text.length === 2 && entry.column.text[0] === '制作秘話の本文。' && !read('albums/albums.json').includes('ALBUM_MEMO_NOT_PUBLIC'), '紹介文・制作秘話・収録曲が入り、管理メモは入らない');
     ok(albums.filter(a => a.id !== 'kakuu-album').map(a => a.id).join() === JSON.parse(before).albums.map(a => a.id).join(), '既存のアルバムの並びはそのまま');
     let st = (await call('GET', '/api/state')).data;
-    ok(st.changes.other.length === 0 && st.changes.items.some(c => c.item === 'アルバム『架空アルバム』' && c.label === 'ジャケット画像'), '公開していない変更にアルバム（文字と画像）');
+    ok(st.changes.other.length === 0 && st.changes.items.length === 3 && st.changes.items.some(c => c.item === 'アルバム『架空アルバム』' && c.label === '新しいアルバム') && st.changes.items.some(c => c.item === 'アルバム『架空アルバム』' && c.label === 'ジャケット画像'), '公開していない変更は3件だけ（新しいアルバム＋画像2枚。後ろのアルバムはずれない）');
     r = await call('POST', '/api/publish', { confirm: true, summary: 'アルバム：架空アルバム' });
     const remote = g(BARE, 'ls-tree', '-r', '--name-only', 'main').split('\n');
     ok(r.status === 200 && remote.includes('albums/kakuu-album/visual-web.jpg') && remote.includes('docs/assets/history/kakuu-album-visual.jpg') && g(BARE, 'show', 'main:docs/history/index.html').includes('id="kakuu-album"'), '公開：HISTORYページに新しいアルバム');
@@ -333,6 +333,7 @@ try {
     ok(it.tracks.map(t => t.title).join('|') === '新しい曲（ページなし）|Diet', '曲目：新しい曲・Diet');
     ok((await call('POST', '/api/album/tracks', { id: 'favorite-track', rev: it.rev, op: 'move', index: 0, dir: 1 })).status === 409 || (await call('POST', '/api/album/tracks', { id: 'favorite-track', rev: (await call('GET', '/api/item?type=album&id=favorite-track')).data.rev, op: 'move', index: 0, dir: 1 })).status === 400, 'ディスク別構成の作品は曲目構成を変えない');
     ok((await call('POST', '/api/album/move', { id: 'kakuu-album', rev: it.rev, dir: -1 })).status === 200 && JSON.parse(read('albums/albums.json')).albums.filter(a => a.section !== 'other').at(-2).id === 'kakuu-album', '掲載順を前へ');
+    ok((await call('GET', '/api/state')).data.changes.items.some(c => c.item === 'HISTORY の掲載順'), '掲載順の変更が一覧に出る');
     ok((await call('POST', '/api/album/move', { id: 'pip-popper', rev: (await call('GET', '/api/item?type=album&id=pip-popper')).data.rev, dir: -1 })).status === 400, '先頭より前へは動かない');
     const jacket = { original: { mime: 'image/jpeg', data: b64('tracks/manner/cover-640.jpg') }, web: { mime: 'image/jpeg', data: b64('tracks/manner/cover-web.jpg') }, thumb: { mime: 'image/jpeg', data: b64('tracks/manner/cover-640.jpg') } };
     ok((await call('POST', '/api/album/jacket', { id: 'kakuu-album', image: jacket, confirm: true })).status === 200 && readFileSync(path.join(WORK, 'albums/kakuu-album/visual-web.jpg')).equals(readFileSync(path.join(REPO, 'tracks/manner/cover-web.jpg'))), 'ジャケットを差し替え');
@@ -346,6 +347,7 @@ try {
     ok((await call('POST', '/api/hidden', { type: 'track', id: 'diet', rev: it.rev, hidden: true })).status === 400, '確認なしでは止めない');
     ok((await call('POST', '/api/archive', { type: 'track', id: 'diet', archive: true, confirm: true })).status === 409, '掲載中の曲は一覧から外せない');
     ok((await call('POST', '/api/hidden', { type: 'track', id: 'diet', rev: it.rev, hidden: true, confirm: true })).status === 200 && JSON.parse(read('tracks/diet/track.json')).hidden === true, '曲の掲載停止（データは残る）');
+    ok((await call('GET', '/api/state')).data.changes.items.some(c => c.item === '曲「Diet」' && c.label === '掲載' && c.after === '掲載停止'), '掲載停止が「公開していない変更」に出る（公開ボタンが押せる）');
     let r = await call('POST', '/api/publish', { confirm: true, summary: '掲載停止：Diet' });
     let remote = g(BARE, 'ls-tree', '-r', '--name-only', 'main').split('\n');
     ok(r.status === 200 && !remote.includes('docs/tracks/diet/index.html') && !remote.includes('docs/assets/covers/diet.jpg') && remote.includes('tracks/diet/track.json') && remote.includes('tracks/diet/cover-web.jpg'), '公開：曲ページと表示画像は消え、元データは残る');
