@@ -131,3 +131,4 @@
 !/.gitattributes
 !/private/dev/test-password.mjs
 !/private/dev/test-library.mjs
+!/private/dev/test-display-text.mjs

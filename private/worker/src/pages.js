@@ -1,5 +1,6 @@
 // PIP POPPER PRIVATE — page templates. Same B-3 look as the official site:
 // public/assets/site.css is copied from src/site.css by `node private/tools/private.mjs assets`.
+import { displayText } from './display-text.js';
 import { audioFormat } from './audio.js';
 import { sortedSongs } from './song-order.js';
 const SITE = 'https://pip-popper.github.io/';
@@ -86,7 +87,7 @@ ${sortedSongs(songs).map((s, i) => { const format=audioFormat(s); const audioUrl
         <p class="pv-no"><span>${no(i)}</span></p>
         <h2 class="pv-song">${esc(s.title)}</h2>
         <span class="pv-song-lyrics" hidden>${esc(lyricsText(s))}</span>
-        ${typeof s.impression==='string'&&s.impression&&(publicMode||['public','private','both'].includes(s.impressionScope))?`<span class="pv-song-impression" hidden>${esc(s.impression)}</span>`:''}
+        ${typeof s.impression==='string'&&s.impression&&(publicMode||['public','private','both'].includes(s.impressionScope))?`<span class="pv-song-impression" hidden>${esc(displayText(s.impression))}</span>`:''}
         ${!publicMode && s.cover === `${SITE}assets/covers/${s.id}-640.jpg` ? `<span class="pv-public-work" hidden>${esc(`${SITE}tracks/${s.id}/`)}</span>` : ''}
         <button class="pv-select" type="button" hidden aria-label="${esc(s.title)}を再生">▶ 再生</button>
         <audio class="pv-audio" controls preload="none" src="${audioUrl}?v=${esc(audioVersion(s))}">お使いのブラウザでは再生できません。</audio>

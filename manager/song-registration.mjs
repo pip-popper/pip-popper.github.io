@@ -3,6 +3,7 @@ import path from 'node:path';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile, rename, copyFile, rm, access } from 'node:fs/promises';
 import { validReading } from '../private/worker/src/song-order.js';
+import { displayText } from '../private/worker/src/display-text.js';
 
 const ID=/^new-[a-f0-9]{24}$/;const REV=/^[a-f0-9-]{36}$/;
 const classes=['unknown','general','site','private'], scopes=['public','private','hidden'], states=['draft','registered','ready'];
@@ -137,7 +138,7 @@ export async function registrationAction(root,action,input={},ctx={}){
       if(!allowed)return result({visible:false,message:'この掲載先への公開許可が設定されていません。'});
       const canShow=scope=>scope==='public'||(isPrivate&&scope==='private');
       // Only the audience-approved projection leaves this API; no raw record, memo, revision or private text.
-      return result({visible:true,title:r.title,artist:r.artist,thumbnail:await thumbData(root,r),lyrics:canShow(r.lyricsScope)?r.lyrics:'',impression:canShow(r.impressionScope)?r.impression:'',links:!isPrivate&&r.classification==='general'?r.links:[],audioStatus:'unregistered',notice:'掲載イメージ（未公開・音源未登録）'});
+      return result({visible:true,title:r.title,artist:r.artist,thumbnail:await thumbData(root,r),lyrics:canShow(r.lyricsScope)?r.lyrics:'',impression:canShow(r.impressionScope)?displayText(r.impression):'',links:!isPrivate&&r.classification==='general'?r.links:[],audioStatus:'unregistered',notice:'掲載イメージ（未公開・音源未登録）'});
     }
     return problem(404,'見つかりません。');
   }catch(e){return problem(e.code?500:400,e.code?'保存・読込みを完了できませんでした。以前の保存内容を保持しています。':(e.message||'登録内容を確認してください。'));}

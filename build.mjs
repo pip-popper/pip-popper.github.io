@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { sortedSongs } from './private/worker/src/song-order.js';
 import { assertArchiveApproval } from './public-listening/approval.mjs';
+import { displayText } from './private/worker/src/display-text.js';
 
 const root = new URL('./', import.meta.url);
 const argv = process.argv.slice(2);
@@ -86,7 +87,8 @@ for (const id of ids) {
     return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 19) + '+09:00'; };
   const gitAt = gitListedAt(id);
   const listedAt = data.releaseDate ?? data.listedAt ?? gitAt ?? await localAt();
-  songs.push({ ...data, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
+  // aiImpression: shown without ChatGPT's Markdown marks (track.json keeps the original)
+  songs.push({ ...data, aiImpression: displayText(data.aiImpression), id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
 }
 // Newest listing first; listOrder breaks ties (higher = registered later).
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
