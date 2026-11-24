@@ -1,5 +1,15 @@
 [
  {
+  "id": "low-income-salaryman-yori",
+  "title": "低所得層サラリーマンより",
+  "cover": "https://pip-popper.github.io/assets/covers/low-income-salaryman-yori-640.jpg"
+ },
+ {
+  "id": "we-love-music",
+  "title": "WE LOVE MUSIC",
+  "cover": "https://pip-popper.github.io/assets/covers/we-love-music-640.jpg"
+ },
+ {
   "id": "rappu-gokko",
   "title": "らっぷごっこ",
   "cover": "https://pip-popper.github.io/assets/covers/rappu-gokko-640.jpg"
