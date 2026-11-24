@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 作業中（Work成果の正式統合・検証・新曲データ移行） |
+| 状態 | 正式統合・検証完了。本番反映（PRIVATE Worker デプロイ・GitHub push）は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-24 Claude Code：Work成果の正式統合・検証を完了。追加実装：新曲の「公式HPへの取り込み」（公開準備完了の承認済み公開候補だけを `tracks/<URL名>/` へ、公開は既存の「公開する」、状態は未取り込み／取り込み済み／公開済みを自動判定、破棄・取り消しは画像を含めて可能）、曲の編集画面に「よみがな」、公開確認画面の項目名を日本語化。新曲データ移行：「低所得層サラリーマンより」new-0b13fe9f2b7ec0da5be794c9・「WE LOVE MUSIC」new-d7a4b7cbf64313f27cf51e6e を SHA-256 照合のうえ `.manager/song-registrations/` へ（下書きのまま、内容無変更、Git対象外）。公開候補 `docs/` を再生成（3ファイルのみ変更）。テスト：管理ツール103・PRIVATE既存61・パスワード53・一覧・公開状況・新曲登録・一般視聴・試作品 --check 合格。実ブラウザ確認：PRIVATE鑑賞（PC・スマホ、再生/一時停止/シーク/切替/歌詞/ジャケット/ダウンロード）、公式HP並び替え、一般視聴、PRIVATE歌詞・よみがな保存→反映、公開状況、新曲登録→画像選択→保存→取り込み→公開（一時フォルダーの検証用送信先）。本番R2の曲目（23曲）がすべてMP3で新しい配信処理に適合することを読み取りで確認。commit：7f846dd・b2ac275（Work成果）、cee0d97、5fef64f、4b300cc、713da68、本記録。
 
 - 2026-11-24 Claude Code：Producer承認の担当移管を受領（体系13.0.0、PACS12.1.1／Gate13.0.0／Environment3.10.3 の Version・SHA-256 一致）。前担当 Work の停止と成果物を確認し、未コミット差分（EXE化＋第1〜3段階＋一般公開・一般視聴＋新曲登録、34件）と `.manager` を`..\PIP POPPER保守バックアップ\作業フォルダー_Work統合前_20261124\` に保全（差分・新規ファイル・.manager・全履歴 bundle）。Work成果を受領時のまま 7f846dd（EXEランチャー）・b2ac275（その他）に保存してから統合作業を開始。
 
@@ -73,15 +75,24 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 残件・承認待ち
 
-0. PRIVATE：Producer が今のパスワードで入室・再生・管理画面を確認 → 準備ができたら管理ツールの「PRIVATE管理」から招待者パスワードを変更。
-1. 管理ツール v1：Producer 実機確認（BATのダブルクリック起動、曲名の修正・保存・プレビュー・破棄／取り消し）。
-2. 管理ツールからの本番公開：Producer の承認後に1回目を実施して確認（GitHub への送信はこのPCの保存済み資格情報を使う）。
-3. 文言の更新判断：トップのヒストリー欄とヒストリーのリード・説明文が「1999年から2001年へ／…PROFESSIONALまで」のまま（現在は2012年まで掲載）。管理ツールの「サイトの文言」で直せる。
-4. 今後：管理ツール v2（画像差し替え・曲の追加・並べ替え）→ PRIVATE管理画面の拡張 → 一般公開の再生（調査報告書の段階④〜⑥）。
+### 本番反映の手順（Producer の承認後に担当AIが行う）
+
+1. **PRIVATE Worker**（鑑賞画面・歌詞・よみがな・▶/⏸・ダウンロード形式）：`private\worker` で `npx wrangler deploy`。バインディング・秘密の値・R2 は変わらない（新しい移行なし）。確認：入口200・未入室の音源401・Producer が入室して再生・歌詞欄・ダウンロード。**復元**：`npx wrangler rollback c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`（現在の本番版）。歌詞・よみがなは曲目の追加項目なので、旧版に戻しても曲目はそのまま読める。
+2. **公式HP**（並び替え）：`git push origin main`（未push の commit がすべて送られる。docs の変更は index.html・site.css・works-sort.js の3つだけ）。送信後、公開中の全ファイルを docs と照合。**復元**：`git revert` で docs を戻して push、または GitHub の main を `1a0b059` 相当へ戻す commit を作る（履歴は消さない）。
+3. **管理ツール**：Producer が今開いている管理ツール（11/23 起動）を「終了」し、`PIP POPPER管理ツール.exe` を起動し直す（新しい機能が読み込まれる）。push が済むまでは「AI等の保存点」があるため管理ツールからの公開はできない（保存・プレビュー・新曲登録・取り込みは使える）。
+4. **一般視聴ページ**：コードは候補として完成。本番化には Producer の判断が必要：公開する曲・音源・歌詞・ジャケットの選定、独立した Cloudflare Worker と専用R2バケット（無料枠内の見込みだが新規作成）、公開URL。決まったら `public-listening/README.md` の手順で設定し、`content/public-listening.json` に URL を入れて公式HPから案内する。
+
+### Producer の確認・判断
+
+1. 新曲2曲は下書きのまま。公開前に確認してほしい点：「低所得層サラリーマンより」の歌詞1行目が曲名、よみがなに「より」がない。両曲ともAIの感想の先頭がMarkdown見出し（`###`）で、そのまま公開すると記号が表示される。「WE LOVE MUSIC」は会話中の歌詞原文との照合が未了（Work記録）。
+2. 公開する曲は、登録画面で「公開準備完了」→「公式HPの掲載データへ取り込む」→「公開する」（`manager/README.md`）。
+3. その他の曲（倦怠期 -THE STAGE OF BOREDOM-・甘いワナ・Talk about separation・PIPPOPPER ENTERTAINMENT・TRIANGLE）は**未登録**。プロジェクト内にあるのは、HISTORY のアルバム曲目の曲名だけ（甘いワナは曲名もない）。ジャケット（PIPPOPPER ENTERTAINMENT は「おとなしそうな男性3人がステージに座っている版」）・歌詞・AIの感想を ChatGPT から保存し、管理ツールの「＋ 新曲を登録」で登録する（下書きから）。
+4. あいうえお順：漢字で始まる曲（公式HP：就職活動・彼女に不満、PRIVATE：同じ2曲）は「よみがな」を入れるまで末尾に並ぶ。公式HPは曲の編集画面、PRIVATE は「PRIVATE楽曲の歌詞・よみがな」から入力できる。
+5. 以前からの残件：PRIVATE の実機確認、トップのヒストリー欄の文言（2012年まで掲載に合わせるか）。
 
 ## 次の一手
 
-Producer が管理ツールを実機で確認 → 本番公開の承認 → 1回目の公開を確認。
+Producer が本番反映（上の1〜3）を承認 → 担当AIが反映・照合 → Producer が新しい管理ツールで新曲を確認・公開判断。
 
 ## 交代の手順（PACS-10）
 
