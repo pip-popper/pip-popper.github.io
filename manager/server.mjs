@@ -47,6 +47,10 @@ const UI = path.join(HERE, 'ui');
 
 // ── files the tool may change ─────────────────────────────────────────
 const DATA_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|content\/site\.json)$/;
+// names for the settings a new song brings with it (shown before publishing)
+const TRACK_EXTRA_LABEL = { publicationClass: '公開区分', publicArchiveApproved: '公式HPへの掲載許可', lyricsScope: '歌詞の公開範囲', impressionScope: 'AIの感想の公開範囲', artwork: 'ジャケットのファイル名', links: '配信リンク', downloadUrl: 'ダウンロードURL' };
+const VALUE_LABEL = { general: '一般公開', site: 'このサイトのみ', public: '一般公開' };
+const valueLabel = v => typeof v === 'string' && Object.hasOwn(VALUE_LABEL, v) ? VALUE_LABEL[v] : v;
 const IMAGE_RE = /^tracks\/[a-z0-9-]+\/cover-(web|640)\.jpg$/;   // only the display JPEGs a new song needs (2026-11-24)
 const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|content\/site\.json|docs\/.+)$/;
 
@@ -235,14 +239,14 @@ async function describeChanges() {
     const before = await headJson(file);
     const diffs = [];
     const walk = (a, b, p) => {
-      if (typeof b === 'string' || b === null || typeof a === 'string') { if (a !== b) diffs.push({ path: p, before: a ?? '', after: b ?? '' }); return; }
+      if (typeof b === 'string' || b === null || typeof a === 'string') { if ((a ?? null) !== (b ?? null)) diffs.push({ path: p, before: valueLabel(a) ?? '', after: valueLabel(b) ?? '' }); return; }
       if (b && typeof b === 'object') for (const k of new Set([...Object.keys(a ?? {}), ...Object.keys(b)])) walk(a?.[k], b[k], [...p, Array.isArray(b) ? Number(k) : k]);
     };
     walk(before, now, []);
     const named = diffs.map(d => {
       if (file === 'albums/albums.json') { const al = now.albums[d.path[1]]; return { ...d, item: `アルバム『${al?.title ?? '?'}』`, label: labelOf(d.path.slice(2)) }; }
       if (file === 'content/site.json') return { ...d, item: `サイトの文言（${LABEL[d.path[0]] ?? d.path[0]}）`, label: siteLabel(d.path[0], d.path.slice(1)) };
-      return { ...d, item: `曲「${now.title}」`, label: (TRACK_FIELDS.find(t => t[0] === d.path[0]) ?? [, d.path.join('.')])[1] };
+      return { ...d, item: `曲「${now.title}」`, label: (TRACK_FIELDS.find(t => t[0] === d.path[0]) ?? [, TRACK_EXTRA_LABEL[d.path[0]] ?? d.path.join('.')])[1] };
     });
     items.push(...named);
   }
