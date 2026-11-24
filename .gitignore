@@ -104,6 +104,10 @@
 !/manager/server.mjs
 !/manager/test-manager.mjs
 !/manager/README.md
+!/manager/Launcher.cs
+!/manager/build-launcher.ps1
+!/manager/test-launcher.mjs
+!/manager/EXE-VERIFICATION.md
 !/manager/ui/
 !/manager/ui/index.html
 !/manager/ui/app.js
