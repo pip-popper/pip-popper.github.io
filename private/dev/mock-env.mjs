@@ -19,7 +19,7 @@ export function mockBucket(r2Dir, hooks = {}) {
     if (!existsSync(f)) return null;
     const st = statSync(f);
     const m = existsSync(metaOf(key)) ? JSON.parse(readFileSync(metaOf(key), 'utf8')) : { etag: `legacy-${st.size}-${st.mtimeMs}`, uploaded: st.mtime.toISOString() };
-    return { key, size: st.size, etag: m.etag, httpEtag: `"${m.etag}"`, uploaded: new Date(m.uploaded), customMetadata: m.customMetadata ?? {}, checksums: { sha256: m.sha256 } };
+    return { key, size: st.size, etag: m.etag, httpEtag: `"${m.etag}"`, uploaded: new Date(m.uploaded), customMetadata: m.customMetadata ?? {}, checksums: { sha256: m.sha256 }, ...(m.httpMetadata ? { httpMetadata: m.httpMetadata } : {}) };   // like R2: the content type given at upload
   };
   const toBuffer = async body => {
     if (body == null) return Buffer.alloc(0);
@@ -51,7 +51,7 @@ export function mockBucket(r2Dir, hooks = {}) {
       const f = fileOf(key);
       mkdirSync(path.dirname(f), { recursive: true }); mkdirSync(metaDir, { recursive: true });
       writeFileSync(f, data);
-      const meta = { etag: randomBytes(8).toString('hex'), uploaded: new Date(Date.now()).toISOString(), customMetadata: options.customMetadata, sha256: sha };
+      const meta = { etag: randomBytes(8).toString('hex'), uploaded: new Date(Date.now()).toISOString(), customMetadata: options.customMetadata, sha256: sha, ...(options.httpMetadata ? { httpMetadata: options.httpMetadata } : {}) };
       writeFileSync(metaOf(key), JSON.stringify(meta));
       return info(key);
     },

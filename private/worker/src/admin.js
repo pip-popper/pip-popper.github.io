@@ -1,5 +1,6 @@
 // PIP POPPER PRIVATE — administrator screen (/admin) and its API (/admin/api/...).
 // Secret (Cloudflare only, never in code/GitHub): ADMIN_PASSWORD — 12+ characters and different from PRIVATE_PASSWORD.
+import { listenApi } from './listen-admin.js';
 import { SITE, MAX_PASSWORD, HttpError, html, json, text, redirect, sameOrigin, signValue, readSigned, secretMatches,
   secretVersion, guard, connection, lockMessage, wait } from './common.js';
 import { loadCatalog, commit, storeUpload, cleanup, RETIRE_GRACE, RESTORE_LIMIT, MAX_UPLOAD } from './catalog.js';
@@ -92,6 +93,7 @@ async function api(request, env, url, path) {
   const method = request.method;
   const pw = await passwordApi(request, env, path);
   if (pw) return pw;
+  if (path === 'listen' || path.startsWith('listen/')) return listenApi(request, env, url, path);   // 一般視聴の管理 (2026-11-25)
   if (path === 'catalog' && method === 'GET') return json(200, view((await loadCatalog(env)).cat));
   if (path === 'works' && method === 'GET') return json(200, { works: await works(env) });
 

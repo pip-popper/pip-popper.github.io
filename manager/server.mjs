@@ -20,6 +20,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { privateLyricsCall } from './private-lyrics.mjs';
+import { listenList, listenUpload, listenAction, listenAudio } from './listen-admin.mjs';
 import { listReleaseStatus, saveReleaseStatus, sanitizePrivateRows } from './release-status.mjs';
 import { registrationAction, listRegistrations, images as checkImages } from './song-registration.mjs';
 import { albumRegistrationAction, listAlbumRegistrations, adoptionSource, markAlbumAdopted, albumGet, ALBUM_SLUG } from './album-registration.mjs';
@@ -562,7 +563,14 @@ const server = http.createServer(async (req, res) => {
     if (!url.pathname.startsWith('/api/')) return serveFile(res, UI, url.pathname === '/' ? 'index.html' : url.pathname.slice(1));
     if (req.headers['x-pp-token'] !== TOKEN) return send(res, 403, { error: 'もう一度、起動用のファイルから開いてください。' });
     let body = {};
-    if (req.method === 'POST') {
+    let rawUpload = null;
+    if (req.method === 'POST' && url.pathname === '/api/listen/upload') {
+      // 一般視聴用MP3: raw bytes (never logged), up to 50MB
+      if (!(req.headers['content-type'] ?? '').startsWith('audio/mpeg')) return send(res, 415, { error: 'MP3を選んでください。' });
+      let length = 0; const chunks = [];
+      for await (const c of req) { length += c.length; if (length > 50 * 1024 * 1024) return send(res, 413, { error: 'ファイルが大きすぎます（上限50MB）。' }); chunks.push(c); }
+      rawUpload = Buffer.concat(chunks);
+    } else if (req.method === 'POST') {
       if (!(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: '形式が正しくありません。' });
       const limit=['/api/song-registration/save','/api/album-registration/save','/api/album/jacket'].includes(url.pathname)?30e6:2e6;let length=0;const chunks=[];
       for await(const c of req){length+=c.length;if(length>limit)return send(res,413,{error:'大きすぎます。'});chunks.push(c);}
@@ -610,6 +618,16 @@ const server = http.createServer(async (req, res) => {
       else if (route.startsWith('POST /api/song-registration/')) r = await registrationAction(ROOT,url.pathname.slice('/api/song-registration/'.length),body,registrationCtx);
       else if (route === 'POST /api/album-registration/adopt') r = await adoptAlbum(body);
       else if (route.startsWith('POST /api/album-registration/')) r = await albumRegistrationAction(ROOT, url.pathname.slice('/api/album-registration/'.length), body, registrationCtx);
+      else if (route === 'POST /api/listen/list') r = await listenList(ROOT, PRIVATE_URL, body);
+      else if (route === 'POST /api/listen/upload') {
+        let password = ''; try { password = Buffer.from(String(req.headers['x-pp-admin-password'] ?? ''), 'base64').toString('utf8'); } catch {}
+        r = await listenUpload(ROOT, PRIVATE_URL, password, { id: String(req.headers['x-id'] ?? ''), rev: Number(req.headers['x-rev']), sha256: String(req.headers['x-sha256'] ?? ''), duration: req.headers['x-duration'] }, rawUpload);
+      }
+      else if (route === 'POST /api/listen/action') r = await listenAction(ROOT, PRIVATE_URL, body);
+      else if (route === 'POST /api/listen/audio') {
+        r = await listenAudio(PRIVATE_URL, body);
+        if (r.audio) { log(`${route} status=200`); res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); return res.end(r.audio); }
+      }
       else if (route === 'POST /api/fetch-status') r = { status: 200, body: { ok: git(['fetch', REMOTE, BRANCH], { timeout: 15000 }).ok } };   // read GitHub's state only (no files change)
       else if (route === 'POST /api/hidden') r = await setHidden(body);
       else if (route === 'POST /api/album/move') r = await moveAlbum(body);
@@ -619,12 +637,12 @@ const server = http.createServer(async (req, res) => {
       else if (route === 'POST /api/quit') { send(res, 200, { ok: true }); setTimeout(() => process.exit(0), 200); return; }
       else r = { status: 404, body: { error: '見つかりません。' } };
       // the log names the operation only (for PRIVATE: whether it succeeded); input values are never written
-      if (route.startsWith('POST /api/private/') || route.startsWith('POST /api/release-status/') || route.startsWith('POST /api/song-registration/') || route.startsWith('POST /api/album-registration/') || route === 'POST /api/album/jacket') log(`${route} status=${r.status}`);
+      if (route.startsWith('POST /api/private/') || route.startsWith('POST /api/release-status/') || route.startsWith('POST /api/song-registration/') || route.startsWith('POST /api/album-registration/') || route.startsWith('POST /api/listen/') || route === 'POST /api/album/jacket') log(`${route} status=${r.status}`);
       else if (r.status === 200) log(`${route} ${JSON.stringify({ type: body.type, id: body.id, sha: body.sha })}`);
       return send(res, r.status, r.body);
     } finally { busy = false; }
   } catch (e) {
-    log(`error ${req.url?.startsWith('/api/private/') || req.url?.startsWith('/api/release-status/') || req.url?.startsWith('/api/song-registration/') ? 'in private management operation' : (e?.stack ?? e)}`);
+    log(`error ${req.url?.startsWith('/api/private/') || req.url?.startsWith('/api/release-status/') || req.url?.startsWith('/api/song-registration/') || req.url?.startsWith('/api/listen/') ? 'in private management operation' : (e?.stack ?? e)}`);
     return send(res, 500, { error: '処理できませんでした。もう一度お試しください。' });
   }
 });

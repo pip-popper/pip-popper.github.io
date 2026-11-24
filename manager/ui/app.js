@@ -70,6 +70,7 @@
       item('＋', 'アルバムを登録', () => openAlbumRegistration(), privateOpen === 'album' && !albumRegId),
       item('✎', '下書き・登録中の曲とアルバム', openDrafts, privateOpen === 'drafts' || (privateOpen === 'registration' && registrationId) || (privateOpen === 'album' && albumRegId), String([...regs, ...albums].filter(r => r.publication?.state !== 'published').length)),
       item('◎', '楽曲の公開状況', openReleaseStatus, privateOpen === 'release'),
+      item('▶', '一般視聴の管理', openListen, privateOpen === 'listen'),
       item('♪', 'PRIVATE音源の登録・管理 ↗', openPrivateAudio, false),
       item('✍', 'PRIVATE歌詞・よみがな', openPrivateLyrics, privateOpen === 'lyrics'),
       item('🔑', 'PRIVATEパスワード', openPrivate, privateOpen === 'password'),
@@ -123,6 +124,7 @@
       else if (where === 'drafts') await openDrafts();
       else if (where === 'release') await openReleaseStatus();
       else if (where === 'deleted') await openDeleted();
+      else if (where === 'listen') await openListen();
     } catch {}
     return true;
   }
@@ -139,6 +141,99 @@
     catch (e) { toast(e.message, 'bad'); } finally { b.disabled = false; }
   };
   const isPublished = r => r.publication?.state === 'published';
+
+
+  // ── 2026-11-25: 一般視聴の管理 (public listening). Works through the PRIVATE Worker's admin API; the
+  // administrator password stays only in this screen's field and is cleared when the screen is left. ──
+  async function openListen() {
+    if (!await guard()) return;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'listen'; privateLyricsDirty = releaseDirty = registrationDirty = false; renderLists();
+    const pw = el('input', { type: 'password', id: 'ls-password', autocomplete: 'off', spellcheck: false });
+    clearPrivateLyricsPassword = () => { pw.value = ''; };
+    const status = el('p', { role: 'status', ariaLive: 'polite', className: 'note' }), show = (m, k = 'note') => { status.textContent = m; status.className = k; };
+    const listBox = el('div', {}), detail = el('section', { className: 'listen-detail' });
+    let data = null, selected = null, busy = false, pending = null, previewUrl = null;
+    const stLabel = { draft: '未公開（下書き）', published: '公開中', stopped: '掲載停止中', removed: '一覧から外した' };
+    const mb = n => `${(n / 1048576).toFixed(1)}MB`, sec = s => s ? `${Math.floor(s / 60)}分${String(Math.round(s % 60)).padStart(2, '0')}秒` : '不明';
+    const items = v => v ? ['歌詞', 'ジャケット', 'AIの感想'].filter((_, i) => v.items[['lyrics', 'jacket', 'impression'][i]]).join('・') || 'なし（曲名と音源だけ）' : '';
+    const ver = v => v ? `${v.source === 'private' ? 'PRIVATEからコピー' : 'アップロード'}／${mb(v.size)}／${sec(v.duration)}／公開項目：${items(v)}` : 'なし';
+    const need = () => { if (!pw.value) { show('管理者パスワードを入力してください。', 'err'); return false; } if (busy) { show('処理中です。', 'err'); return false; } return true; };
+    const run = async (label, fn) => { if (!need()) return; busy = true; detail.inert = true; show(`${label}…`); try { await fn(); } catch (e) { show(e.message, 'err'); } finally { busy = false; detail.inert = false; } };
+    async function load(keep) {
+      data = await api('POST', '/api/listen/list', { adminPassword: pw.value });
+      paintList(); if (keep && selected) paintDetail(selected); else detail.replaceChildren(el('p', { className: 'note', textContent: '左の一覧（下）から曲を選んでください。' }));
+    }
+    const entry = id => data?.songs.find(s => s.id === id);
+    function paintList() {
+      const rows = data.official.filter(o => !o.audioPrivate).map(o => ({ o, s: entry(o.id) }));
+      const pub = rows.filter(r => r.s?.status === 'published').length;
+      listBox.replaceChildren(el('p', { className: 'note', textContent: `公式サイトの曲 ${rows.length} 曲のうち、一般視聴で公開中 ${pub} 曲。` }),
+        el('ul', { className: 'changes drafts' }, ...rows.map(({ o, s }) => el('li', {}, el('button', { type: 'button', className: 'draft-open', ariaCurrent: String(selected === o.id), onclick: () => paintDetail(o.id) },
+          el('span', { className: 'what', textContent: o.title }), el('span', { className: 'draft-meta', textContent: s ? `${stLabel[s.status]}${s.changed ? '（公開前の変更あり）' : ''}` : '未登録' }))))));
+    }
+    function paintDetail(id) {
+      selected = id; paintList();
+      const o = data.official.find(x => x.id === id), s = entry(id), p = data.privateSongs.find(x => x.id === id), v = s?.draft ?? s?.live;
+      if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; } pending = null;
+      const player = el('audio', { controls: true, preload: 'metadata', className: 'listen-player', hidden: true });
+      const file = el('input', { type: 'file', accept: 'audio/mpeg,.mp3', id: 'ls-file' }), fileInfo = el('p', { className: 'note' });
+      file.onchange = async () => {
+        const f = file.files?.[0]; pending = null; if (!f) return;
+        if (f.size > 50 * 1048576) return show('MP3は50MBまでです。', 'err');
+        if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = URL.createObjectURL(f); player.src = previewUrl; player.hidden = false;
+        const duration = await new Promise(r => { const a = new Audio(); a.preload = 'metadata'; a.onloadedmetadata = () => r(a.duration); a.onerror = () => r(null); a.src = previewUrl; });
+        if (!duration) { show('MP3として読めませんでした。', 'err'); return; }
+        pending = { file: f, duration }; fileInfo.textContent = `選んだMP3：${f.name}／${mb(f.size)}／${sec(duration)}（上で試聴できます）`; show('試聴して問題なければ「この音源を登録（まだ公開しない）」を押してください。');
+      };
+      const upload = el('button', { type: 'button', className: 'primary', textContent: 'この音源を登録（まだ公開しない）', onclick: () => run('登録しています', async () => {
+        if (!pending) throw new Error('先にMP3を選んでください。');
+        if (await ask('一般視聴用の音源を登録します', [el('p', { textContent: `曲：${o.title}` }), el('p', { textContent: `MP3：${pending.file.name}／${mb(pending.file.size)}／${sec(pending.duration)}` }), el('p', { className: 'warn', textContent: 'まだ公開されません。公開中の曲なら、「公開する」を押すまで今の音源のままです。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '登録する', primary: true }]) !== 'go') return show('取りやめました。');
+        const buf = await pending.file.arrayBuffer(), hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', buf))].map(b => b.toString(16).padStart(2, '0')).join('');
+        const res = await fetch('/api/listen/upload', { method: 'POST', body: buf, headers: { 'Content-Type': 'audio/mpeg', 'X-PP-Token': token || '', 'X-Id': id, 'X-Rev': String(data.rev), 'X-Sha256': hash, 'X-Duration': String(pending.duration), 'X-PP-Admin-Password': btoa(String.fromCharCode(...new TextEncoder().encode(pw.value))) } });
+        const out = await res.json().catch(() => ({})); if (!res.ok) throw new Error(out.error ?? '登録できませんでした。');
+        await load(true); show(`✔ ${out.message}`, 'done');
+      }) });
+      const act = (label, op, extra = {}, done) => run(label, async () => { const r = await api('POST', '/api/listen/action', { adminPassword: pw.value, id, op, rev: data.rev, ...extra }); await load(true); show(`✔ ${r.message ?? done ?? '完了しました。'}`, 'done'); });
+      const copyBtn = p ? el('button', { type: 'button', textContent: 'PRIVATEの音源をコピーして使う', onclick: async () => {
+        if (await ask('PRIVATEの音源をコピーします', [el('p', { textContent: `対象：${p.title}（PRIVATEの完全版／${mb(p.size)}／${sec(p.duration)}）` }), el('p', { textContent: 'PRIVATEの音源を一般視聴用に別のファイルとして複製します。PRIVATEの音源・曲目・パスワードは変わりません。' }), el('p', { className: 'warn', textContent: 'コピーしただけでは公開されません。完全版を一般公開してよいかを確認してから「公開する」を押してください。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: 'この曲をコピーする', primary: true }]) === 'go') act('コピーしています', 'copy-private', { confirm: true });
+      } }) : el('p', { className: 'note', textContent: 'PRIVATEにこの曲の音源はありません。' });
+      const chk = (key, label, can) => { const c = el('input', { type: 'checkbox', id: `ls-${key}`, checked: !!v?.items?.[key], disabled: !can }); return [c, el('div', { className: 'field check' }, c, el('label', { htmlFor: c.id, textContent: label + (can ? '' : '（公式サイトに登録がありません）') }))]; };
+      const [cl, fl] = chk('lyrics', '歌詞を公開する', o.hasLyrics), [cj, fj] = chk('jacket', 'ジャケットを公開する', true), [ci, fi] = chk('impression', 'AIの感想を公開する', o.hasImpression);
+      const saveItems = el('button', { type: 'button', textContent: '公開する項目を保存（まだ公開しない）', disabled: !v, onclick: () => act('保存しています', 'settings', { items: { lyrics: cl.checked, jacket: cj.checked, impression: ci.checked } }) });
+      const listen = which => run('音源を読み込んでいます', async () => {
+        const res = await fetch('/api/listen/audio', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-PP-Token': token || '' }, body: JSON.stringify({ adminPassword: pw.value, id, which }) });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? '読み込めませんでした。');
+        if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = URL.createObjectURL(await res.blob()); player.src = previewUrl; player.hidden = false; player.play().catch(() => {}); show(which === 'live' ? '公開中の音源を再生しています。' : '公開前（下書き）の音源を再生しています。');
+      });
+      const publishBtn = el('button', { type: 'button', className: 'primary', textContent: s?.status === 'published' && !s.changed ? '公開中（変更なし）' : '内容を確認して公開する', disabled: !v || (s?.status === 'published' && !s.changed), onclick: async () => {
+        const w = s.draft ?? s.live;
+        if (await ask('一般視聴に公開します', [el('p', { textContent: `曲名：${s.title}` }), el('p', { textContent: `MP3：${ver(w)}` }), el('p', { textContent: `公開する項目：${items(w)}` }), el('p', { className: 'warn', textContent: '公開すると、公式サイトの「LISTEN｜音楽を聴く」から誰でも聴けるようになります。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '公開する', primary: true }]) === 'go') act('公開しています', 'publish', { confirm: true });
+      } });
+      const stopBtn = s?.status === 'published' ? el('button', { type: 'button', textContent: '掲載を停止する', onclick: async () => { if (await ask('一般視聴の掲載を停止します', el('p', { textContent: `「${s.title}」を一般視聴から外します（音源・設定は残り、「掲載を再開する」で戻せます）。` }), [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '停止する', primary: true }]) === 'go') act('停止しています', 'stop'); } })
+        : s?.status === 'stopped' ? el('button', { type: 'button', textContent: '掲載を再開する', onclick: () => act('再開しています', 'resume') }) : '';
+      const hist = el('select', { id: 'ls-history' }, ...(s?.history ?? []).map((h, i) => el('option', { value: String(i), textContent: `${new Date(h.at).toLocaleString('ja-JP')}　${ver(h)}` })));
+      const restoreBtn = el('button', { type: 'button', textContent: 'この版を下書きに戻す', disabled: !s?.history?.length, onclick: () => act('戻しています', 'restore', { index: Number(hist.value) }) });
+      const removeBtn = s && s.status !== 'removed' && s.status !== 'published' ? el('button', { type: 'button', textContent: '一般視聴の一覧から外す', onclick: async () => { if (await ask('一般視聴の一覧から外します', el('p', { textContent: '音源・設定・履歴は残り、「一覧に戻す」で戻せます。' }), [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '外す', primary: true }]) === 'go') act('外しています', 'remove', { confirm: true }); } })
+        : s?.status === 'removed' ? el('button', { type: 'button', textContent: '一覧に戻す', onclick: () => act('戻しています', 'undelete') }) : '';
+      detail.replaceChildren(el('h3', { textContent: o.title }),
+        el('p', { className: 'note', textContent: `状態：${s ? stLabel[s.status] : '未登録'}${s?.changed ? '（公開前の変更あり）' : ''}` }),
+        el('p', { className: 'note', textContent: `公開中の版：${ver(s?.live)}` }), ...(s?.changed ? [el('p', { className: 'note', textContent: `公開前の版：${ver(s.draft)}` })] : []),
+        el('div', { className: 'registration-actions' }, ...(s?.live ? [el('button', { type: 'button', textContent: '公開中の音源を試聴', onclick: () => listen('live') })] : []), ...(s?.draft ? [el('button', { type: 'button', textContent: '公開前の音源を試聴', onclick: () => listen('draft') })] : [])), player,
+        el('h3', { textContent: '1. 一般視聴用のMP3（短縮版・編集版も可）' }), el('div', { className: 'field' }, el('label', { htmlFor: 'ls-file', textContent: 'MP3を選ぶ（50MBまで。選ぶと試聴できます）' }), file), fileInfo, el('div', { className: 'registration-actions' }, upload, copyBtn),
+        el('h3', { textContent: '2. 公開する項目（公式サイトの内容を使います）' }), fl, fj, fi, el('div', { className: 'registration-actions' }, saveItems),
+        el('h3', { textContent: '3. 公開・停止' }), el('div', { className: 'registration-actions' }, publishBtn, stopBtn, removeBtn),
+        el('h3', { textContent: '以前の版に戻す' }), el('div', { className: 'registration-actions' }, hist, restoreBtn));
+      $('#main').querySelector('.listen-detail')?.scrollIntoView?.({ block: 'start' });
+    }
+    const pageUrl = new URL('listen/', state?.privateUrl ?? 'https://pip-popper-private.pip-popper-private.workers.dev/').href;
+    $('#main').replaceChildren(el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: '管理メニュー' }), '一般視聴の管理')),
+      el('p', { className: 'note', textContent: '公式サイトの曲に、誰でも聴ける一般視聴用のMP3を付けます（PRIVATEの完全版とは別に、短縮版・編集版も登録できます）。登録・保存だけでは公開されず、「公開する」を押したときだけ公開されます。' }),
+      el('p', { className: 'note' }, '一般視聴ページ：', el('a', { href: pageUrl, target: '_blank', rel: 'noopener', textContent: pageUrl })),
+      el('div', { className: 'field' }, el('label', { htmlFor: 'ls-password', textContent: '管理者パスワード（PRIVATEの管理画面のもの。この画面を離れると消えます）' }), pw),
+      el('div', { className: 'registration-actions' }, el('button', { type: 'button', className: 'primary', textContent: '読み込む', onclick: () => run('読み込んでいます', async () => { await load(true); show('✔ 読み込みました。', 'done'); }) })),
+      status, el('div', { className: 'listen-layout' }, listBox, detail));
+    $('#main').scrollTop = 0;
+  }
 
   // drafts and registrations of new songs and albums, in one place
   async function openDrafts() {

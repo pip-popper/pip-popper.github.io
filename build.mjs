@@ -278,7 +278,8 @@ ${onHome ? `  <a class="mobile-latest" href="#latest">最新楽曲</a>
     <a class="nav-history" href="${historyUrl(r)}">ヒストリー</a>
     <a class="nav-other" href="${otherUrl(r)}">その他の作品</a>
     <a class="nav-about" href="${aboutUrl(r)}">アーティスト紹介</a>
-    <a class="nav-message" href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>${PRIVATE_URL ? `
+    <a class="nav-message" href="${onHome ? '#message' : sec(r, 'message')}">メッセージ</a>${listeningUrl ? `
+    <a class="nav-listen" href="${esc(listeningUrl)}">LISTEN｜音楽を聴く</a>` : ''}${PRIVATE_URL ? `
     <a class="nav-private" href="${esc(PRIVATE_URL)}" aria-label="PRIVATE（招待者専用の音源ライブラリ）"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg><span class="nav-private-label">PRIVATE</span></a>` : ''}
   </nav>
 </header>`;

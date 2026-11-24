@@ -226,6 +226,36 @@ try {
       ok(leaks === '', '管理ツールが書くフォルダー（.manager・データ・docs）にパスワードは残らない', leaks);
       const broken = await fetch(`${base}/api/private/password`, { method: 'POST', headers: { 'X-PP-Token': token, 'Content-Type': 'application/json' }, body: `{"newPassword": "${NEW}", ` });
       ok(broken.status === 400 && !readFileSync(path.join(WORK, '.manager', 'manager.log'), 'utf8').includes(NEW), '壊れた送信内容は処理せず、記録にも残さない');
+      // ── 一般視聴の管理（2026-11-25）：管理ツール → 模擬PRIVATE Worker → 模擬R2 ──
+      {
+        const { createHash } = await import('node:crypto');
+        const PV = `http://localhost:${PV_PORT}`;
+        ok((await call('POST', '/api/listen/list', { adminPassword: 'wrong-admin-pass' })).status === 403, '一般視聴：管理者パスワードが違うと読めない');
+        let l = await call('POST', '/api/listen/list', { adminPassword: ADM });
+        ok(l.status === 200 && l.data.songs.length === 0 && l.data.official.some(o => o.id === 'manner'), '一般視聴：公式サイトの曲を一覧（まだ0曲）');
+        const mp3 = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(6000, 5)]);
+        const up = (id, bytes, rev) => fetch(`${base}/api/listen/upload`, { method: 'POST', body: bytes, headers: { 'X-PP-Token': token, 'Content-Type': 'audio/mpeg', 'X-Id': id, 'X-Rev': String(rev), 'X-Sha256': createHash('sha256').update(bytes).digest('hex'), 'X-Duration': '61.2', 'X-PP-Admin-Password': Buffer.from(ADM).toString('base64') } });
+        ok((await up('no-such-song', mp3, l.data.rev)).status === 400, '一般視聴：公式サイトにない曲には登録できない');
+        let res = await up('manner', mp3, l.data.rev), out = await res.json();
+        ok(res.status === 200 && out.song.status === 'draft', '一般視聴：MP3を登録（下書き）');
+        ok(!(await (await fetch(`${PV}/listen/`)).text()).includes('Manner'), '一般視聴：登録しただけでは公開されない');
+        l = await call('POST', '/api/listen/list', { adminPassword: ADM });
+        r = await call('POST', '/api/listen/action', { adminPassword: ADM, id: 'manner', op: 'settings', rev: l.data.rev, items: { lyrics: true, jacket: true, impression: false } });
+        ok(r.status === 200 && r.data.song.draft.items.lyrics && r.data.song.draft.hasJacket, '一般視聴：歌詞・ジャケットは公式サイトのものを公開項目に');
+        res = await fetch(`${base}/api/listen/audio`, { method: 'POST', headers: { 'X-PP-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ adminPassword: ADM, id: 'manner' }) });
+        ok(res.status === 200 && Buffer.from(await res.arrayBuffer()).equals(mp3), '一般視聴：公開前の音源を管理ツールで試聴できる');
+        r = await call('POST', '/api/listen/action', { adminPassword: ADM, id: 'manner', op: 'publish', rev: r.data.rev, confirm: true });
+        const page = await (await fetch(`${PV}/listen/`)).text();
+        const lyric = JSON.parse(read('tracks/manner/track.json')).lyrics.split('\n')[0].trim();
+        ok(r.status === 200 && page.includes('Manner') && page.includes(lyric.slice(0, 6)) && (await fetch(`${PV}/listen/audio/manner.mp3`, { headers: { Range: 'bytes=0-9' } })).status === 206, '一般視聴：公開すると誰でも見られ・聴ける');
+        r = await call('POST', '/api/listen/action', { adminPassword: ADM, id: 'manner', op: 'stop', rev: r.data.rev });
+        ok(r.status === 200 && !(await (await fetch(`${PV}/listen/`)).text()).includes('Manner'), '一般視聴：掲載停止');
+        r = await call('POST', '/api/listen/action', { adminPassword: ADM, id: 'manner', op: 'resume', rev: r.data.rev });
+        ok(r.status === 200 && (await (await fetch(`${PV}/listen/`)).text()).includes('Manner'), '一般視聴：掲載再開');
+        const log2 = readFileSync(path.join(WORK, '.manager', 'manager.log'), 'utf8');
+        ok(!log2.includes(ADM) && /listen\/upload status=200/.test(log2), '一般視聴：記録にパスワードは残らない');
+        ok(status() === '', '一般視聴：公式サイトのデータは変わらない');
+      }
     } finally { pv.kill(); }
   }
 

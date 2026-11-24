@@ -16,14 +16,15 @@ export function approvedSongs(catalog){
   const result=[];
   for(const row of catalog.songs){
     if(!row||typeof row.id!=='string'||!ID.test(row.id)||counts.get(row.id)!==1||!['general','site'].includes(row.classification)||row.publicAudioApproved!==true||typeof row.title!=='string'||!row.title.trim())continue;
-    const ext=['mp3','wav'].find(x=>row.audioKey===`public-audio/${row.id}.${x}`);
+    // public-audio/<id>.mp3, or a version written by the manager: public-audio/<id>-<stamp>-<random>.mp3 (2026-11-25)
+    const ext=new RegExp(`^public-audio/${row.id}(?:-[0-9a-z]+-[0-9a-f]{8})?\\.(mp3|wav)$`).exec(row.audioKey??'')?.[1];
     if(!ext||!Number.isSafeInteger(row.size)||row.size<=0)continue;
     // Deliberately construct a new record; never spread raw catalog metadata.
     const song={id:row.id,title:row.title,file:row.audioKey,size:row.size,type:ext==='mp3'?'audio/mpeg':'audio/wav'};
     if(validReading(row.reading))song.reading=row.reading.trim();
     if(['public','both'].includes(row.lyricsScope)&&row.publicLyricsApproved===true&&typeof row.lyrics==='string')song.lyrics=row.lyrics;
     if(['public','both'].includes(row.impressionScope)&&row.publicImpressionApproved===true&&typeof row.impression==='string')song.impression=row.impression;
-    const jacketExt=Object.keys(IMAGE_TYPES).find(x=>row.jacketKey===`public-jackets/${row.id}.${x}`);
+    const jacketExt=new RegExp(`^public-jackets/${row.id}(?:-[0-9a-z]+-[0-9a-f]{8})?\\.(jpg|png|webp)$`).exec(row.jacketKey??'')?.[1];
     if(jacketExt&&row.publicJacketApproved===true)song.coverKey=row.jacketKey;
     result.push(song);
   }

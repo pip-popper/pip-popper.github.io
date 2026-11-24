@@ -95,7 +95,7 @@ ${sortedSongs(songs).map((s, i) => { const format=audioFormat(s); const audioUrl
       </div>
     </li>`; }).join('\n    ')}
   </ol>
-  </div>` : '<p class="pv-empty">現在、登録されている音源はありません。</p>'}
+  </div>` : publicMode ? '<p class="pv-empty">一般視聴は準備中です。聴ける曲が決まりしだい、ここで公開します。公式サイトでは歌詞と作品紹介をご覧いただけます。</p>' : '<p class="pv-empty">現在、登録されている音源はありません。</p>'}
   <a class="back" href="${esc(siteUrl)}">← 公式サイトへ戻る</a>
 </main>
 <footer class="site-foot">

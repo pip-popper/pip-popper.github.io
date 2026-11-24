@@ -148,3 +148,10 @@ details.restore summary { cursor: pointer; color: var(--muted); }
 @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .side { max-height: none; overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); } #menu ul { grid-template-columns: 1fr 1fr; } .side-lists { max-height: 50vh; } }
 .live-note { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--ok); border-radius: 8px; background: var(--panel2); }
 .live-note[hidden] { display: none; }
+/* 2026-11-25: 一般視聴の管理 */
+.listen-layout { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.listen-layout .drafts { max-height: 70vh; overflow: auto; }
+.listen-detail { padding: 4px 0; }
+.listen-player { display: block; width: 100%; max-width: 520px; margin: 8px 0; }
+.draft-open[aria-current="true"] { background: var(--panel2); box-shadow: inset 3px 0 0 var(--red); }
+@media (max-width: 900px) { .listen-layout { grid-template-columns: 1fr; } .listen-layout .drafts { max-height: 40vh; } }

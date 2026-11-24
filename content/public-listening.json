@@ -1,4 +1,4 @@
 {
-  "enabled": false,
-  "url": null
+  "enabled": true,
+  "url": "https://pip-popper-private.pip-popper-private.workers.dev/listen/"
 }
