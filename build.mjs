@@ -5,7 +5,7 @@
 // Before building, display images must exist: python tools/make-web-images.py
 // Audio policy: the official site never holds or plays audio (GitHub Pages is public). Songs are introduced;
 // listening goes to external links or to PIP POPPER PRIVATE (private Cloudflare R2). track.json "audio" must be null.
-import { readFile, readdir, writeFile, access, mkdir, stat, copyFile } from 'node:fs/promises';
+import { readFile, readdir, writeFile, access, mkdir, stat, copyFile, rm } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { sortedSongs } from './private/worker/src/song-order.js';
@@ -67,12 +67,18 @@ function cleanLinks(id, list) {
 }
 
 const songs = [];
+const hiddenSongs = new Set();
 // Existing archive entries are already public; new entries need explicit approval.
 // The private manager records and R2 catalog are never read by this builder.
 const priorArchive = new Set(JSON.parse(await readFile(new URL('works.json', published),'utf8')).map(s=>s.id));
+// a song that was published before and then 掲載停止 is not in works.json any more: Git's history of its page says it was public
+const wasPublished = id => { try { return !!execFileSync('git', ['log', '-1', '--format=%H', '--', `docs/tracks/${id}/index.html`], { cwd: fileURLToPath(root), windowsHide: true, encoding: 'utf8' }).trim(); } catch { return false; } };
+for (const id of ids) if (!priorArchive.has(id) && wasPublished(id)) priorArchive.add(id);
 for (const id of ids) {
   if (!/^[a-z0-9-]+$/.test(id)) throw new Error(`曲IDは英小文字・数字・ハイフンのみ: ${id}`);
   const data = JSON.parse(await readFile(new URL(`${id}/track.json`, trackDir), 'utf8'));
+  // "hidden": true = 掲載停止 (set from the manager). The data stays; the page is not published (and removed below).
+  if (data.hidden === true) { hiddenSongs.add(id); continue; }
   assertArchiveApproval(id,data,priorArchive);
   if (!data.title) throw new Error(`曲名がありません: ${id}`);
   if (data.releaseDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.releaseDate)) throw new Error(`公開日の形式が無効です: ${id}`);
@@ -100,7 +106,10 @@ const latest = songs[0];
 // Main visual = visual-web.jpg (the Producer-adopted AI jacket) when present; otherwise the chapter's
 // typographic scene. The old CD front is only a small ORIGINAL ARCHIVE item (cover-240.jpg, archive: true).
 const albumDir = new URL('albums/', root);
-const { albums } = JSON.parse(await readFile(new URL('albums.json', albumDir), 'utf8'));
+const { albums: allAlbums } = JSON.parse(await readFile(new URL('albums.json', albumDir), 'utf8'));
+// "hidden": true = 掲載停止 for an album (set from the manager); its data and images stay in albums/.
+const hiddenAlbums = allAlbums.filter(a => a.hidden === true).map(a => a.id);
+const albums = allAlbums.filter(a => a.hidden !== true);
 // JPEG pixel size (SOF marker), so every <img> carries width/height and the page never jumps.
 async function jpegSize(url) {
   const b = await readFile(url);
@@ -150,6 +159,7 @@ for (const a of albums) {
   }
   if (a.backdrop && !await exists(new URL(`${a.backdrop}/visual-web.jpg`, albumDir))) throw new Error(`背景に使うアルバムの採用ジャケットがありません: ${a.id} → ${a.backdrop}`);
   for (const t of a.tracks ?? []) if (t.music) {
+    if (hiddenSongs.has(t.music)) { delete t.music; continue; }   // the song is 掲載停止: show the title without a link
     if (!songById.has(t.music)) throw new Error(`HISTORYのMUSICリンク先がありません: ${a.id} → ${t.music}`);
     originOf.set(t.music, a);
   }
@@ -817,6 +827,14 @@ await write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 ${SITEMAP_PATHS.map(p => `  <url><loc>${esc(pageUrl(p))}</loc></url>`).join('\n')}
 </urlset>
 `);
+// 掲載停止: remove what an earlier build made for hidden songs/albums (only those exact generated files)
+for (const id of hiddenSongs) {
+  await rm(new URL(`tracks/${id}/`, out), { recursive: true, force: true });
+  for (const f of [`${id}.jpg`, `${id}-640.jpg`]) await rm(new URL(`assets/covers/${f}`, out), { force: true });
+}
+for (const id of hiddenAlbums) for (const f of await readdir(new URL('assets/history/', out)).catch(() => []))
+  if (f.slice(0, id.length + 1) === `${id}-` && /^(visual|visual-640|archive|backdrop|title|strip-\d+|jacket-\d+)\.(jpg|png)$/.test(f.slice(id.length + 1))) await rm(new URL(`assets/history/${f}`, out), { force: true });
+
 // works.json: the list the PRIVATE admin screen offers when adding a song (only already-public facts).
 await write('works.json', JSON.stringify(songs.map(s => ({ id: s.id, title: s.title, cover: pageUrl(`assets/covers/${s.id}-640.jpg`) })), null, 1) + '\n');
 await write('robots.txt', `User-agent: *

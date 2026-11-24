@@ -21,7 +21,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { privateLyricsCall } from './private-lyrics.mjs';
 import { listReleaseStatus, saveReleaseStatus, sanitizePrivateRows } from './release-status.mjs';
-import { registrationAction, listRegistrations } from './song-registration.mjs';
+import { registrationAction, listRegistrations, images as checkImages } from './song-registration.mjs';
+import { albumRegistrationAction, listAlbumRegistrations, adoptionSource, markAlbumAdopted, albumGet, ALBUM_SLUG } from './album-registration.mjs';
 import { validReading } from '../private/worker/src/song-order.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -46,13 +47,13 @@ const PREVIEW = path.join(WORK, 'preview');
 const UI = path.join(HERE, 'ui');
 
 // ── files the tool may change ─────────────────────────────────────────
-const DATA_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|content\/site\.json)$/;
+const DATA_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|albums\/[a-z0-9-]+\/visual-(web|640)\.jpg|content\/site\.json)$/;
 // names for the settings a new song brings with it (shown before publishing)
 const TRACK_EXTRA_LABEL = { publicationClass: '公開区分', publicArchiveApproved: '公式HPへの掲載許可', lyricsScope: '歌詞の公開範囲', impressionScope: 'AIの感想の公開範囲', artwork: 'ジャケットのファイル名', links: '配信リンク', downloadUrl: 'ダウンロードURL' };
 const VALUE_LABEL = { general: '一般公開', site: 'このサイトのみ', public: '一般公開' };
 const valueLabel = v => typeof v === 'string' && Object.hasOwn(VALUE_LABEL, v) ? VALUE_LABEL[v] : v;
-const IMAGE_RE = /^tracks\/[a-z0-9-]+\/cover-(web|640)\.jpg$/;   // only the display JPEGs a new song needs (2026-11-24)
-const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|content\/site\.json|docs\/.+)$/;
+const IMAGE_RE = /^(tracks\/[a-z0-9-]+\/cover-(web|640)|albums\/[a-z0-9-]+\/visual-(web|640))\.jpg$/;   // only the display JPEGs a new song needs (2026-11-24)
+const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/(track\.json|cover-(web|640)\.jpg)|albums\/albums\.json|albums\/[a-z0-9-]+\/visual-(web|640)\.jpg|content\/site\.json|docs\/.+)$/;
 
 // ── Git ───────────────────────────────────────────────────────────────
 function git(args, opts = {}) {
@@ -138,16 +139,18 @@ function setAt(o, p, value) { const last = p[p.length - 1]; const parent = getAt
 const kindOf = (p, v) => /lyrics/.test(p.join('.')) ? 'lyrics' : (v.length > 60 || v.includes('\n') ? 'text' : 'line');
 
 async function listItems() {
+  const archived = new Set((await readArchive()).map(a => `${a.type}:${a.id}`));
   const tracks = [];
   for (const id of (await readdir(path.join(ROOT, 'tracks'))).sort()) {
     const rel = `tracks/${id}/track.json`;
     if (!existsSync(path.join(ROOT, rel))) continue;
     const { data } = await readJson(rel);
-    tracks.push({ type: 'track', id, title: data.title, order: data.listOrder ?? 0 });
+    if (archived.has(`track:${id}`)) continue;
+    tracks.push({ type: 'track', id, title: data.title, order: data.listOrder ?? 0, hidden: data.hidden === true });
   }
   tracks.sort((a, b) => b.order - a.order);
   const { data: { albums } } = await readJson('albums/albums.json');
-  const al = albums.map(a => ({ type: 'album', id: a.id, title: a.title, year: a.year, group: a.section === 'other' ? 'other' : 'history' }));
+  const al = albums.filter(a => !archived.has(`album:${a.id}`)).map(a => ({ type: 'album', id: a.id, title: a.title, year: a.year, group: a.section === 'other' ? 'other' : 'history', hidden: a.hidden === true }));
   const site = SITE_PAGES.map(id => ({ type: 'site', id, title: LABEL[id] }));
   return { tracks, history: al.filter(a => a.group === 'history'), other: al.filter(a => a.group === 'other'), site };
 }
@@ -179,7 +182,9 @@ async function loadItem(type, id) {
     fields = stringLeaves(f.data[id]).map(p => ({ path: p, label: siteLabel(id, p), kind: kindOf(p, getAt(f.data[id], p)), required: true, nullable: false, value: getAt(f.data[id], p) }));
   }
   const title = type === 'track' ? f.data.title : type === 'album' ? f.data.albums[base[1]].title : LABEL[id];
-  return { type, id, file: rel, rev: f.rev, title, fields, base };
+  const extra = type === 'track' ? { hidden: f.data.hidden === true }
+    : type === 'album' ? (a => ({ hidden: a.hidden === true, section: a.section === 'other' ? 'other' : 'history', tracks: a.discs ? null : (a.tracks ?? []).map(t => ({ title: t.title, music: t.music ?? null })), hasJacket: existsSync(path.join(ROOT, 'albums', id, 'visual-web.jpg')), joint: !!a.works }))(f.data.albums[base[1]]) : {};
+  return { type, id, file: rel, rev: f.rev, title, fields, base, ...extra };
 }
 async function saveItem({ type, id, rev, changes }) {
   const rel = fileOf(type, id);
@@ -230,8 +235,9 @@ async function describeChanges() {
   const items = [];
   for (const { file, code } of data) {
     if (IMAGE_RE.test(file)) {
-      let title = file.split('/')[1]; try { title = JSON.parse(await readFile(path.join(ROOT, path.dirname(file), 'track.json'), 'utf8')).title; } catch {}
-      items.push({ path: [file], before: code.includes('?') || code.includes('A') ? '' : '（以前の画像）', after: file.endsWith('640.jpg') ? '一覧用の画像' : '曲ページ用の画像', item: `曲「${title}」`, label: code.includes('D') ? 'ジャケット画像（削除）' : 'ジャケット画像' });
+      const isAlbum = file.startsWith('albums/'), key = file.split('/')[1];
+      let title = key; try { title = isAlbum ? JSON.parse(await readFile(path.join(ROOT, 'albums', 'albums.json'), 'utf8')).albums.find(a => a.id === key)?.title ?? key : JSON.parse(await readFile(path.join(ROOT, path.dirname(file), 'track.json'), 'utf8')).title; } catch {}
+      items.push({ path: [file], before: code.includes('?') || code.includes('A') ? '' : '（以前の画像）', after: file.endsWith('640.jpg') ? '一覧用の画像' : (isAlbum ? 'アルバムページ用の画像' : '曲ページ用の画像'), item: isAlbum ? `アルバム『${title}』` : `曲「${title}」`, label: code.includes('D') ? 'ジャケット画像（削除）' : 'ジャケット画像' });
       continue;
     }
     if (code.includes('D')) { items.push({ path: [file], before: file, after: '（削除）', item: file, label: 'ファイル' }); continue; }
@@ -398,8 +404,119 @@ async function releaseStatusList(body) {
   return { status: 200, body: await listReleaseStatus(ROOT, releasePrivateRows) };
 }
 
+
+// ── 2026-11-24: structure operations on the published data (all become "公開していない変更" first) ──
+// Nothing is erased: a hidden song/album keeps its files and data; "管理一覧から外す" only hides it in this tool
+// (.manager/archived.json, restorable). Album track edits keep every existing track object as it is.
+const ARCHIVE = () => path.join(WORK, 'archived.json');
+async function readArchive() { try { return JSON.parse(await readFile(ARCHIVE(), 'utf8')); } catch { return []; } }
+async function writeArchive(list) { await mkdir(WORK, { recursive: true }); const tmp = `${ARCHIVE()}.tmp`; await writeFile(tmp, JSON.stringify(list, null, 2) + '\n'); await rename(tmp, ARCHIVE()); }
+const stale = () => ({ status: 409, body: { error: 'このデータは画面を開いた後に変更されています。読み込み直してください。' } });
+async function albumsFile(rev) { const f = await readJson('albums/albums.json'); if (rev !== undefined && f.rev !== rev) return null; return f; }
+async function setHidden({ type, id, rev, hidden, confirm }) {
+  if (confirm !== true || typeof hidden !== 'boolean') return { status: 400, body: { error: '確認が必要です。' } };
+  if (type === 'track') {
+    if (!/^[a-z0-9-]+$/.test(id ?? '')) return { status: 400, body: { error: '対象が正しくありません。' } };
+    const rel = `tracks/${id}/track.json`, f = await readJson(rel);
+    if (f.rev !== rev) return stale();
+    if (hidden) f.data.hidden = true; else delete f.data.hidden;
+    return { status: 200, body: { ok: true, rev: await writeJsonAtomic(rel, f.data, f.indent, f.eol) } };
+  }
+  if (type === 'album') {
+    const f = await albumsFile(rev); if (!f) return stale();
+    const a = f.data.albums.find(x => x.id === id); if (!a) return { status: 404, body: { error: 'アルバムが見つかりません。' } };
+    if (hidden) a.hidden = true; else delete a.hidden;
+    return { status: 200, body: { ok: true, rev: await writeJsonAtomic('albums/albums.json', f.data, f.indent, f.eol) } };
+  }
+  return { status: 400, body: { error: '対象が正しくありません。' } };
+}
+async function moveAlbum({ id, rev, dir }) {
+  const f = await albumsFile(rev); if (!f) return stale();
+  const list = f.data.albums, i = list.findIndex(a => a.id === id);
+  if (i < 0 || ![-1, 1].includes(dir)) return { status: 400, body: { error: '対象が正しくありません。' } };
+  const group = a => a.section === 'other' ? 'other' : 'history';
+  let j = i + dir; while (j >= 0 && j < list.length && group(list[j]) !== group(list[i])) j += dir;   // next one in the same page
+  if (j < 0 || j >= list.length) return { status: 400, body: { error: dir < 0 ? 'すでに先頭です。' : 'すでに最後です。' } };
+  [list[i], list[j]] = [list[j], list[i]];
+  return { status: 200, body: { ok: true, rev: await writeJsonAtomic('albums/albums.json', f.data, f.indent, f.eol) } };
+}
+async function albumTracks({ id, rev, op, index, dir, title, music, confirm }) {
+  const f = await albumsFile(rev); if (!f) return stale();
+  const a = f.data.albums.find(x => x.id === id); if (!a) return { status: 404, body: { error: 'アルバムが見つかりません。' } };
+  if (a.discs || a.works || !Array.isArray(a.tracks)) return { status: 400, body: { error: 'この作品（ディスク別・複数作品の構成）の収録曲はAIに依頼してください。' } };
+  const t = a.tracks;
+  if (op === 'move') { const j = index + dir; if (!Number.isInteger(index) || ![-1, 1].includes(dir) || index < 0 || j < 0 || j >= t.length) return { status: 400, body: { error: '動かせません。' } }; [t[index], t[j]] = [t[j], t[index]]; }
+  else if (op === 'remove') { if (confirm !== true || !Number.isInteger(index) || !t[index]) return { status: 400, body: { error: '確認が必要です。' } }; if (t.length === 1) return { status: 400, body: { error: '収録曲を0曲にはできません（掲載を止めるときは「掲載を停止」）。' } }; t.splice(index, 1); }
+  else if (op === 'add') {
+    if (typeof title !== 'string' || !title.trim() || title.length > 150) return { status: 400, body: { error: '曲名を入力してください。' } };
+    if (music && (!/^[a-z0-9-]+$/.test(music) || !existsSync(path.join(ROOT, 'tracks', music, 'track.json')))) return { status: 400, body: { error: '公式サイトの曲が見つかりません。' } };
+    t.push(music ? { title: title.trim(), music } : { title: title.trim() });
+  } else return { status: 400, body: { error: '操作が正しくありません。' } };
+  return { status: 200, body: { ok: true, rev: await writeJsonAtomic('albums/albums.json', f.data, f.indent, f.eol) } };
+}
+async function albumJacket({ id, image, confirm }) {
+  if (confirm !== true || !/^[a-z0-9-]+$/.test(id ?? '')) return { status: 400, body: { error: '確認が必要です。' } };
+  const { data } = await readJson('albums/albums.json'); const a = data.albums.find(x => x.id === id);
+  if (!a) return { status: 404, body: { error: 'アルバムが見つかりません。' } };
+  if (a.works) return { status: 400, body: { error: '複数作品の構成のジャケットはAIに依頼してください。' } };
+  let img; try { img = checkImages(image); } catch (e) { return { status: 400, body: { error: e.message } }; }
+  if (!img) return { status: 400, body: { error: '画像を選んでください。' } };
+  const folder = path.join(ROOT, 'albums', id); await mkdir(folder, { recursive: true });
+  for (const [name, bytes] of [['visual-web.jpg', img.web.bytes], ['visual-640.jpg', img.thumb.bytes]]) {
+    const target = path.join(folder, name);
+    if (existsSync(target)) { const bk = path.join(WORK, 'backup', new Date().toISOString().replace(/[:.]/g, '-'), 'albums', id, name); await mkdir(path.dirname(bk), { recursive: true }); await copyFile(target, bk); }
+    await writeFile(`${target}.tmp`, bytes); await rename(`${target}.tmp`, target);
+  }
+  return { status: 200, body: { ok: true } };
+}
+async function adoptAlbum({ id, rev, slug, confirm }) {
+  if (confirm !== true) return { status: 400, body: { error: '取り込み前の確認が必要です。' } };
+  const src = await adoptionSource(ROOT, id, rev); if (src.error) return src.error;
+  const pub = (await albumGet(ROOT, id, registrationCtx)).body.publication;
+  if (['adopted', 'published'].includes(pub?.state)) return { status: 409, body: { error: `このアルバムはすでに取り込み済みです（${pub.slug}）。` } };
+  slug = String(slug ?? '').trim();
+  if (!ALBUM_SLUG.test(slug) || slug.length > 60) return { status: 400, body: { error: 'ページのURL名は英小文字・数字・ハイフンで入力してください（例：new-album-2026）。' } };
+  const f = await readJson('albums/albums.json');
+  if (f.data.albums.some(a => a.id === slug) || existsSync(path.join(ROOT, 'albums', slug))) return { status: 409, body: { error: '同じURL名のアルバムがすでにあります。別の名前にしてください。' } };
+  const r = src.record, paras = t => t.replace(/\r\n?/g, '\n').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  const entry = { id: slug, ...(r.section === 'other' ? { section: 'other' } : {}), no: 'PIP POPPER', kind: r.kind, year: r.year || '—', date: null, dateLabel: r.dateLabel || null,
+    title: r.title, subtitle: r.subtitle || null, accent: '#ec2630', visual: { source: `管理ツールで登録（albums/${slug}/visual-web.jpg）`, adopted: `${new Date().toISOString().slice(0, 10)} 管理ツールで取り込み` },
+    info: r.links.map(u => ['配信', u]), ...(paras(r.intro).length ? { episode: { title: 'アルバム紹介', text: paras(r.intro) } } : {}),
+    ...(paras(r.story).length ? { column: { title: '制作秘話', text: paras(r.story) } } : {}), tracks: r.tracks.map(t => ({ ...t })), archive: false };
+  // a new album goes at the end of its own page (the order can be changed afterwards)
+  let at = f.data.albums.length; for (let i = f.data.albums.length - 1; i >= 0; i--) if ((f.data.albums[i].section === 'other') === (r.section === 'other')) { at = i + 1; break; }
+  const folder = path.join(ROOT, 'albums', slug); await mkdir(folder);
+  try {
+    await copyFile(src.web, path.join(folder, 'visual-web.jpg')); await copyFile(src.thumb, path.join(folder, 'visual-640.jpg'));
+    f.data.albums.splice(at, 0, entry);
+    await writeJsonAtomic('albums/albums.json', f.data, f.indent, f.eol);
+  } catch (e) { await rm(folder, { recursive: true, force: true }); throw e; }
+  await markAlbumAdopted(ROOT, id, slug);
+  return albumGet(ROOT, id, registrationCtx);
+}
+async function archiveItem({ type, id, archive, confirm }) {
+  if (confirm !== true || !['track', 'album'].includes(type) || !/^[a-z0-9-]+$/.test(id ?? '')) return { status: 400, body: { error: '確認が必要です。' } };
+  const list = await readArchive(), key = x => `${x.type}:${x.id}`;
+  if (archive) {
+    const hidden = type === 'track' ? (await readJson(`tracks/${id}/track.json`)).data.hidden === true : (await readJson('albums/albums.json')).data.albums.find(a => a.id === id)?.hidden === true;
+    if (!hidden) return { status: 409, body: { error: '先に「掲載を停止」して公開してから、一覧から外してください。' } };
+    if (!list.some(x => key(x) === `${type}:${id}`)) list.push({ type, id, at: new Date().toISOString() });
+  } else { const i = list.findIndex(x => key(x) === `${type}:${id}`); if (i >= 0) list.splice(i, 1); }
+  await writeArchive(list);
+  return { status: 200, body: { ok: true } };
+}
+async function archivedList() {
+  const out = [];
+  for (const a of await readArchive()) {
+    try { const title = a.type === 'track' ? (await readJson(`tracks/${a.id}/track.json`)).data.title : (await readJson('albums/albums.json')).data.albums.find(x => x.id === a.id)?.title; if (title) out.push({ ...a, title }); } catch {}
+  }
+  return out;
+}
+
 // a song counts as published only when GitHub's main (as last fetched) has its track.json
-const registrationCtx = { isPublished: async slug => git(['cat-file', '-e', `${REMOTE}/${BRANCH}:tracks/${slug}/track.json`]).ok };
+const registrationCtx = { isPublished: async slug => git(['cat-file', '-e', `${REMOTE}/${BRANCH}:tracks/${slug}/track.json`]).ok,
+  albumHere: async slug => { try { return (await readJson('albums/albums.json')).data.albums.some(a => a.id === slug); } catch { return false; } },
+  albumPublished: async slug => { const r = git(['show', `${REMOTE}/${BRANCH}:albums/albums.json`]); try { return r.ok && JSON.parse(r.out).albums.some(a => a.id === slug); } catch { return false; } } };
 
 // ── HTTP ──────────────────────────────────────────────────────────────
 async function log(line) { try { await mkdir(WORK, { recursive: true }); await writeFile(path.join(WORK, 'manager.log'), `${new Date().toISOString()} ${line}\n`, { flag: 'a' }); } catch {} }
@@ -426,7 +543,7 @@ const server = http.createServer(async (req, res) => {
     let body = {};
     if (req.method === 'POST') {
       if (!(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: '形式が正しくありません。' });
-      const limit=url.pathname==='/api/song-registration/save'?30e6:2e6;let length=0;const chunks=[];
+      const limit=['/api/song-registration/save','/api/album-registration/save','/api/album/jacket'].includes(url.pathname)?30e6:2e6;let length=0;const chunks=[];
       for await(const c of req){length+=c.length;if(length>limit)return send(res,413,{error:'大きすぎます。'});chunks.push(c);}
       try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { return send(res, 400, { error: '形式が正しくありません。' }); }   // never logged: a body may hold a password
     }
@@ -434,7 +551,7 @@ const server = http.createServer(async (req, res) => {
     if (route === 'GET /api/state') {
       const ch = await describeChanges();
       const up = unpushed();
-      return send(res, 200, { list: await listItems(), registrations:await listRegistrations(ROOT,registrationCtx), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
+      return send(res, 200, { list: await listItems(), registrations:await listRegistrations(ROOT,registrationCtx), albumRegistrations: await listAlbumRegistrations(ROOT, registrationCtx), deletedRegistrations: [...await listRegistrations(ROOT, registrationCtx, { deleted: true }), ...(await listAlbumRegistrations(ROOT, registrationCtx, { deleted: true })).map(a => ({ ...a, kind: 'album' }))], archived: await archivedList(), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
         pendingPush: up.tool, otherUnpushed: up.other, liveUrl: LIVE_URL, privateUrl: PRIVATE_URL.href, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
     }
     if (route === 'GET /api/item') return send(res, 200, await loadItem(url.searchParams.get('type'), url.searchParams.get('id')));
@@ -470,10 +587,17 @@ const server = http.createServer(async (req, res) => {
       else if (route === 'POST /api/release-status/list') r = await releaseStatusList(body);
       else if (route === 'POST /api/release-status/save') r = await saveReleaseStatus(ROOT, releasePrivateRows, body);
       else if (route.startsWith('POST /api/song-registration/')) r = await registrationAction(ROOT,url.pathname.slice('/api/song-registration/'.length),body,registrationCtx);
+      else if (route === 'POST /api/album-registration/adopt') r = await adoptAlbum(body);
+      else if (route.startsWith('POST /api/album-registration/')) r = await albumRegistrationAction(ROOT, url.pathname.slice('/api/album-registration/'.length), body, registrationCtx);
+      else if (route === 'POST /api/hidden') r = await setHidden(body);
+      else if (route === 'POST /api/album/move') r = await moveAlbum(body);
+      else if (route === 'POST /api/album/tracks') r = await albumTracks(body);
+      else if (route === 'POST /api/album/jacket') r = await albumJacket(body);
+      else if (route === 'POST /api/archive') r = await archiveItem(body);
       else if (route === 'POST /api/quit') { send(res, 200, { ok: true }); setTimeout(() => process.exit(0), 200); return; }
       else r = { status: 404, body: { error: '見つかりません。' } };
       // the log names the operation only (for PRIVATE: whether it succeeded); input values are never written
-      if (route.startsWith('POST /api/private/') || route.startsWith('POST /api/release-status/') || route.startsWith('POST /api/song-registration/')) log(`${route} status=${r.status}`);
+      if (route.startsWith('POST /api/private/') || route.startsWith('POST /api/release-status/') || route.startsWith('POST /api/song-registration/') || route.startsWith('POST /api/album-registration/') || route === 'POST /api/album/jacket') log(`${route} status=${r.status}`);
       else if (r.status === 200) log(`${route} ${JSON.stringify({ type: body.type, id: body.id, sha: body.sha })}`);
       return send(res, r.status, r.body);
     } finally { busy = false; }

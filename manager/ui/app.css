@@ -117,3 +117,9 @@ details.restore summary { cursor: pointer; color: var(--muted); }
 .reg-candidate h2 { overflow-wrap:anywhere; }.reg-candidate-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:16px; line-height:1.9; }
 .registration-preview.phone .reg-candidate-main { grid-template-columns:1fr; }.registration-preview.phone .reg-candidate-main img { max-width:230px; margin:auto; }
 .reg-candidate-player { border:1px solid var(--red);padding:10px;display:flex;gap:12px;align-items:center;margin:12px 0 18px;color:#ffd0d2; }
+/* 2026-11-24: album tracks and management panel */
+.album-tracks { max-width: 900px; margin: 0 0 12px; padding-left: 0; list-style: none; }
+.album-track { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.album-track > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.album-track button { min-width: 44px; min-height: 36px; }
+#main h3 { margin: 26px 0 8px; }

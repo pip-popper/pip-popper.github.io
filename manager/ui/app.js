@@ -71,12 +71,14 @@
       return [el('h2', { textContent: title }), el('ul', {}, ...shown.map(it => el('li', {}, el('button', {
         type: 'button', ariaCurrent: String(!!current && current.type === it.type && current.id === it.id),
         onclick: () => openItem(it.type, it.id),
-      }, el('span', { textContent: `${mark(it) ? '● ' : ''}${it.title}` }), el('span', { className: 'yr', textContent: it.year ?? '' })))))];
+      }, el('span', { textContent: `${mark(it) ? '● ' : ''}${it.title}${it.hidden ? '（掲載停止中）' : ''}` }), el('span', { className: 'yr', textContent: it.year ?? '' })))))];
     };
     $('#lists').replaceChildren(...group('楽曲', state.list.tracks), ...group('HISTORY（アルバム）', state.list.history),
       ...group('その他の作品', state.list.other), ...group('サイトの文言', state.list.site),
-      ...(q?[]:[el('h2',{textContent:'新曲掲載準備'}),el('ul',{},el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&!registrationId),onclick:()=>openRegistration()},el('span',{textContent:'＋ 新曲を登録'}))))]),
+      ...(q?[]:[el('h2',{textContent:'新曲・アルバムの登録'}),el('ul',{},el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&!registrationId),onclick:()=>openRegistration()},el('span',{textContent:'＋ 新曲を登録'}))),el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='album'&&!albumRegId),onclick:()=>openAlbumRegistration()},el('span',{textContent:'＋ アルバムを登録'}))))]),
+      ...((state.albumRegistrations??[]).length&&!q?[el('h2',{textContent:'登録中のアルバム（未公開）'}),el('ul',{},...state.albumRegistrations.map(r=>el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='album'&&albumRegId===r.id),onclick:()=>openAlbumRegistration(r.id)},el('span',{textContent:r.title}),el('span',{className:'yr',textContent:{'not-adopted':'下書き','adopted':'取り込み済み','published':'公開済み','withdrawn':'取り消し済み'}[r.publication?.state]??''})))))]:[]),
       ...((state.registrations??[]).filter(r=>!q||`${r.title} ${r.id}`.toLowerCase().includes(q)).length?[el('h2',{textContent:'登録中の楽曲（未公開）'}),el('ul',{},...(state.registrations??[]).filter(r=>!q||`${r.title} ${r.id}`.toLowerCase().includes(q)).map(r=>el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&registrationId===r.id),onclick:()=>openRegistration(r.id)},el('span',{textContent:r.title})))) )]:[]),
+      ...(!q && ((state.deletedRegistrations??[]).length || (state.archived??[]).length) ? [el('h2', { textContent: '削除済み・一覧から外したもの' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'deleted'), onclick: openDeleted }, el('span', { textContent: `復元する（${(state.deletedRegistrations??[]).length + (state.archived??[]).length}件）` }))))] : []),
       ...(q ? [] : [el('h2', { textContent: '楽曲公開状況' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'release'), onclick: openReleaseStatus }, el('span', { textContent: '全楽曲の公開状況' }))))]),
       ...(q ? [] : [el('h2', { textContent: 'PRIVATE管理' }), el('ul', {},
         el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'lyrics'), onclick: openPrivateLyrics }, el('span', { textContent: 'PRIVATE楽曲の歌詞・よみがな' }))),
@@ -86,11 +88,12 @@
   // what this tool does not change: kept fixed, ask an AI (Claude Code / ChatGPT Work) when a change is really needed
   const FIXED = [
     ['ページの構成・デザイン', 'レイアウト、色、文字の大きさ、動き（演出）'],
-    ['アルバムの特設デザイン・画像', '作品ごとの世界観。ジャケット・背景の画像'],
+    ['アルバムの特設デザイン', '作品ごとの世界観・背景・題字・写真。ジャケットの差し替えは編集画面から可'],
     ['メニュー・ボタン・欄の名前', '「最新楽曲」「楽曲一覧」「AIの感想」など'],
     ['メッセージの送信フォーム', '入力欄の名前・送信の仕組み'],
-    ['曲・アルバムの追加・削除・並び順', '管理ツール v2 で対応予定'],
-    ['曲の公開日・掲載順', '「最新楽曲」の選ばれ方に関わるため'],
+    ['曲の公開日・新着順', '新着順は掲載した日で自動。並び替え（あいうえお・A〜Z）は訪問者が選ぶ'],
+    ['ディスク別・複数作品の構成の曲目', 'Favorite Track・SOLO WORKS など特別な構成の作品'],
+    ['音源・データの完全な削除', '掲載停止・一覧から外す（復元可）まで。完全削除はAIに依頼'],
     ['上記以外のリンク・ダウンロード', 'Spotify・YouTube・Suno・Apple Music 以外の配信先、ダウンロード'],
     ['サイト全体の検索用説明文', '曲数が自動で入る文のため'],
     ['PRIVATEの音源', '曲の追加・差し替えはPRIVATEの管理画面で操作します（パスワードは上の「PRIVATE管理」）'],
@@ -122,13 +125,185 @@
       });
       return box;
     });
-    const tip = el('p', { className: 'note', textContent: type === 'album' ? '作品のデザイン・画像・項目の数は変わりません。文字だけを直せます。改行はそのまま表示に反映されない箇所があります（プレビューで確認してください）。' : '文字だけを直せます。デザインは変わりません。' });
-    $('#main').replaceChildren(head, tip, ...fields);
+    const tip = el('p', { className: 'note', textContent: type === 'album' ? '上の欄で文字を直せます（改行はそのまま表示に反映）。下の「掲載の管理」で、掲載停止・掲載順・収録曲・ジャケットを変えられます。特設デザインの構成や色は変わりません。' : '文字だけを直せます。デザインは変わりません。' });
+    $('#main').replaceChildren(head, tip, ...fields, ...(type === 'site' ? [] : manageBox(current)));
     $('#main').scrollTop = 0;
   }
 
+  // ── 2026-11-24: publication, order, album tracks and jacket for songs/albums already on the site ──
+  // Every change here becomes a "公開していない変更" first (preview, then 公開する; 変更を破棄 undoes it).
+  async function prepareImage(file) {
+    if (!file || file.size > 12 * 1024 * 1024) throw new Error('PNG/JPEGの画像は12MB以内にしてください。');
+    const mime = file.type || (/\.png$/i.test(file.name) ? 'image/png' : /\.jpe?g$/i.test(file.name) ? 'image/jpeg' : '');
+    if (!['image/png', 'image/jpeg'].includes(mime)) throw new Error('PNGまたはJPEGを選択してください。');
+    const original = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1]); r.onerror = () => reject(new Error('画像を読み込めません。')); r.readAsDataURL(file); });
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((resolve, reject) => { const x = new Image(); x.onload = () => resolve(x); x.onerror = () => reject(new Error('画像を読み込めません。')); x.src = url; });
+      if (!img.naturalWidth || !img.naturalHeight || img.naturalWidth * img.naturalHeight > 40e6) throw new Error('画像の大きさを確認してください。');
+      const render = (width, quality) => { const c = document.createElement('canvas'); c.width = width; c.height = Math.max(1, Math.round(img.naturalHeight * width / img.naturalWidth)); if (c.height > 4000) throw new Error('画像の縦横比を確認してください。'); const ctx = c.getContext('2d'); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height); return { mime: 'image/jpeg', data: c.toDataURL('image/jpeg', quality).split(',')[1] }; };
+      return { original: { mime, data: original }, web: render(Math.min(1254, img.naturalWidth), .86), thumb: render(640, .84) };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const reopen = async (type, id) => { await refresh(); edits = new Map(); await openItem(type, id); };
+  function manageBox(item) {
+    const kindName = item.type === 'track' ? '曲' : 'アルバム';
+    const out = [el('h3', { textContent: '掲載の管理' })];
+    out.push(el('p', { className: 'note', textContent: item.hidden ? `この${kindName}は「掲載停止中」です（データ・画像は残っています）。公開すると公式サイトから見えなくなります。` : `公式サイトに掲載中の${kindName}です。` }));
+    const hideBtn = el('button', { type: 'button', textContent: item.hidden ? '掲載を再開する' : '掲載を停止する', onclick: async () => {
+      if (edits.size) return toast('先に文字の変更を保存してください。', 'bad');
+      const go = await ask(item.hidden ? `${kindName}の掲載を再開します` : `${kindName}の掲載を停止します`, [el('p', { textContent: `対象：${item.title}（${item.id}）` }),
+        el('p', { textContent: item.hidden ? '公開すると、公式サイトにもう一度表示されます。' : '公開すると、公式サイトのページと一覧から消えます。曲名・歌詞・画像などのデータは消えず、「掲載を再開する」で戻せます。' + (item.type === 'track' ? 'アルバムの曲目では曲名だけが残り、曲ページへのリンクが外れます。PRIVATE には影響しません。' : '') }),
+        el('p', { className: 'warn', textContent: 'まだ公開はされません。プレビューで確認してから「公開する」を押してください。' })],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: item.hidden ? '再開する' : '停止する', primary: true }]);
+      if (go !== 'go') return;
+      try { await api('POST', '/api/hidden', { type: item.type, id: item.id, rev: item.rev, hidden: !item.hidden, confirm: true }); toast(item.hidden ? '掲載を再開しました（まだ公開されていません）。' : '掲載を停止しました（まだ公開されていません）。'); await reopen(item.type, item.id); } catch (e) { toast(e.message, 'bad', 9000); }
+    } });
+    const actions = [hideBtn];
+    if (item.hidden) actions.push(el('button', { type: 'button', textContent: '管理一覧から外す', onclick: async () => {
+      const go = await ask('管理一覧から外します', [el('p', { textContent: `対象：${item.title}（${item.id}）` }), el('p', { textContent: '左の一覧に出なくなるだけで、データ・画像は消えません。「削除済み・一覧から外したもの」からいつでも戻せます。公開済みの状態でも、先に掲載停止を公開してから外してください。' })],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '一覧から外す', primary: true }]);
+      if (go !== 'go') return;
+      try { await api('POST', '/api/archive', { type: item.type, id: item.id, archive: true, confirm: true }); toast('一覧から外しました。'); await refresh(); $('#main').replaceChildren(el('p', { className: 'note', textContent: '一覧から外しました。' })); } catch (e) { toast(e.message, 'bad', 9000); }
+    } }));
+    out.push(el('div', { className: 'registration-actions' }, ...actions));
+    if (item.type !== 'album') return out;
+
+    out.push(el('h3', { textContent: '掲載順（同じページの中で）' }), el('div', { className: 'registration-actions' },
+      ...[[-1, '↑ 前へ'], [1, '↓ 後ろへ']].map(([dir, label]) => el('button', { type: 'button', textContent: label, onclick: async () => {
+        try { await api('POST', '/api/album/move', { id: item.id, rev: item.rev, dir }); toast('掲載順を変えました（まだ公開されていません）。'); await reopen('album', item.id); } catch (e) { toast(e.message, 'bad'); }
+      } }))));
+
+    out.push(el('h3', { textContent: '収録曲（曲順・追加・取り外し）' }));
+    if (!item.tracks) out.push(el('p', { className: 'note', textContent: 'この作品はディスク別などの特別な構成のため、収録曲の構成の変更はAIに依頼してください（曲名の文字は上の欄で直せます）。' }));
+    else {
+      const songs = state.list.tracks;
+      const row = (t, i) => el('li', { className: 'album-track' }, el('span', { textContent: `${String(i + 1).padStart(2, '0')}  ${t.title}${t.music ? `（曲ページ：${songs.find(s => s.id === t.music)?.title ?? t.music}）` : ''}` }),
+        ...[['↑', 'move', -1], ['↓', 'move', 1]].map(([label, op, dir]) => el('button', { type: 'button', textContent: label, ariaLabel: `${t.title}を${dir < 0 ? '前' : '後ろ'}へ`, onclick: async () => {
+          try { await api('POST', '/api/album/tracks', { id: item.id, rev: item.rev, op, index: i, dir }); await reopen('album', item.id); } catch (e) { toast(e.message, 'bad'); }
+        } })),
+        el('button', { type: 'button', textContent: '外す', onclick: async () => {
+          const go = await ask('収録曲から外します', [el('p', { textContent: `「${t.title}」をアルバム『${item.title}』の曲目から外します。` }), el('p', { textContent: '曲そのもの（曲ページ・歌詞・ジャケット・音源・PRIVATE）は消えません。公開前なら「変更を破棄」で戻せます。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '外す', primary: true }]);
+          if (go !== 'go') return;
+          try { await api('POST', '/api/album/tracks', { id: item.id, rev: item.rev, op: 'remove', index: i, confirm: true }); await reopen('album', item.id); } catch (e) { toast(e.message, 'bad'); }
+        } }));
+      const addTitle = el('input', { type: 'text', id: 'album-add-title', placeholder: '曲名', maxLength: 150 });
+      const addMusic = el('select', { id: 'album-add-music' }, el('option', { value: '', textContent: '（曲ページなし）' }), ...songs.map(s => el('option', { value: s.id, textContent: s.title })));
+      addMusic.onchange = () => { if (addMusic.value && !addTitle.value.trim()) addTitle.value = addMusic.selectedOptions[0].textContent; };
+      out.push(el('ol', { className: 'album-tracks' }, ...item.tracks.map(row)),
+        el('div', { className: 'registration-actions' }, el('label', { htmlFor: 'album-add-music', textContent: '追加：' }), addMusic, addTitle, el('button', { type: 'button', textContent: '曲目に追加', onclick: async () => {
+          try { await api('POST', '/api/album/tracks', { id: item.id, rev: item.rev, op: 'add', title: addTitle.value, music: addMusic.value || null }); await reopen('album', item.id); } catch (e) { toast(e.message, 'bad'); }
+        } })));
+    }
+    out.push(el('h3', { textContent: 'ジャケット画像' }));
+    if (item.joint) out.push(el('p', { className: 'note', textContent: '複数作品の構成のため、画像の変更はAIに依頼してください。' }));
+    else {
+      const input = el('input', { type: 'file', accept: 'image/png,image/jpeg', id: 'album-jacket' });
+      out.push(el('p', { className: 'note', textContent: item.hasJacket ? '選んだ画像で差し替えます（前の画像はこのパソコンの控えに残り、公開前なら「変更を破棄」で戻せます）。' : 'この作品には採用ジャケットがありません。登録すると、ジャケット付きの表示になります。' }),
+        el('div', { className: 'field' }, el('label', { htmlFor: 'album-jacket', textContent: 'PNG/JPEG を選ぶ' }), input));
+      input.onchange = async () => {
+        const f = input.files?.[0]; if (!f) return;
+        try {
+          const image = await prepareImage(f);
+          const go = await ask('ジャケットを差し替えます', [el('img', { src: `data:image/jpeg;base64,${image.thumb.data}`, alt: '新しいジャケット', className: 'registration-jacket' }), el('p', { textContent: `アルバム『${item.title}』のジャケットをこの画像にします。` })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '差し替える', primary: true }]);
+          if (go !== 'go') { input.value = ''; return; }
+          await api('POST', '/api/album/jacket', { id: item.id, image, confirm: true }); toast('ジャケットを差し替えました（まだ公開されていません）。'); await reopen('album', item.id);
+        } catch (e) { toast(e.message, 'bad', 9000); input.value = ''; }
+      };
+    }
+    return out;
+  }
+
+  // ── 2026-11-24: album registration (draft → ready → adopt into albums.json → 公開する) ──
+  async function openAlbumRegistration(id = null) {
+    if (!await guard()) return;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'album'; albumRegId = id; privateLyricsDirty = releaseDirty = registrationDirty = false; renderLists();
+    const stateLabels = { draft: '下書き', ready: '公開準備完了' }, pubLabels = { 'not-adopted': '未公開（公式HPへ未取り込み）', adopted: '公式HPへ取り込み済み・まだ公開していない（画面上部の「公開する」で公開）', published: '公式HPで公開済み', withdrawn: '取り込みを取り消し済み（未公開）' };
+    let saved = null, pendingImage = null, history = [], publication = { state: 'not-adopted' }, tracks = [];
+    const status = el('p', { role: 'status', ariaLive: 'polite', className: 'note' }), show = (m, k = 'note') => { status.textContent = m; status.className = k; };
+    const dirty = () => { registrationDirty = true; };
+    const c = {};
+    const field = (key, label, tag = 'input', max = 150) => { const n = el(tag, { id: `al-${key}`, maxLength: max, ...(tag === 'input' ? { type: 'text' } : {}) }); n.oninput = dirty; c[key] = n; return el('div', { className: 'field' }, el('label', { htmlFor: n.id, textContent: label }), n); };
+    const sel = (key, label, opts) => { const n = el('select', { id: `al-${key}` }, ...Object.entries(opts).map(([value, textContent]) => el('option', { value, textContent }))); n.onchange = dirty; c[key] = n; return el('div', { className: 'field' }, el('label', { htmlFor: n.id, textContent: label }), n); };
+    const idLabel = el('p', { className: 'note' }), img = el('img', { className: 'registration-jacket', alt: 'アルバムのジャケット', hidden: true }), imgInput = el('input', { type: 'file', accept: 'image/png,image/jpeg', id: 'al-image' });
+    const list = el('ol', { className: 'album-tracks' }), songs = state.list.tracks;
+    const addMusic = el('select', { id: 'al-add-music' }, el('option', { value: '', textContent: '（曲ページなし）' }), ...songs.map(s => el('option', { value: s.id, textContent: s.title }))), addTitle = el('input', { type: 'text', id: 'al-add-title', placeholder: '曲名', maxLength: 150 });
+    addMusic.onchange = () => { if (addMusic.value && !addTitle.value.trim()) addTitle.value = addMusic.selectedOptions[0].textContent; };
+    function paintTracks() {
+      list.replaceChildren(...tracks.map((t, i) => el('li', { className: 'album-track' }, el('span', { textContent: `${String(i + 1).padStart(2, '0')}  ${t.title}${t.music ? `（曲ページ：${songs.find(s => s.id === t.music)?.title ?? t.music}）` : ''}` }),
+        el('button', { type: 'button', textContent: '↑', disabled: i === 0, onclick: () => { [tracks[i - 1], tracks[i]] = [tracks[i], tracks[i - 1]]; dirty(); paintTracks(); } }),
+        el('button', { type: 'button', textContent: '↓', disabled: i === tracks.length - 1, onclick: () => { [tracks[i + 1], tracks[i]] = [tracks[i], tracks[i + 1]]; dirty(); paintTracks(); } }),
+        el('button', { type: 'button', textContent: '外す', onclick: () => { tracks.splice(i, 1); dirty(); paintTracks(); } }))));
+    }
+    const addBtn = el('button', { type: 'button', textContent: '曲目に追加', onclick: () => { const t = addTitle.value.trim(); if (!t) return show('曲名を入力してください。', 'err'); tracks.push(addMusic.value ? { title: t, music: addMusic.value } : { title: t }); addTitle.value = ''; addMusic.value = ''; dirty(); paintTracks(); } });
+    const histSel = el('select', { id: 'al-history' }), slug = el('input', { type: 'text', id: 'al-slug', maxLength: 60, placeholder: '例：new-album-2026', spellcheck: false, autocomplete: 'off' }), adoptNote = el('p', { className: 'note' });
+    function fill(res) {
+      saved = res?.record ?? null; publication = res?.publication ?? { state: 'not-adopted' }; history = res?.history ?? []; pendingImage = null; albumRegId = saved?.id ?? null;
+      const r = saved ?? { title: '', subtitle: '', section: 'history', kind: 'Album', year: '', dateLabel: '', intro: '', story: '', tracks: [], links: [], state: 'draft', memo: '' };
+      for (const k of ['title', 'subtitle', 'section', 'kind', 'year', 'dateLabel', 'intro', 'story', 'state', 'memo']) c[k].value = r[k] ?? '';
+      c.urls.value = (r.links ?? []).join('\n'); tracks = r.tracks.map(t => ({ ...t })); paintTracks();
+      img.hidden = !res?.thumbnail; if (res?.thumbnail) img.src = res.thumbnail; imgInput.value = '';
+      idLabel.textContent = saved ? `アルバムID：${saved.id} ／ 実際の公開：${pubLabels[publication.state] ?? '未公開'}${publication.slug ? `（albums/${publication.slug}）` : ''}` : 'アルバムID：初回保存時に自動発行 ／ 実際の公開：未公開';
+      histSel.replaceChildren(...history.filter(h => h.rev !== saved?.rev).map(h => el('option', { value: h.rev, textContent: `${new Date(h.updatedAt).toLocaleString('ja-JP')}　${h.title}` }))); histSel.disabled = history.length < 2;
+      const done = ['adopted', 'published'].includes(publication.state), ready = saved?.state === 'ready' && saved.image && saved.tracks.length;
+      adoptBtn.disabled = slug.disabled = !ready || done; if (publication.slug && !slug.value) slug.value = publication.slug;
+      adoptNote.textContent = done ? `取り込み済み（albums/${publication.slug}）。この後の修正は、左の HISTORY／その他の作品 の一覧から行ってください。` : ready ? 'ページのURL名を決めて取り込むと、公式HPのアルバムデータに加わります（そのページの最後に並びます）。公開は画面上部の「公開する」で行います。' : '取り込めるのは「公開準備完了」で保存し、ジャケットと収録曲を登録したアルバムです。';
+      delBtn.hidden = !saved || done; registrationDirty = false; renderLists();
+    }
+    const values = () => ({ title: c.title.value, subtitle: c.subtitle.value, section: c.section.value, kind: c.kind.value, year: c.year.value, dateLabel: c.dateLabel.value, intro: c.intro.value, story: c.story.value, tracks, urls: c.urls.value.split('\n').map(x => x.trim()).filter(Boolean), state: c.state.value, memo: c.memo.value });
+    imgInput.onchange = async () => { const f = imgInput.files?.[0]; if (!f) return; try { pendingImage = await prepareImage(f); img.src = `data:image/jpeg;base64,${pendingImage.thumb.data}`; img.hidden = false; dirty(); show('画像を準備しました。保存すると登録されます。'); } catch (e) { show(e.message, 'err'); } };
+    const busy = async (fn) => { if (registrationBusy) return; registrationBusy = true; form.inert = true; try { await fn(); } catch (e) { show(e.message, 'err'); } finally { registrationBusy = false; form.inert = false; } };
+    const saveBtn = el('button', { type: 'button', className: 'primary', textContent: '確認して保存', onclick: async () => {
+      if (saved && !registrationDirty) return show('変更はありません。'); const f = values(); if (!f.title.trim()) return show('アルバム名を入力してください。', 'err');
+      const go = await ask('アルバム登録の保存確認', [el('p', { textContent: `${f.title}（${saved?.id ?? '新規IDを発行'}）` }), el('p', { textContent: `${f.section === 'other' ? 'その他の作品' : 'HISTORY'}／${stateLabels[f.state]}／収録曲 ${f.tracks.length} 曲` }), el('p', { className: 'warn', textContent: 'この保存は非公開の掲載準備記録です。公式サイトはまだ変わりません。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '保存する', primary: true }]);
+      if (go !== 'go') return;
+      await busy(async () => { fill(await api('POST', '/api/album-registration/save', { id: saved?.id, rev: saved?.rev, fields: f, image: pendingImage, confirm: true })); await refresh(); show('✔ 保存しました。まだ公開されていません。', 'done'); });
+    } });
+    const restoreBtn = el('button', { type: 'button', textContent: '以前の保存版を復元', onclick: async () => {
+      if (!saved || !histSel.value || registrationDirty) return show('保存済みの版を選んでください。未保存の入力は先に保存してください。', 'err');
+      if (await ask('以前の保存版を復元します', el('p', { textContent: '現在の内容も履歴に残したまま、新しい保存版として復元します。' }), [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '復元する', primary: true }]) !== 'go') return;
+      await busy(async () => { fill(await api('POST', '/api/album-registration/restore', { id: saved.id, rev: saved.rev, restoreRev: histSel.value, confirm: true })); await refresh(); show('✔ 復元しました。', 'done'); });
+    } });
+    const adoptBtn = el('button', { type: 'button', textContent: '公式HPのアルバムデータへ取り込む', onclick: async () => {
+      if (!saved || registrationDirty) return show('先に保存してください。', 'err');
+      const s = slug.value.trim(); if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s)) return show('ページのURL名は英小文字・数字・ハイフンで入力してください。', 'err');
+      if (await ask('公式HPのアルバムデータへ取り込みます', [el('p', { textContent: `『${saved.title}』を ${saved.section === 'other' ? 'その他の作品' : 'HISTORY'} の最後に、albums/${s} として加えます（収録曲 ${saved.tracks.length} 曲・ジャケット）。` }), el('p', { className: 'warn', textContent: 'まだ公開されません。プレビューで確認し、画面上部の「公開する」で公開します。公開前なら「変更を破棄」で取り消せます。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '取り込む', primary: true }]) !== 'go') return;
+      await busy(async () => { fill(await api('POST', '/api/album-registration/adopt', { id: saved.id, rev: saved.rev, slug: s, confirm: true })); await refresh(); show('✔ 取り込みました。まだ公開されていません。左の一覧のアルバムを開いて「プレビュー」で確認してから「公開する」を押してください。', 'done'); });
+    } });
+    const delBtn = el('button', { type: 'button', textContent: 'この登録を削除（復元できます）', onclick: async () => {
+      if (await ask('アルバムの登録を削除します', [el('p', { textContent: `対象：${saved.title}（${saved.id}）` }), el('p', { textContent: '左の一覧から消えますが、データは残り「削除済み・一覧から外したもの」から復元できます。' })], [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '削除する', primary: true }]) !== 'go') return;
+      await busy(async () => { await api('POST', '/api/album-registration/delete', { id: saved.id, confirm: true }); registrationDirty = false; await refresh(); $('#main').replaceChildren(el('p', { className: 'note', textContent: '削除しました（復元できます）。' })); });
+    } });
+    const form = el('section', {}, idLabel, field('title', 'アルバム名（必須）'), field('subtitle', '副題（任意）'),
+      el('div', { className: 'release-fields' }, sel('section', '掲載ページ', { history: 'HISTORY（PIP POPPERの作品）', other: 'その他の作品' }), field('kind', '区分（例：Album・Single・EP）', 'input', 40)),
+      el('div', { className: 'release-fields' }, field('year', '年（例：2026。未設定可）', 'input', 20), field('dateLabel', '公開日の表示（例：2026年11月。未設定可）', 'input', 40)),
+      el('div', { className: 'field' }, el('label', { htmlFor: 'al-image', textContent: 'アルバムジャケット（PNG/JPEG）' }), imgInput, img),
+      field('intro', 'アルバム紹介文（空行で段落を分ける）', 'textarea', 20000), field('story', '制作秘話・補足説明（空行で段落を分ける）', 'textarea', 20000),
+      el('h3', { textContent: '収録曲（曲順）' }), list, el('div', { className: 'registration-actions' }, el('label', { htmlFor: 'al-add-music', textContent: '追加：' }), addMusic, addTitle, addBtn),
+      field('urls', '外部配信先URL（任意・1行1件。アルバム情報に表示）', 'textarea', 5000), field('memo', '管理メモ（非公開）', 'textarea', 10000), sel('state', '登録状態', stateLabels),
+      el('div', { className: 'registration-actions' }, saveBtn, delBtn), el('h3', { textContent: '保存履歴・復元' }), el('div', { className: 'registration-actions' }, histSel, restoreBtn),
+      el('h3', { textContent: '公式HPへの取り込み（公開前の最終段階）' }), adoptNote, el('div', { className: 'field' }, el('label', { htmlFor: 'al-slug', textContent: 'ページのURL名（英小文字・数字・ハイフン。公開後は変えない）' }), slug), el('div', { className: 'registration-actions' }, adoptBtn));
+    $('#main').replaceChildren(el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: 'アルバム管理' }), 'アルバムを登録')), el('p', { className: 'note', textContent: 'ジャケット・紹介文・制作秘話・収録曲を登録し、下書きとして保存します。ここから本番公開はされません。' }), form, status);
+    $('#main').scrollTop = 0;
+    registrationBusy = true; form.inert = true;
+    try { fill(id ? await api('POST', '/api/album-registration/get', { id }) : null); } catch (e) { show(e.message, 'err'); } finally { registrationBusy = false; form.inert = false; }
+  }
+
+  // ── 2026-11-24: restore what was deleted (registrations) or taken off the list (hidden songs/albums) ──
+  async function openDeleted() {
+    if (!await guard()) return;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'deleted'; renderLists();
+    const rows = [...(state.deletedRegistrations ?? []).map(r => ({ label: `${r.kind === 'album' ? 'アルバム登録' : '新曲登録'}：${r.title}`, at: r.deletedAt, restore: () => api('POST', `/api/${r.kind === 'album' ? 'album' : 'song'}-registration/undelete`, { id: r.id, confirm: true }) })),
+      ...(state.archived ?? []).map(a => ({ label: `${a.type === 'album' ? 'アルバム' : '曲'}（掲載停止中）：${a.title}`, at: a.at, restore: () => api('POST', '/api/archive', { type: a.type, id: a.id, archive: false, confirm: true }) }))];
+    $('#main').replaceChildren(el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: '復元' }), '削除済み・一覧から外したもの')),
+      el('p', { className: 'note', textContent: 'ここにあるものはデータが残っています。「戻す」で左の一覧に戻ります（公式サイトの掲載は変わりません。掲載を再開するときは、戻した後に編集画面の「掲載を再開する」）。' }),
+      rows.length ? el('ul', { className: 'changes' }, ...rows.map(r => el('li', {}, el('div', { className: 'what', textContent: `${r.label}　${r.at ? new Date(r.at).toLocaleString('ja-JP') : ''}` }),
+        el('button', { type: 'button', textContent: '戻す', onclick: async () => { try { await r.restore(); toast('戻しました。'); await refresh(); await openDeleted(); } catch (e) { toast(e.message, 'bad'); } } })))) : el('p', { textContent: 'ありません。' }));
+  }
+
+
   // ── PRIVATE: invitee password. Typed passwords are cleared when the work ends (success or not) and never stored. ──
-  let privateOpen = false;
+  let privateOpen = false, albumRegId = null;
   async function openPrivate() {
     if (!await guard()) return;
     clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'password'; privateLyricsDirty = false; releaseDirty = false; registrationDirty=false;

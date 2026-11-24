@@ -116,6 +116,7 @@
 !/manager/private-lyrics.mjs
 !/manager/release-status.mjs
 !/manager/song-registration.mjs
+!/manager/album-registration.mjs
 !/manager/test-song-registration.mjs
 !/manager/test-release-status.mjs
 !/manager/prototype-preview.mjs

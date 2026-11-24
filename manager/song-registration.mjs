@@ -31,7 +31,7 @@ function imageDimensions(b,mime){
   throw new Error('PNG/JPEG画像を確認できません。');
 }
 function decodeImage(item,max,expected){if(!item||!['image/png','image/jpeg'].includes(item.mime)||(expected&&item.mime!==expected)||typeof item.data!=='string'||item.data.length>Math.ceil(max/3)*4+4||!/^[A-Za-z0-9+/]*={0,2}$/.test(item.data))throw new Error('画像形式または容量を確認してください。');const bytes=Buffer.from(item.data,'base64');if(!bytes.length||bytes.length>max)throw new Error('画像の容量が上限を超えています。');const [width,height]=imageDimensions(bytes,item.mime);if(width<1||height<1||width>12000||height>12000||width*height>40e6)throw new Error('画像のサイズを確認してください。');return {bytes,width,height,mime:item.mime};}
-function images(input){if(!input)return null;const original=decodeImage(input.original,12*1024*1024),web=decodeImage(input.web,4*1024*1024,'image/jpeg'),thumb=decodeImage(input.thumb,2*1024*1024,'image/jpeg');if(thumb.width!==640||web.width>1254||web.height>4000||thumb.height>4000)throw new Error('表示画像のサイズを確認してください。');return {original,web,thumb};}
+export function images(input){if(!input)return null;const original=decodeImage(input.original,12*1024*1024),web=decodeImage(input.web,4*1024*1024,'image/jpeg'),thumb=decodeImage(input.thumb,2*1024*1024,'image/jpeg');if(thumb.width!==640||web.width>1254||web.height>4000||thumb.height>4000)throw new Error('表示画像のサイズを確認してください。');return {original,web,thumb};}
 async function current(root,id){try{const p=await readJson(file(root,id,'current.json'));if(!REV.test(p.rev))throw new Error('保存記録を確認できません。');return p.rev;}catch(e){if(e.code==='ENOENT')return null;throw e;}}
 async function record(root,id,rev){if(!REV.test(rev))throw new Error('保存版を確認してください。');const r=await readJson(file(root,id,'versions',rev,'record.json'));if(r.id!==id||r.rev!==rev)throw new Error('曲と保存版が一致しません。');return r;}
 async function thumbData(root,r){if(!r.image)return null;const b=await readFile(file(root,r.id,'versions',r.rev,'cover-640.jpg'));return `data:image/jpeg;base64,${b.toString('base64')}`;}
@@ -84,7 +84,7 @@ async function adopt(root,input,ctx){
   return get(root,id,ctx);
 }
 async function history(root,id){const rows=[];for(const rev of await readdir(file(root,id,'versions'))){if(!REV.test(rev))continue;try{const r=await record(root,id,rev);rows.push({rev,updatedAt:r.updatedAt,title:r.title});}catch{}}return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
-export async function listRegistrations(root,ctx={}){let ids;try{ids=await readdir(dir(root));}catch(e){if(e.code==='ENOENT')return [];throw e;}const rows=[];for(const id of ids){if(!ID.test(id))continue;const rev=await current(root,id);if(!rev)continue;const r=await record(root,id,rev);rows.push({id,rev,title:r.title,reading:r.reading,classification:r.classification,lyricsScope:r.lyricsScope,links:r.links,state:r.state,channels:r.channels,image:!!r.image,updatedAt:r.updatedAt,publication:await publicationOf(root,id,ctx)});}return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
+export async function listRegistrations(root,ctx={},{deleted=false}={}){let ids;try{ids=await readdir(dir(root));}catch(e){if(e.code==='ENOENT')return [];throw e;}const rows=[];for(const id of ids){if(!ID.test(id))continue;const rev=await current(root,id);if(!rev)continue;let del=null;try{del=await readJson(file(root,id,'deleted.json'));}catch{}if(!!del!==deleted)continue;const r=await record(root,id,rev);rows.push({deletedAt:del?.at??null,id,rev,title:r.title,reading:r.reading,classification:r.classification,lyricsScope:r.lyricsScope,links:r.links,state:r.state,channels:r.channels,image:!!r.image,updatedAt:r.updatedAt,publication:await publicationOf(root,id,ctx)});}return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
 async function get(root,id,ctx={}){const rev=await current(root,id);if(!rev)return problem(404,'新曲の登録が見つかりません。');const r=await record(root,id,rev);return result({record:r,thumbnail:await thumbData(root,r),history:await history(root,id),publication:await publicationOf(root,id,ctx)});}
 async function writeVersion(root,id,expected,data,source,upload,ctx={}){
   const rev=randomUUID(),base=file(root,id,'versions',rev);await mkdir(base,{recursive:true});
@@ -120,6 +120,13 @@ export async function registrationAction(root,action,input={},ctx={}){
     if(action==='list')return result({songs:await listRegistrations(root,ctx)});
     if(action==='get')return await get(root,input.id,ctx);
     if(action==='adopt')return await adopt(root,input,ctx);
+    if(action==='delete'||action==='undelete'){
+      if(input.confirm!==true)return problem(400,'確認が必要です。');if(!await current(root,input.id))return problem(404,'新曲の登録が見つかりません。');
+      const pub=await publicationOf(root,input.id,ctx);if(action==='delete'&&['adopted','published'].includes(pub.state))return problem(409,'公式HPに取り込み済みの曲です。先に曲の編集画面で「掲載を停止」してください。');
+      if(action==='delete'){const tmp=file(root,input.id,`deleted-${randomUUID()}.tmp`);await writeFile(tmp,JSON.stringify({at:new Date().toISOString()})+'\n',{flag:'wx'});await rename(tmp,file(root,input.id,'deleted.json'));}
+      else await rm(file(root,input.id,'deleted.json'),{force:true});
+      return await get(root,input.id,ctx);
+    }
     if(action==='save'){
       if(input.confirm!==true)return problem(400,'保存前の確認が必要です。');const data=fields(input),upload=images(input.image);
       const id=input.id??`new-${randomBytes(12).toString('hex')}`;if(!ID.test(id))return problem(400,'曲IDが正しくありません。');const rev=await current(root,id);
