@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 本番反映済み（PRIVATE Worker 95d3da0c・公式HP ee6b967）。Producer の実機確認待ち |
+| 状態 | 一般視聴と新曲2曲の公開直前まで準備完了（ローカル保存のみ）。公開・push・デプロイ・R2書込みは Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,10 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-24 **Producer の本番PRIVATE実機確認：合格**（実音源の再生・一時停止、ジャケットと歌詞欄の表示、MP3ダウンロードと再生、歌詞未登録時の案内）。
+
+- 2026-11-24 Claude Code：次工程の準備。①AIの感想の表示整形（先頭の `###` 見出し行と `**` を表示時だけ外す。保存データは不変、既存25曲の生成結果は1バイトも変わらない）22e42bf、感想の段落を改行どおり表示 2de020b。②一般視聴の本番方式：新しいサービスは作らず PRIVATE Worker の `/listen/`、既存R2の公開用の場所（public-*）だけを読む読み取り口、承認ファイルから公開カタログを作る `public-listening/stage.mjs`（prepare・verify・upload --approved・rollback）8e13f32。③新曲2曲の掲載工程を一時的な作業コピーで通し確認（編集保存→プレビュー→公開準備完了→取り込み→公開候補ページ生成。歌詞・感想は無改変、`###` は表示されない、音源なし）。本物の下書きは変更なし（下書き・音源未登録・未公開）。テスト：/listen/ 20・表示整形・PRIVATE既存61・パスワード53・一覧・一般視聴・試作品 --check 合格、Workerの本番用ビルド確認。本番（Worker・R2・GitHub）は変更していない。
 
 - 2026-11-24 Producer承認で本番反映。PRIVATE Worker：Version `95d3da0c-c58a-47c9-b25f-048090183873`（復元点 `c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`、バインディング・秘密の値・R2は変更なし、R2曲目 rev 78・23曲のまま）。公式HP：`git push`（1a0b059..ee6b967、17件）→ 公開中の173ファイルが docs と全一致、並び替え3種を実ブラウザで確認。確認：PRIVATE入口200・ログイン欄、未入室の音源・ジャケット・管理API 401、配信中の private.js・private.css が commit と一致。未確認（パスワードが必要）：本番PRIVATEへの入室・既存音源の再生・ジャケット/歌詞欄の表示（Producer確認）。一般視聴・新曲2曲の公開・R2への追加は承認範囲外で未実施。
 
@@ -84,17 +88,22 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 - 管理ツール：Producer が一度「終了」→ `PIP POPPER管理ツール.exe` を起動し直す（新機能を読み込む）。この引継ぎ記録の commit（HANDOVER.md のみ、docs の変更なし）が未 push の間は「AI等の保存点」として管理ツールからの公開が止まる。Producer の承認で push すれば公開できるようになる。
 - 一般視聴ページ：本番化は Producer の判断後（公開する曲・音源・歌詞・ジャケット、専用Worker・R2の新規作成、URL）。
 
-### Producer の確認・判断
+### Producer の確認・判断（2026-11-24 時点）
 
-1. 新曲2曲は下書きのまま。公開前に確認してほしい点：「低所得層サラリーマンより」の歌詞1行目が曲名、よみがなに「より」がない。両曲ともAIの感想の先頭がMarkdown見出し（`###`）で、そのまま公開すると記号が表示される。「WE LOVE MUSIC」は会話中の歌詞原文との照合が未了（Work記録）。
-2. 公開する曲は、登録画面で「公開準備完了」→「公式HPの掲載データへ取り込む」→「公開する」（`manager/README.md`）。
-3. その他の曲（倦怠期 -THE STAGE OF BOREDOM-・甘いワナ・Talk about separation・PIPPOPPER ENTERTAINMENT・TRIANGLE）は**未登録**。プロジェクト内にあるのは、HISTORY のアルバム曲目の曲名だけ（甘いワナは曲名もない）。ジャケット（PIPPOPPER ENTERTAINMENT は「おとなしそうな男性3人がステージに座っている版」）・歌詞・AIの感想を ChatGPT から保存し、管理ツールの「＋ 新曲を登録」で登録する（下書きから）。
-4. あいうえお順：漢字で始まる曲（公式HP：就職活動・彼女に不満、PRIVATE：同じ2曲）は「よみがな」を入れるまで末尾に並ぶ。公式HPは曲の編集画面、PRIVATE は「PRIVATE楽曲の歌詞・よみがな」から入力できる。
-5. 以前からの残件：PRIVATE の実機確認、トップのヒストリー欄の文言（2012年まで掲載に合わせるか）。
+**A. 一般視聴（承認が必要なもの）**
+1. 掲載する曲と、曲ごとに歌詞・ジャケット・AIの感想を載せるか。候補（公式サイト公開済みで、PRIVATE に音源がある曲）は22曲：らっぷごっこ、Blood type feat.AI、こんなこといいな feat.AI（公式歌詞なし）、彼女に不満、OneLove、BADBOYZ -ヒモの道-、Diet、Lost days、SLOTER -破滅に向かって-、Distance、Friendship、Be myself、Showtime 2010、Close My Heart、3月30日、TRADER-損切戦士-、LOVELESS、MY WAY、MENKUI、Manner、ブスの瞳に恋してる。。。、就職活動。**現在の掲載許可はすべて未設定**（公開状況の記録なし・公開カタログなし）。対象外：いとしのハニー（音源非公開の指定）、すけこまし -AI remix-・Anniversary（PRIVATE に音源なし）。音源の権利関係に問題がないことの確認を含めて判断する。
+2. 承認後の作業（AI）：PRIVATE Worker のデプロイ（/listen/ を含む）→ 公開カタログと公開用の複製を本番R2へ書込み → 必要なら公式サイトから案内（push）。手順と戻し方は `public-listening/README.md`「本番方式」。
+
+**B. 新曲2曲（低所得層サラリーマンより・WE LOVE MUSIC）**
+1. 現在：下書き・**実音源は未登録**・未公開。曲名・アーティスト（PIP POPPER）・ジャケット（WE LOVE MUSIC は PIP POP 表記版）・歌詞・AIの感想・公開区分（一般公開）・歌詞と感想の公開範囲（一般公開）・掲載先（公式HP・一般視聴・PRIVATE すべて許可）は移行時のまま。
+2. Producer に決めてほしいこと：「低所得層サラリーマンより」の歌詞1行目の曲名行を残すか／よみがなを「ていしょとくそうさらりーまんより」にするか（並び順には影響しない）／WE LOVE MUSIC の歌詞を会話の原文と照合済みとしてよいか／ページのURL名（案：`low-income-salaryman-yori`・`we-love-music`）。AIの感想の `###` と `**` は表示時に外れるので、元の文は直さなくてよい。
+3. 公開の操作：管理ツールで登録状態を「公開準備完了」→「公式HPの掲載データへ取り込む」→ プレビュー →「公開する」。AI の未push の保存点が残っている間は管理ツールから公開できないので、先に AI の保存点の push を承認する。公開後の新曲は、一般視聴（A）と PRIVATE（`/admin` で音源アップロード）にも載せられる。
+
+**C. 以前からの残件**：トップのヒストリー欄の文言（2012年まで掲載に合わせるか）。その他の曲（倦怠期・甘いワナ・Talk about separation・PIPPOPPER ENTERTAINMENT・TRIANGLE）は未登録で、素材の保存と登録から。
 
 ## 次の一手
 
-Producer が本番PRIVATEに入室して再生・歌詞欄・ダウンロードを確認し、管理ツールを再起動 → 新曲2曲の内容を確認して公開判断。
+Producer が A（一般視聴の曲と項目）と B（新曲2曲の確認点）を判断 → AI の保存点の push・PRIVATE Worker デプロイ・公開カタログ書込みを承認 → 新曲を管理ツールから公開。
 
 ## 交代の手順（PACS-10）
 

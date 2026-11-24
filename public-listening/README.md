@@ -1,5 +1,32 @@
 # 一般公開HPの並び替え・一般視聴（2026-11-23、ローカル候補）
 
+## 本番方式（2026-11-24 決定・Claude Code）— 以下の旧方式の記述より優先
+
+- **新しいサービスは作らない。** 一般視聴は既存の PRIVATE Worker の `/listen/`（パスワード不要）で配信する。URL：`https://pip-popper-private.pip-popper-private.workers.dev/listen/`。このアカウントでは新しい Worker を作っても `○○.pip-popper-private.workers.dev` になるため、別 Worker にしても URL 上の利点がなく、管理対象が増えるだけのため。
+- **データは既存のR2の公開用の場所だけ**：`public-catalog.json`・`public-audio/<ID>.mp3`・`public-jackets/<ID>.jpg`。`/listen/` には「この3種類しか読めない読み取り口」だけを渡す（`private/worker/src/index.js` の `publicOnly`）。PRIVATE の音源（`audio/`）・曲目（`catalog.json`）・認証（`auth/`）・管理API には届かない。PRIVATE の「整理」は `audio/` だけを消すので公開用の場所に影響しない。
+- **費用**：なし（既存の無料枠。R2 使用量は現在145MB／無料枠10GB、公開用の複製を足しても数百MB）。
+- **掲載できる曲**：公式サイトですでに公開している曲だけ（`docs/works.json` にあり、音源非公開の指定がないもの）。歌詞・ジャケット・AIの感想は、公式サイトで公開済みのものを、Producer が承認した項目だけ載せる。新曲は公式サイトで公開した後に対象になる。
+- **公開カタログがない間は0曲**（ページは「準備中」状態で、PRIVATE のデータは一切出ない）。
+
+### 公開の手順（Producer の承認後）
+
+1. 承認内容を `.manager/public-listening/approvals.json`（Git対象外）に書く：`{"approvedBy":"Producer","approvedAt":"YYYY-MM-DD","songs":[{"id":"manner","lyrics":true,"jacket":true,"impression":false}]}`。
+2. `node public-listening/stage.mjs prepare .manager/public-listening/approvals.json` — PRIVATE の R2 から音源を**読み取り**、指紋を曲目と照合して、ローカルに公開候補（`.manager/public-listening/stage-<日時>/`）を作る。本番には書かない。
+3. `node public-listening/stage.mjs verify <公開候補フォルダー>` — 模擬環境の `/listen/` で、曲数・再生・ジャケット・歌詞と、PRIVATE に届かないことを確認。
+4. PRIVATE Worker をデプロイ（`/listen/` を含む版。`private\worker` で `npx wrangler deploy`）。
+5. `node public-listening/stage.mjs upload <公開候補フォルダー> --approved` — 音源・ジャケットを先に、公開カタログを最後に書く（カタログを書くまで何も見えない）。書く前の公開カタログを控えとして保存する。
+6. 公式サイトから案内する場合は `content/public-listening.json` を `{"enabled":true,"url":"https://pip-popper-private.pip-popper-private.workers.dev/listen/"}` にして公開（GitHub push）。
+
+### 元に戻す
+
+- 一般視聴だけ止める：`node public-listening/stage.mjs rollback <公開候補フォルダー> --approved`（書く前の公開カタログに戻す。最初の公開なら0曲に戻る）。
+- Worker ごと戻す：`npx wrangler rollback <前のVersion ID>`（`/listen/` がなくなる。PRIVATE は従来どおり）。
+- 公式サイトの案内を消す：`content/public-listening.json` を `enabled:false` に戻して公開。
+
+### テスト
+
+`node private/dev/test-listen.mjs`（/listen/ の表示・再生・遮断とPRIVATEの従来動作、20項目）、`node public-listening/stage.mjs prepare|verify`（架空音源での確認は一時フォルダーで行い、本番候補には残さない）。
+
 ## 現在の状態と仕様
 
 - 公式HPトップの既存楽曲カードに「新着順（既存掲載順）」「あいうえお順」「A〜Z順」。現在の掲載内容と新着欄を変えず、カードだけを表示順に再配置する。公開日の新規推定・配信URLの登録なし。かな順は任意の公開用よみがなを使用し、なければ公開曲名。A〜Zは英字を先に、数字、かな・その他の順。実際のPRIVATE管理用読みは取得しない。
