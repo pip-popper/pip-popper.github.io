@@ -7,18 +7,20 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 | 項目 | 内容 |
 |---|---|
-| 担当AI | 本ChatGPT Work（PIP POPPER公式サイト専用開発、Producer承認、2026-11-22） |
-| 状態 | 第1〜第3段階のローカル実装・模擬検証および試作品プレビュー準備完了。本Work単独担当。Producer実ブラウザ確認・Git保存・本番反映は保留。楽曲掲載候補は保護。 |
+| 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
+| 状態 | 作業中（Work成果の正式統合・検証・新曲データ移行） |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
-| 開始時HEAD | 6d8ca8299673a3c7cb1a57a098372038ab597a8a |
+| 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
 | 復元点 | `1a0b059`（管理ツール導入前）。バックアップ bundle は `..\PIP POPPER保守バックアップ\GitHubリポジトリ` |
-| 未コミット差分と所有者 | EXE化（ChatGPT Workの成果、未commitのまま保護・未検証の部分あり）：.gitignore の EXE 許可行、README.md、build.mjs、manager/README.md・server.mjs・test-manager.mjs、manager/EXE-VERIFICATION.md・Launcher.cs・build-launcher.ps1・test-launcher.mjs、HANDOVER.md の EXE 記録2件。PRIVATE一覧改善は commit 済み |
-| 更新日 | 2026-11-22 |
-| Git保存 | .git読取り専用のため保留。Producer明示指示により本記録の保存をもって担当移管成立、commitは後工程。 |
-| 本Workの差分 | 第1段階PRIVATE鑑賞画面：private/worker/src/pages.js・index.js、private/worker/public/assets/private.css・private.js、private/dev/test-library.mjs、private/README.md。第2段階：同pages.js・private.js・private.css・test-library.mjs・private/README.mdの追記、private/worker/src/admin.js、manager/private-lyrics.mjs、manager/ui/app.js・app.css、manager/server.mjs・manager/README.md・.gitignoreの歌詞関連追記。第3段階：manager/release-status.mjs・test-release-status.mjs（新規）、manager/ui/app.js・app.css、manager/server.mjs・manager/README.md・.gitignore・private/README.md・本記録の追記。旧EXE差分・楽曲候補は保護。共有ファイルは差分を分けてGit保存すること。 |
+| 未コミット差分と所有者 | なし（Work成果は 7f846dd＝EXEランチャー、b2ac275＝その他すべて に受領時のまま保存） |
+| 更新日 | 2026-11-24 |
+| Git保存 | 通常どおり（Claude Code が commit。push は Producer 承認後のみ） |
+| 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-24 Claude Code：Producer承認の担当移管を受領（体系13.0.0、PACS12.1.1／Gate13.0.0／Environment3.10.3 の Version・SHA-256 一致）。前担当 Work の停止と成果物を確認し、未コミット差分（EXE化＋第1〜3段階＋一般公開・一般視聴＋新曲登録、34件）と `.manager` を`..\PIP POPPER保守バックアップ\作業フォルダー_Work統合前_20261124\` に保全（差分・新規ファイル・.manager・全履歴 bundle）。Work成果を受領時のまま 7f846dd（EXEランチャー）・b2ac275（その他）に保存してから統合作業を開始。
 
 - 2026-11-23 新曲掲載登録をローカル実装。体系13.0.0照合。管理ツール「＋ 新曲を登録」、新規ID・基本/公開情報・状態、PNG/JPEG選択と表示用JPG作成、画像なし下書き、版保存/復元、公開範囲別3プレビュー、PC/スマホ相当、公開状況一覧連携。非公開 `.manager/song-registrations/<ID>/versions/<rev>` と現在版ポインターで保護。公開準備完了時だけ許可済みの公式HP候補・音源未承認の一般視聴候補・PRIVATE候補を非公開保存。歌詞/AI感想の独立範囲、非公開情報漏えい防止、公開済み実状態は設定不可。新曲登録・画像版・誤保存/復元・DOM操作・既存公開/PRIVATE/公開管理回帰・BATチェック合格。既存実データ・本番docs/R2/GitHub不変。実ブラウザ画像変換・HTTP結合・Git保存・正式音源ID連携は残工程。詳細と正式統合手順はmanager/README.md。今回差分：manager/song-registration.mjs・test-song-registration.mjs、manager/server.mjs・release-status.mjs・ui/app.js・app.css・prototype-preview.mjs、private/worker/src/pages.js・public/assets/private.js・private.css、public-listening/approval.mjs・worker.mjs・test.mjs・README.md、.gitignore・manager/README.md・本記録。旧成果物は保護。
 
