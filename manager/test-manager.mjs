@@ -21,11 +21,13 @@ const gOk = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8' }).status
 console.log('準備：検証用の送信先と作業コピーを作成');
 spawnSync('git', ['clone', '-q', '--bare', REPO, BARE]);
 spawnSync('git', ['clone', '-q', BARE, WORK]);
-for (const p of ['build.mjs', 'content', 'manager']) cpSync(path.join(REPO, p), path.join(WORK, p), { recursive: true });
+for (const p of ['build.mjs', 'content', 'manager', 'src', 'private/worker/src/song-order.js', 'public-listening/approval.mjs']) cpSync(path.join(REPO, p), path.join(WORK, p), {
+  recursive: true, filter: source => path.relative(REPO, source) !== path.join('manager', 'runtime')
+});
 g(WORK, 'config', 'user.name', 'Producer'); g(WORK, 'config', 'user.email', 'test@example.invalid');
 // --allow-empty: when the manager is already committed in the repository there is nothing to add, but the
 // tests still need one ordinary (non-manager) saved point named "test base"
-g(WORK, 'add', '-f', 'build.mjs', 'content', 'manager'); g(WORK, 'commit', '-q', '--allow-empty', '-m', 'test base'); g(WORK, 'push', '-q', 'origin', 'main');
+g(WORK, 'add', '-f', 'build.mjs', 'content', 'manager', 'src', 'private/worker/src/song-order.js', 'public-listening/approval.mjs'); g(WORK, 'commit', '-q', '--allow-empty', '-m', 'test base'); g(WORK, 'push', '-q', 'origin', 'main');
 g(WORK, 'branch', '-q', '-u', 'origin/main');
 
 const env = { ...process.env, PP_MANAGER_EXPECTED_REMOTE: BARE, PP_MANAGER_PRINT_TOKEN: '1', PP_MANAGER_PRIVATE_URL: 'http://localhost:18995/' };

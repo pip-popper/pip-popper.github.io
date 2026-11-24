@@ -58,7 +58,7 @@ const get = async (admin) => (await api('GET', 'catalog', admin)).json();
 const member = cookieOf(await login('/login', vars.PRIVATE_PASSWORD));
 {
   const page = await (await call('GET', '/', { cookie: member })).text();
-  ok('招待者：旧形式の曲目でMannerを表示', page.includes('Manner') && /\/audio\/manner\?v=/.test(page));
+  ok('招待者：旧形式の曲目でMannerを表示', page.includes('Manner') && /\/audio\/manner\.mp3\?v=/.test(page));
   const a = await call('GET', '/audio/manner', { cookie: member });
   ok('招待者：Mannerを再生できる（中身一致）', a.status === 200 && sha(Buffer.from(await a.arrayBuffer())) === sha(manner));
   ok('招待者：未入室は401', (await call('GET', '/audio/manner')).status === 401);
@@ -128,7 +128,7 @@ const oldPage = await (await call('GET', '/', { cookie: member })).text();
   const a = await call('GET', '/audio/manner', { cookie: member });
   ok('差し替え：招待者には新しい音源が届く', sha(Buffer.from(await a.arrayBuffer())) === sha(v1));
   const newPage = await (await call('GET', '/', { cookie: member })).text();
-  const vOld = /\/audio\/manner\?v=([^"&]+)/.exec(oldPage)[1], vNew = /\/audio\/manner\?v=([^"&]+)/.exec(newPage)[1];
+  const vOld = /\/audio\/manner\.mp3\?v=([^"&]+)/.exec(oldPage)[1], vNew = /\/audio\/manner\.mp3\?v=([^"&]+)/.exec(newPage)[1];
   ok('差し替え：音源のアドレスが変わる（古いキャッシュを使わない）', vOld !== vNew);
   ok('差し替え：配信は保存禁止（no-store）', (a.headers.get('cache-control') ?? '').includes('no-store'));
   ok('差し替え：旧音源はすぐには消さず、削除待ちとして記録', existsSync(path.join(r2, 'audio', 'manner.mp3')) && catalogFile().retired.some(x => x.file === 'audio/manner.mp3' && x.reason === 'replaced'));
@@ -163,7 +163,8 @@ const oldPage = await (await call('GET', '/', { cookie: member })).text();
   view = await get(admin);
   ok('並べ替え：曲が欠けたり増えたりした一覧は拒否（409）', (await api('POST', 'order', admin, { rev: view.rev, ids: view.songs.slice(1).map(s => s.id) })).status === 409);
   const r = await api('POST', 'order', admin, { rev: view.rev, ids: ['manner', ...view.songs.map(s => s.id).filter(i => i !== 'manner')] });
-  ok('並べ替え：保存され、招待者の一覧にも反映', r.status === 200 && (await (await call('GET', '/', { cookie: member })).text()).indexOf('Manner') < (await (await call('GET', '/', { cookie: member })).text()).indexOf('Distance'));
+  const memberPage = await (await call('GET', '/', { cookie: member })).text();
+  ok('並べ替え：登録順は保存、招待者一覧は曲名順', r.status === 200 && catalogFile().songs[0].id === 'manner' && memberPage.indexOf('Distance') < memberPage.indexOf('Manner'));
   view = await r.json();
 }
 // ── 5. Remove and restore ──

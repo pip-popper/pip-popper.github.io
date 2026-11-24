@@ -1,19 +1,24 @@
 // PIP POPPER PRIVATE — page templates. Same B-3 look as the official site:
 // public/assets/site.css is copied from src/site.css by `node private/tools/private.mjs assets`.
+import { audioFormat } from './audio.js';
+import { sortedSongs } from './song-order.js';
 const SITE = 'https://pip-popper.github.io/';
 const esc = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const no = i => String(i + 1).padStart(2, '0');
 // Changes when the audio is replaced, so the new audio gets a new address (never an old copy from any cache).
 const audioVersion = s => String(s.sha256 ?? s.audioUpdatedAt ?? '').slice(0, 16);
+// Private lyrics are stored in the R2 catalog, never in the public site's data.
+const lyricsText = s => typeof s.lyrics === 'string' ? s.lyrics : '';
+const coverUrl = (s, base='') => s.coverKey ? `${base}/jacket/${encodeURIComponent(s.id)}` : s.cover || '';
 const wordmark = `<span class="wordmark"><span class="wm-pip">PIP</span><span class="wm-popper">POPPER</span></span>`;
 const LOCK = `<svg class="pv-lock" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>`;
 
-const page = (title, extraClass, body, head = '') => `<!doctype html>
+const page = (title, extraClass, body, head = '', indexable = false) => `<!doctype html>
 <html lang="ja" class="js page-track page-private${extraClass}" data-logo="b">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
+${indexable?'':'<meta name="robots" content="noindex, nofollow">'}
 <title>${title}</title>
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
@@ -51,42 +56,52 @@ export const loginPage = ({ error = '' }) => page('PIP POPPER PRIVATE', ' page-g
   <a class="back" href="${SITE}">← 公式サイトへ戻る</a>
 </main>`);
 
-export const libraryPage = ({ songs }) => page('ライブラリ｜PIP POPPER PRIVATE', ' page-library', `<header class="topbar">
-  <a class="topbar-brand" href="${SITE}" aria-label="PIP POPPER 公式サイトへ">${wordmark}</a>
-  <nav aria-label="PRIVATE">
-    <a href="${SITE}">公式サイト</a>
-    <form method="post" action="/logout"><button class="pv-logout" type="submit">退室</button></form>
+export const libraryPage = ({ songs, publicMode=false, base='', siteUrl=SITE }) => page(publicMode?'一般視聴｜PIP POPPER':'ライブラリ｜PIP POPPER PRIVATE', ' page-library', `<header class="topbar">
+  <a class="topbar-brand" href="${esc(siteUrl)}" aria-label="PIP POPPER 公式サイトへ">${wordmark}</a>
+  <nav aria-label="${publicMode?'一般視聴':'PRIVATE'}">
+    <a href="${esc(siteUrl)}">公式サイト</a>
+    ${publicMode?'':'<form method="post" action="/logout"><button class="pv-logout" type="submit">退室</button></form>'}
   </nav>
 </header>
 <main class="pv-library">
   <header class="pv-head">
-    <p class="section-label"><span class="label-en">${LOCK}Private Library</span><span class="label-ja">招待者専用ライブラリ</span></p>
-    <p class="works-count"><span>${songs.length}</span> 曲</p>
+    <p class="section-label"><span class="label-en">${publicMode?'Public Listening':`${LOCK}Private Library`}</span><span class="label-ja">${publicMode?'一般視聴':'招待者専用ライブラリ'}</span></p>
+    <p class="works-count"><span>${songs.length}</span> 曲 <small class="pv-order-label">あいうえお順</small></p>
   </header>
   ${songs.length ? `<section class="pv-player" aria-label="選択中の曲と再生操作" hidden>
     <p class="pv-player-state" role="status" aria-live="polite">曲を選んで再生</p>
     <h2 class="pv-player-title"></h2>
     <div class="pv-player-controls"></div>
+    <a class="pv-listening-link" href="#pv-listening">歌詞・ジャケットを見る ↓</a>
+  </section>
+  <div class="pv-library-content">
+  <section id="pv-listening" class="pv-listening" aria-label="ジャケットと歌詞" hidden>
+    <div class="pv-jacket pv-current-jacket"><span class="jacket-fallback">ジャケット未登録</span><img width="640" height="640" alt="" hidden></div>
+    <div class="pv-lyrics-panel"><h3>歌詞</h3><div class="pv-current-lyrics" tabindex="0" aria-label="選択曲の歌詞"${publicMode?' data-empty-message="公開歌詞はありません。"':''}></div><a class="pv-public-lyrics" target="_blank" rel="noopener noreferrer" hidden>公式サイトの歌詞・作品紹介を見る ↗</a><section class="pv-impression" hidden><h3>AIの感想</h3><div class="pv-current-impression"></div></section></div>
   </section>
   <ol class="pv-list pv-library-list" aria-label="楽曲一覧">
-    ${songs.map((s, i) => `<li class="pv-item">
-      <span class="pv-jacket"><span class="jacket-fallback">${esc(s.title)}</span>${s.cover ? `<img src="${esc(s.cover)}" width="640" height="640" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">` : ''}</span>
+${sortedSongs(songs).map((s, i) => { const format=audioFormat(s); const audioUrl=`${base}/audio/${esc(s.id)}${format?'.'+format.ext:''}`; return `<li class="pv-item">
+      <span class="pv-jacket"><span class="jacket-fallback">${esc(s.title)}</span>${coverUrl(s,base) ? `<img src="${esc(coverUrl(s,base))}" width="640" height="640" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">` : ''}</span>
       <div class="pv-body">
         <p class="pv-no"><span>${no(i)}</span></p>
         <h2 class="pv-song">${esc(s.title)}</h2>
-        <button class="pv-select" type="button" hidden aria-label="${esc(s.title)}を再生">再生する</button>
-        <audio class="pv-audio" controls preload="none" src="/audio/${esc(s.id)}?v=${esc(audioVersion(s))}">お使いのブラウザでは再生できません。</audio>
-        <a class="pv-dl" href="/audio/${esc(s.id)}?download=1&amp;v=${esc(audioVersion(s))}" download>MP3をダウンロード <span aria-hidden="true">↓</span></a>
+        <span class="pv-song-lyrics" hidden>${esc(lyricsText(s))}</span>
+        ${typeof s.impression==='string'&&s.impression&&(publicMode||['public','private','both'].includes(s.impressionScope))?`<span class="pv-song-impression" hidden>${esc(s.impression)}</span>`:''}
+        ${!publicMode && s.cover === `${SITE}assets/covers/${s.id}-640.jpg` ? `<span class="pv-public-work" hidden>${esc(`${SITE}tracks/${s.id}/`)}</span>` : ''}
+        <button class="pv-select" type="button" hidden aria-label="${esc(s.title)}を再生">▶ 再生</button>
+        <audio class="pv-audio" controls preload="none" src="${audioUrl}?v=${esc(audioVersion(s))}">お使いのブラウザでは再生できません。</audio>
+        ${publicMode?'':format?`<a class="pv-dl" href="${audioUrl}?download=1&amp;v=${esc(audioVersion(s))}" download="${esc(format.filename)}">${format.label}をダウンロード <span aria-hidden="true">↓</span></a>`:'<span class="pv-dl">音源形式を確認してください</span>'}
       </div>
-    </li>`).join('\n    ')}
-  </ol>` : '<p class="pv-empty">現在、登録されている音源はありません。</p>'}
-  <a class="back" href="${SITE}">← 公式サイトへ戻る</a>
+    </li>`; }).join('\n    ')}
+  </ol>
+  </div>` : '<p class="pv-empty">現在、登録されている音源はありません。</p>'}
+  <a class="back" href="${esc(siteUrl)}">← 公式サイトへ戻る</a>
 </main>
 <footer class="site-foot">
-  <a class="foot-brand" href="${SITE}">${wordmark}</a>
-  <nav aria-label="フッター"><a href="${SITE}">公式サイト</a></nav>
+  <a class="foot-brand" href="${esc(siteUrl)}">${wordmark}</a>
+  <nav aria-label="フッター"><a href="${esc(siteUrl)}">公式サイト</a></nav>
 </footer>
-<script src="/assets/private.js" defer></script>`);
+<script src="/assets/private.js" defer></script>`, '', publicMode);
 
 export const messagePage = message => page('PIP POPPER PRIVATE', ' page-gate', `<main class="pv-gate">
   <h1 class="pv-title">${wordmark}<span class="pv-word">${LOCK}PRIVATE</span></h1>
@@ -127,6 +142,7 @@ export const adminPage = () => page('管理｜PIP POPPER PRIVATE', ' page-librar
     </div>
   </header>
   <p class="ad-status" id="ad-status" role="status" aria-live="polite"></p>
+  <p class="ad-note">ここでは登録順を管理します。招待者の楽曲一覧は曲名の読みで自動整列します（よみがなはWindows管理ツールで設定できます）。</p>
   <ol class="pv-list ad-list" id="ad-list" aria-label="登録済みの曲"></ol>
   <p class="pv-empty" id="ad-empty" hidden>まだ曲がありません。「＋ 曲を追加」から登録できます。</p>
   <section class="ad-removed" id="ad-removed" hidden aria-labelledby="ad-removed-title">

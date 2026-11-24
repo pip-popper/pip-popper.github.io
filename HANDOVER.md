@@ -7,22 +7,48 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 | 項目 | 内容 |
 |---|---|
-| 担当AI | Claude Code（Producerの指示でChatGPT Workから交代、2026-11-22） |
-| 状態 | PRIVATE一覧改善を本番反映済み（c44a4e36）。Producerの実機確認待ち |
+| 担当AI | 本ChatGPT Work（PIP POPPER公式サイト専用開発、Producer承認、2026-11-22） |
+| 状態 | 第1〜第3段階のローカル実装・模擬検証および試作品プレビュー準備完了。本Work単独担当。Producer実ブラウザ確認・Git保存・本番反映は保留。楽曲掲載候補は保護。 |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
-| 開始時HEAD | 3f103e2（ChatGPT Workの未コミット差分＝PRIVATE一覧改善とEXE化を受領） |
+| 開始時HEAD | 6d8ca8299673a3c7cb1a57a098372038ab597a8a |
 | 復元点 | `1a0b059`（管理ツール導入前）。バックアップ bundle は `..\PIP POPPER保守バックアップ\GitHubリポジトリ` |
 | 未コミット差分と所有者 | EXE化（ChatGPT Workの成果、未commitのまま保護・未検証の部分あり）：.gitignore の EXE 許可行、README.md、build.mjs、manager/README.md・server.mjs・test-manager.mjs、manager/EXE-VERIFICATION.md・Launcher.cs・build-launcher.ps1・test-launcher.mjs、HANDOVER.md の EXE 記録2件。PRIVATE一覧改善は commit 済み |
 | 更新日 | 2026-11-22 |
+| Git保存 | .git読取り専用のため保留。Producer明示指示により本記録の保存をもって担当移管成立、commitは後工程。 |
+| 本Workの差分 | 第1段階PRIVATE鑑賞画面：private/worker/src/pages.js・index.js、private/worker/public/assets/private.css・private.js、private/dev/test-library.mjs、private/README.md。第2段階：同pages.js・private.js・private.css・test-library.mjs・private/README.mdの追記、private/worker/src/admin.js、manager/private-lyrics.mjs、manager/ui/app.js・app.css、manager/server.mjs・manager/README.md・.gitignoreの歌詞関連追記。第3段階：manager/release-status.mjs・test-release-status.mjs（新規）、manager/ui/app.js・app.css、manager/server.mjs・manager/README.md・.gitignore・private/README.md・本記録の追記。旧EXE差分・楽曲候補は保護。共有ファイルは差分を分けてGit保存すること。 |
 
 ## 進捗
+
+- 2026-11-23 新曲掲載登録をローカル実装。体系13.0.0照合。管理ツール「＋ 新曲を登録」、新規ID・基本/公開情報・状態、PNG/JPEG選択と表示用JPG作成、画像なし下書き、版保存/復元、公開範囲別3プレビュー、PC/スマホ相当、公開状況一覧連携。非公開 `.manager/song-registrations/<ID>/versions/<rev>` と現在版ポインターで保護。公開準備完了時だけ許可済みの公式HP候補・音源未承認の一般視聴候補・PRIVATE候補を非公開保存。歌詞/AI感想の独立範囲、非公開情報漏えい防止、公開済み実状態は設定不可。新曲登録・画像版・誤保存/復元・DOM操作・既存公開/PRIVATE/公開管理回帰・BATチェック合格。既存実データ・本番docs/R2/GitHub不変。実ブラウザ画像変換・HTTP結合・Git保存・正式音源ID連携は残工程。詳細と正式統合手順はmanager/README.md。今回差分：manager/song-registration.mjs・test-song-registration.mjs、manager/server.mjs・release-status.mjs・ui/app.js・app.css・prototype-preview.mjs、private/worker/src/pages.js・public/assets/private.js・private.css、public-listening/approval.mjs・worker.mjs・test.mjs・README.md、.gitignore・manager/README.md・本記録。旧成果物は保護。
+
+- 2026-11-23 Producer指示の一般公開HP3切替・一般視聴をローカル実装。体系13.0.0照合。既存公開済みアーカイブ25曲の掲載は不変、新規公式掲載と公開歌詞に明示承認ゲート。一般視聴は独立Worker候補、`PUBLIC_BUCKET` の明示許可曲だけを新しいレコードに整形、歌詞・ジャケット別承認、PRIVATE binding未参照。試作品BATから既存公式HP資料の別出力と架空許可済み3曲を確認可能。公開URL未設定/OFF、本番音源未登録。公開3切替・境界・音声Range・試作品・既存PRIVATE/管理機能模擬検証合格。変更ファイル、仕様、Claude正式統合残工程は `public-listening/README.md` を正とする。既存EXE・第1〜3段階差分保護、本番docs・R2・Cloudflare・pushなし、Git保存・実ブラウザ確認保留。
+
+- 2026-11-22 PRIVATE楽曲一覧あいうえお順をローカル実装。体系13.0.0照合。表示用配列のみ整列（かな→A–Z→数字自然順→読み未設定漢字・その他、かな/カナと全半角を同一読み扱い）、任意のreadingを管理ツールから曲ID・revで保存。読みだけ変更時は歌詞を送信せず、登録順・他データは不変。既存Web管理登録順は維持。試作品30曲に混在タイトル・よみがな例を追加、同じBATで確認可。模擬一覧・保存/クリア・不正/競合・再生・ダウンロード・第1〜3段階回帰、BATチェック合格。本番・一般公開サイト・Gitは変更なし。追加差分：private/worker/src/song-order.js・pages.js・admin.js、private/worker/public/assets/private.css、manager/private-lyrics.mjs・ui/app.js・prototype-preview.mjs、private/dev/test-library.mjs・test-admin.mjs、既存README/本記録の追記。
+
+- 2026-11-22 Producerの実ブラウザ指摘2件を反映。正式標準13.0.0照合。PRIVATE楽曲カードを▶再生／⏸一時停止のトグルにし、上部audioと同期・位置保持・単独再生を維持。MP3/WAVのURL拡張子・HTML download名・MIME・Content-Dispositionを統一し、試作品独自のヘッダー上書きを廃止。旧URL互換あり、実音源再変換なし。旧実機保存ファイル未取得のため直接原因の断定はしない。DOM・模擬MP3/WAV実バイト・Range・未入室拒否・BAT・第1〜3段階の回帰および既存61/53合格。Producer実ブラウザでの再確認待ち。本Work追記はprivate/worker/src/audio.js・index.js・pages.js、private/worker/public/assets/private.js・private.css、private/dev/test-admin.mjs・test-library.mjs、manager/prototype-preview.mjs、private/README.md・本記録。旧成果物・本番・Git保存は変更なし。
+
+- 2026-11-22 Producer指示で第1〜3段階の試作品プレビューを準備。体系13.0.0取得・照合。起動入口は正式フォルダーの `PIP POPPER試作品プレビューを起動.bat`（UTF-8 BOM/CRLF、同梱Node、自己参照）。`manager/prototype-preview.mjs` がlocalhostの空きポートを使用し、実際のUI・Workerを架空30曲・WAV合成音・模擬R2・試作品専用の `.manager/prototype-preview/run-.../` で操作可能にする。PC/スマホ幅の案内、歌詞保存連携、公開状況保存、本番操作拒否。BAT経由のチェックで待受けと模擬ルーター操作合格。実ブラウザ操作は未確認、Producer実機で確認。本番・既存実データ・通常管理記録を変更せず、Git保存保留。今回の追加はこのBAT・manager/prototype-preview.mjs、.gitignore許可行、manager/README.md・private/README.md・本記録の追記のみ。
+
+- 2026-11-22 第3段階の楽曲公開状況管理をローカル実装。体系13.0.0取得・照合・単独担当確認。公開区分3種＋未設定、歌詞範囲独立、配信先とURL、検索/絞り込み/集計、実際の確認情報と管理指定の不一致表示、曲IDとrevで保存/再読込み。非公開ローカル `.manager/release-status.json`（初回保存時のみ作成、前版バックアップ）で管理し、Git・公開サイト・本番R2は未変更。既存ローカル公式サイト25曲（歌詞24、ソース配信URL0）、全25曲未設定、PRIVATE本番曲目・配信稼働状態未取得。201曲模擬データと実際の管理画面DOM模擬で保存・再読込み・絞り込み・URL編集・保護を検証。第1/2段階回帰合格。実ブラウザ・HTTP結合・Git保存は既知の制限で未確認。第1〜3段階の本番反映手順はprivate/README.mdに記載。Cloudflare・R2・push・実際の公開状態変更なし。
+
+- 2026-11-22 第2段階PRIVATE歌詞管理をローカル実装。体系13.0.0取得・照合と単独担当を確認。Windows管理ツールのPRIVATE管理に選曲・登録/編集・全文確認・保存・結果表示を追加。曲ID＋rev＋R2条件付き更新で競合・誤保存を防止。歌詞の改行保持、公開歌詞の重複登録を避ける公式作品リンク、認証済み鑑賞画面への連携。模擬環境のテンプレート/再生、認証/画像、管理通信/Worker保存、管理画面DOMの4群合格。既存PRIVATE管理61・パスワード53も全合格。既存EXE化の11ファイル（共有server/README/.gitignore/HANDOVERは既存差分を残して追記）・第1段階成果保護。既知のHTTP・Git制限は再試行せず、実ブラウザ未確認、commit保留。第3段階の公開区分と歌詞表示先を別管理する設計方針をprivate/README.mdに記録。Cloudflare本番デプロイ、R2本番変更、push、パスワード変更は未実施。
+
+- 2026-11-22 PRIVATE鑑賞画面をローカル実装。既存3列一覧・再生操作と曲ごとの位置保持を維持し、選択した曲のジャケット・歌詞を切替表示。PCでは左右の鑑賞・選択欄、スマホでは再生欄から鑑賞欄へ戻る操作。任意の非公開R2曲目lyricsと限定画像coverKeyに対応（本番データ作成なし）。50曲テンプレート・DOM模擬・通常入室した模擬Workerの画像配信、未入室の拒否・歌詞非表示・no-store合格。構文・差分検査合格。実ブラウザ/実音声はlocalhost制限で未確認。Git保存は権限不足で保留。次工程は実物表示検証、歌詞編集機能と公開区分管理。本番変更・pushなし。
+
+- 2026-11-22 Producer明示承認で専用Workへ移管。旧Work（6b02416a-d98c-83ec-abec-7890a3d2b0a1）の停止・最終報告を送信元が確認し、Producer自身も停止を確認。Claudeは前作業終了。体系13.0.0の3文書Version・SHA-256照合、指示適合、HEAD 6d8ca82、旧担当11ファイルと所有者を照合。今回の範囲はPRIVATEの鑑賞画面、続く歌詞管理・公開区分管理。既存EXE化・楽曲候補を保護。Git保存は権限不足で保留、Producer指示により通常ファイル編集を続行。本番デプロイ・R2変更・パスワード変更・pushは承認外。
+
+- 2026-11-22 Producer指示で本Workが楽曲追加を単独受領。体系13.0.0／PACS12.1.1／Gate13.0.0／Environment3.10.3のVersion・SHA-256を照合し指示と適合。開始HEAD 6d8ca82、EXE化差分の所有者と保護を確認。正式歌詞（今回の本文）を .manager/song-import/lyrics.txt に保持し、登録候補 .manager/song-import/low-income-salaryman-yori/track.json を作成（9段落・空行除く99行、改稿なし、音源・配信URL・発売日・紹介文・背景はnull）。正式画像は添付「夕暮れの低所得サラリーマン.png」（libfile_86ed8e5eed4081918e2a98dce885cbea、file_000000004eb88206a9ccd82fcaaca804、3,430,640 bytes）。転送準備は成功したがローカルの正規転送ヘルパーがdownload failed: DNS。直接配置指定も署名URL方式になりローカルbytes未取得。画像不在で通常ビルドを壊さないよう、候補はまだtracks/へ登録していない。作業前生成は25曲で成功（.manager/song-before）。docs・tracks・PRIVATEは未変更、EXE hash維持、Git保存・push・本番操作なし。今回の所有差分は本記録と.manager/song-import内の候補。残工程：正規経路で添付画像を取得し対象曲フォルダへcover.pngとして無改変コピー→既存tools/make-web-images.pyと同じPillow設定（web品質86、640px品質84、progressive・optimize）を新曲だけに適用→候補JSONをtracks/low-income-salaryman-yori/へ配置→別出力生成で歌詞と影響差分を確認→docs生成→今回分だけローカルcommit。対象のjpg・png・JSON・生成HTMLは既存.gitignore許可に該当。既存EXE差分と混ぜない。Claude再引継ぎはProducerの担当交代指示後。公開は別途承認。
 
 - 2026-11-22 Producerの承認でPRIVATE一覧改善を本番デプロイ（5639c9c、Version `c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`、復元点 `299d45f8-71aa-4520-b0e1-83b3c1274433`）。更新は private.css・private.js・pages.js のみ。本番の配信物がcommitと一致、入口200・未ログイン音源401・管理画面200・管理API401。R2はデプロイで変更なし（曲目 rev 78・23曲は当日10:09までの管理画面での追加、照合ファイルあり＝管理ツールでの変更済み）。
 
 - 2026-11-22 Claude Code：PRIVATE一覧改善を検証（模擬環境の実ブラウザで PC・タブレット・スマホ幅、架空30曲、実音声の再生・一時停止・位置変更・切替、認証・管理への影響なし）。小修正1件（開いた直後の状態表示）。テスト：一覧・PRIVATE既存61・パスワード53 合格。PRIVATE分だけ commit（EXE化の差分は未commitのまま保護）。本番未反映。
 
 - 2026-11-22 PRIVATE一覧改善：招待者ページだけPC3列／1050px以下2列／379px以下1列。上部に選択曲と既存のネイティブaudioを集約しsticky表示（低い横向き画面では通常配置）。選択・再生中を赤い枠と文字で表示。曲・順序・音源URL・認証・管理処理は不変。変更は private/worker/src/pages.js、public/assets/private.css・private.js、private/dev/test-library.mjs、許可行の.gitignore、本記録とprivate/README.md。既存EXE差分は保護。管理61・パスワード53の模擬テスト合格、50曲と長い曲名のHTML・DOM模擬操作テスト合格。PC・スマホの実描画／実音声の再生・シークは未確認（Edgeのheadless出力取得不可）。既知のHTTP／Git権限制限は再試行せず、未コミット・未push・未デプロイ。Claudeへの残工程はprivate/README.md末尾。担当交代はProducerの指示後にPACS-10で行う。
+
+- 2026-11-22 続行指示を同じWorkで受領し、標準13.0.0のVersion／hash・担当・HEAD・既存差分を照合。HTTPテストとGit保存を再実行したが、ローカル接続EACCESとindex.lock書込み拒否が継続。現在の権限設定では承認再申請不可。完成扱いにはせず、詳細を manager/EXE-VERIFICATION.md に追記。PRIVATE本番・GitHub公開への操作なし。
+
+- 2026-11-22 Producerの担当移管指示により、Claude未着手のEXE化を既存ChatGPT Workが単独で受領。着手HEAD 3f103e2・未push 8件・作業ツリー正常を照合。Windows GUIランチャーと同梱Node/Gitを正式配置。正式フォルダと日本語・空白を含む移動先で、起動・重複再利用・ランチャー消失時のサーバー終了を確認。PRIVATE模擬テスト61＋53合格。ローカルHTTP接続EACCESにより管理ツール77項目テストは0合格・1例外で中断（不合格扱い）。.git/index.lock書込み拒否でコミット未作成。Cloudflare・R2・本番パスワード・公開ファイル不変。詳細 manager/EXE-VERIFICATION.md。
 
 - 2026-11-22 管理ツール v1（文字情報の編集・保存・プレビュー・公開・取り消し）を実装。`content/site.json` を新設し、`build.mjs` 内の通常編集する文言を移動（生成されるサイトは全167ファイルが変更前と同一）。README・CLAUDE.md・AGENTS.md・本ファイルを整備。自動テスト 44項目合格、検証用の送信先で公開・取り消しを確認。本物の GitHub への公開は未実施（Producerの承認待ち）。
 

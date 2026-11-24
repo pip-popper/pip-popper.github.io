@@ -172,6 +172,9 @@ main { position: relative; z-index: 1; }
 .works-count { font: 500 14px/1 var(--f-body); letter-spacing: .14em; color: var(--muted); }
 .works-count span { font: 500 clamp(30px, 3vw, 44px)/1 var(--f-en); color: var(--ink); margin-right: .1em; }
 .work-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(36px, 4.5svh, 56px) clamp(20px, 2.6vw, 40px); }
+.works-tools { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:0 0 24px; color:var(--ink); font:500 14px/1.5 var(--f-body); }
+.works-tools select { min-height:44px; padding:8px 15px; border:1px solid var(--line); background:#151315; color:var(--ink); font:inherit; }
+.works-tools .more { margin-left:auto; }
 .work-link { display: grid; gap: 12px; }
 .work-jacket { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: linear-gradient(140deg, #2a1215, #0e1222 70%);
   box-shadow: 0 30px 70px -36px rgba(0,0,0,.95); }

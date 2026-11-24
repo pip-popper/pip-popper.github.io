@@ -17,6 +17,14 @@
 !/src/
 /src/**
 !/src/site.css
+!/src/works-sort.js
+!/docs/assets/works-sort.js
+!/public-listening/
+/public-listening/**
+!/public-listening/worker.mjs
+!/public-listening/approval.mjs
+!/public-listening/test.mjs
+!/public-listening/README.md
 !/src/stage.jpg
 !/tools/
 /tools/**
@@ -94,14 +102,22 @@
 !/content/
 /content/**
 !/content/site.json
+!/content/public-listening.json
 !/README.md
 !/CLAUDE.md
 !/AGENTS.md
 !/HANDOVER.md
 !/PIP POPPER管理ツールを起動.bat
+!/PIP POPPER試作品プレビューを起動.bat
 !/manager/
 /manager/**
 !/manager/server.mjs
+!/manager/private-lyrics.mjs
+!/manager/release-status.mjs
+!/manager/song-registration.mjs
+!/manager/test-song-registration.mjs
+!/manager/test-release-status.mjs
+!/manager/prototype-preview.mjs
 !/manager/test-manager.mjs
 !/manager/README.md
 !/manager/Launcher.cs

@@ -6,6 +6,7 @@ import { loadCatalog, commit, storeUpload, cleanup, RETIRE_GRACE, RESTORE_LIMIT,
 import { adminLoginPage, adminPage, messagePage } from './pages.js';
 import { loadCredential, saveCredential, removeCredential, MIN_PASSWORD, CREDENTIAL_KEY } from './credential.js';
 import { serveAudio } from './audio.js';
+import { validReading, sortedSongs } from './song-order.js';
 
 const ADMIN_COOKIE = 'pp_admin';
 const ADMIN_HOURS = 12;
@@ -93,6 +94,30 @@ async function api(request, env, url, path) {
   if (pw) return pw;
   if (path === 'catalog' && method === 'GET') return json(200, view((await loadCatalog(env)).cat));
   if (path === 'works' && method === 'GET') return json(200, { works: await works(env) });
+
+  // PRIVATE lyrics and optional title reading are keyed by the existing song ID. No audio cleanup
+  // is run for this operation; the same conditional catalog write protects edits.
+  if (path === 'lyrics' && method === 'GET') {
+    const { cat } = await loadCatalog(env);
+    return json(200, { rev: cat.rev, songs: sortedSongs(cat.songs).map(s => ({ id: s.id, title: s.title,
+      lyrics: typeof s.lyrics === 'string' ? s.lyrics : '', reading: typeof s.reading === 'string' ? s.reading : '', publicWork: typeof s.cover === 'string' && s.cover === `${SITE}assets/covers/${s.id}-640.jpg` })) });
+  }
+  const lyricMatch = /^songs\/([a-z0-9-]+)\/lyrics$/.exec(path);
+  if (lyricMatch && method === 'POST') {
+    const body = await bodyJson(request);
+    const hasLyrics = body && Object.hasOwn(body, 'lyrics'), hasReading = body && Object.hasOwn(body, 'reading');
+    if (!body || !Number.isSafeInteger(body.rev) || body.rev < 0 || body.id !== lyricMatch[1] || (!hasLyrics && !hasReading) || (hasLyrics && (typeof body.lyrics !== 'string' || body.lyrics.length > 100000)) || body.confirm !== true)
+      throw new HttpError(400, '曲・歌詞・確認内容を確認してください（歌詞は10万文字以内）。');
+    if (hasReading && !validReading(body.reading)) throw new HttpError(400, 'よみがなは100文字以内のひらがな・カタカナ・英数字で入力してください。');
+    const { cat, result } = await commit(env, body.rev, c => {
+      const song = c.songs.find(s => s.id === lyricMatch[1]);
+      if (!song) throw new HttpError(404, 'この曲は登録されていません。');
+      if (hasLyrics) song.lyrics = body.lyrics;
+      if (hasReading) song.reading = body.reading.trim();
+      return { id: song.id, title: song.title, lyrics: typeof song.lyrics === 'string' ? song.lyrics : '', reading: typeof song.reading === 'string' ? song.reading : '' };
+    });
+    return json(200, { ok: true, rev: cat.rev, song: result, orderedIds: sortedSongs(cat.songs).map(s=>s.id), message: '変更した内容を保存しました。' });
+  }
 
   let m;
   if ((m = /^songs\/([a-z0-9-]+)\/audio$/.exec(path)) && method === 'GET') return serveAudio(request, env, m[1], url);

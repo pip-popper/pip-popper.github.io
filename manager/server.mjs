@@ -19,11 +19,14 @@ import { readFile, writeFile, rename, mkdir, readdir, stat, copyFile, rm } from 
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { privateLyricsCall } from './private-lyrics.mjs';
+import { listReleaseStatus, saveReleaseStatus, sanitizePrivateRows } from './release-status.mjs';
+import { registrationAction, listRegistrations } from './song-registration.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const ROOT = path.resolve(arg('--root') ?? path.join(HERE, '..'));
-const PORT = Number(arg('--port') ?? 18990);
+let PORT = Number(arg('--port') ?? 18990);
 const OPEN = !process.argv.includes('--no-open') && !process.env.PP_MANAGER_NO_OPEN;   // the env form is for checking the BAT without opening a browser
 const BRANCH = 'main';
 const REMOTE = 'origin';
@@ -47,7 +50,7 @@ const PUBLISH_RE = /^(tracks\/[a-z0-9-]+\/track\.json|albums\/albums\.json|conte
 
 // ── Git ───────────────────────────────────────────────────────────────
 function git(args, opts = {}) {
-  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, maxBuffer: 64 << 20, ...opts });
+  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd: ROOT, windowsHide: true, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, maxBuffer: 64 << 20, ...opts });
   return { ok: r.status === 0, out: (r.stdout ?? '').replace(/\s+$/, ''), err: (r.stderr ?? '').trim() };   // keep leading spaces (status codes)
 }
 const changedFiles = () => {
@@ -198,7 +201,7 @@ function runBuild(outDir) {
   return new Promise(resolve => {
     const args = [path.join(ROOT, 'build.mjs')];
     if (outDir) args.push('--out', outDir);
-    const p = spawn(process.execPath, args, { cwd: ROOT });
+    const p = spawn(process.execPath, args, { cwd: ROOT, windowsHide: true });
     let log = '';
     p.stdout.on('data', d => log += d); p.stderr.on('data', d => log += d);
     p.on('close', code => {
@@ -316,8 +319,8 @@ async function undo({ sha: s }) {
   if (!h || !h.undoable) return { status: 400, body: { error: 'この保存点は管理ツールでは取り消せません。' } };
   if (changedFiles().length) return { status: 409, body: { error: '公開していない変更があります。先に「公開する」か「変更を破棄」をしてください。' } };
   const files = git(['show', '--name-only', '--format=', s]).out.split('\n').filter(f => DATA_RE.test(f));
-  const patch = spawnSync('git', ['-c', 'core.quotepath=false', 'diff', `${s}^`, s, '--', ...files], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }).stdout;
-  const a = spawnSync('git', ['apply', '-R', '--whitespace=nowarn'], { cwd: ROOT, input: patch, encoding: 'utf8' });
+  const patch = spawnSync('git', ['-c', 'core.quotepath=false', 'diff', `${s}^`, s, '--', ...files], { cwd: ROOT, windowsHide: true, encoding: 'utf8', maxBuffer: 64 << 20 }).stdout;
+  const a = spawnSync('git', ['apply', '-R', '--whitespace=nowarn'], { cwd: ROOT, windowsHide: true, input: patch, encoding: 'utf8' });
   if (a.status !== 0) return { status: 409, body: { error: 'その後に同じ箇所が変更されているため、自動では取り消せません。' } };
   return { status: 200, body: { ok: true, message: '取り消した内容を「公開していない変更」に入れました。プレビューで確認してから公開してください。' } };
 }
@@ -366,6 +369,19 @@ async function changePrivatePassword({ newPassword, confirmPassword, adminPasswo
 }
 const restorePrivatePassword = ({ adminPassword, confirm }) => privateCall(adminPassword, 'private-password/restore', { confirm });
 
+// The inventory is held only in this local server process. Lyrics and credentials
+// are not part of the release-status data returned or persisted.
+let releasePrivateRows = null;
+async function releaseStatusList(body) {
+  if (body?.adminPassword !== undefined) {
+    releasePrivateRows = null;
+    const result = await privateLyricsCall(PRIVATE_URL, body);
+    if (result.status !== 200) return result;
+    releasePrivateRows = sanitizePrivateRows(result.body.songs);
+  }
+  return { status: 200, body: await listReleaseStatus(ROOT, releasePrivateRows) };
+}
+
 // ── HTTP ──────────────────────────────────────────────────────────────
 async function log(line) { try { await mkdir(WORK, { recursive: true }); await writeFile(path.join(WORK, 'manager.log'), `${new Date().toISOString()} ${line}\n`, { flag: 'a' }); } catch {} }
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.jpg': 'image/jpeg', '.png': 'image/png', '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' };
@@ -391,14 +407,15 @@ const server = http.createServer(async (req, res) => {
     let body = {};
     if (req.method === 'POST') {
       if (!(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: '形式が正しくありません。' });
-      let raw = ''; for await (const c of req) { raw += c; if (raw.length > 2e6) return send(res, 413, { error: '大きすぎます。' }); }
-      try { body = JSON.parse(raw || '{}'); } catch { return send(res, 400, { error: '形式が正しくありません。' }); }   // never logged: a body may hold a password
+      const limit=url.pathname==='/api/song-registration/save'?30e6:2e6;let length=0;const chunks=[];
+      for await(const c of req){length+=c.length;if(length>limit)return send(res,413,{error:'大きすぎます。'});chunks.push(c);}
+      try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { return send(res, 400, { error: '形式が正しくありません。' }); }   // never logged: a body may hold a password
     }
     const route = `${req.method} ${url.pathname}`;
     if (route === 'GET /api/state') {
       const ch = await describeChanges();
       const up = unpushed();
-      return send(res, 200, { list: await listItems(), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
+      return send(res, 200, { list: await listItems(), registrations:await listRegistrations(ROOT), changes: ch, branch: currentBranch(), head: git(['rev-parse', '--short', 'HEAD']).out,
         pendingPush: up.tool, otherUnpushed: up.other, liveUrl: LIVE_URL, privateUrl: PRIVATE_URL.href, remoteOk: normUrl(remoteUrl()) === normUrl(EXPECTED_REMOTE) });
     }
     if (route === 'GET /api/item') return send(res, 200, await loadItem(url.searchParams.get('type'), url.searchParams.get('id')));
@@ -423,15 +440,26 @@ const server = http.createServer(async (req, res) => {
       else if (route === 'POST /api/check-publish') r = { status: 200, body: { problems: publishProblems() } };
       else if (route === 'POST /api/private/password') r = await changePrivatePassword(body);
       else if (route === 'POST /api/private/restore') r = await restorePrivatePassword(body);
+      else if (route === 'POST /api/private/lyrics/list') r = await privateLyricsCall(PRIVATE_URL, body);
+      else if (route === 'POST /api/private/lyrics/save') {
+        r = await privateLyricsCall(PRIVATE_URL, body, true);
+        if (r.status === 200 && releasePrivateRows) {
+          const cached = releasePrivateRows.find(row => row.id === r.body.song.id);
+          if (cached) cached.privateLyrics = !!r.body.song.lyrics.trim();
+        }
+      }
+      else if (route === 'POST /api/release-status/list') r = await releaseStatusList(body);
+      else if (route === 'POST /api/release-status/save') r = await saveReleaseStatus(ROOT, releasePrivateRows, body);
+      else if (route.startsWith('POST /api/song-registration/')) r = await registrationAction(ROOT,url.pathname.slice('/api/song-registration/'.length),body);
       else if (route === 'POST /api/quit') { send(res, 200, { ok: true }); setTimeout(() => process.exit(0), 200); return; }
       else r = { status: 404, body: { error: '見つかりません。' } };
       // the log names the operation only (for PRIVATE: whether it succeeded); input values are never written
-      if (route.startsWith('POST /api/private/')) log(`${route} status=${r.status}`);
+      if (route.startsWith('POST /api/private/') || route.startsWith('POST /api/release-status/') || route.startsWith('POST /api/song-registration/')) log(`${route} status=${r.status}`);
       else if (r.status === 200) log(`${route} ${JSON.stringify({ type: body.type, id: body.id, sha: body.sha })}`);
       return send(res, r.status, r.body);
     } finally { busy = false; }
   } catch (e) {
-    log(`error ${req.url?.startsWith('/api/private/') ? 'in PRIVATE password operation' : (e?.stack ?? e)}`);
+    log(`error ${req.url?.startsWith('/api/private/') || req.url?.startsWith('/api/release-status/') || req.url?.startsWith('/api/song-registration/') ? 'in private management operation' : (e?.stack ?? e)}`);
     return send(res, 500, { error: '処理できませんでした。もう一度お試しください。' });
   }
 });
@@ -440,7 +468,13 @@ server.on('error', e => {
   else console.log('起動できませんでした：', e.message);
   process.exit(1);
 });
+// The EXE owns this pipe. If it disappears unexpectedly, its own server exits too.
+if (process.argv.includes('--launcher')) {
+  process.stdin.resume();
+  process.stdin.on('end', () => process.exit(0));
+}
 server.listen(PORT, '127.0.0.1', () => {
+  PORT = server.address().port;
   const open = `http://127.0.0.1:${PORT}/#t=${TOKEN}`;
   console.log('PIP POPPER 管理ツールを起動しました。');
   console.log('この黒い画面は、管理ツールを使っている間は閉じないでください（閉じると終了します）。');

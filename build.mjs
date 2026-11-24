@@ -8,6 +8,8 @@
 import { readFile, readdir, writeFile, access, mkdir, stat, copyFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { sortedSongs } from './private/worker/src/song-order.js';
+import { assertArchiveApproval } from './public-listening/approval.mjs';
 
 const root = new URL('./', import.meta.url);
 const argv = process.argv.slice(2);
@@ -15,6 +17,13 @@ const option = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 
 const outArg = option('--out');
 const out = outArg ? new URL(`file:///${(outArg.match(/^[A-Za-z]:/) ? outArg : fileURLToPath(root) + '/' + outArg).replace(/\\/g, '/')}/`) : new URL('docs/', root);
 const published = new URL('docs/', root);
+const listeningConfig = JSON.parse(await readFile(new URL('content/public-listening.json',root),'utf8'));
+const listeningUrl = option('--public-listening-url') ?? (listeningConfig.enabled===true?listeningConfig.url:null);
+if (listeningConfig.enabled===true && !listeningUrl) throw new Error('一般視聴の承認済みURLを設定してください。');
+if (listeningUrl && !(outArg && listeningUrl === '/listen/')) {
+  const target = new URL(listeningUrl);
+  if (target.protocol !== 'https:' || target.username || target.password || target.hostname === 'pip-popper-private.pip-popper-private.workers.dev') throw new Error('一般視聴には承認済みの独立したHTTPS URLを指定してください。');
+}
 const exists = url => access(url).then(() => true, () => false);
 const write = async (path, text) => { const u = new URL(path, out); await mkdir(new URL('./', u), { recursive: true }); await writeFile(u, text, 'utf8'); };
 
@@ -26,7 +35,7 @@ const ids = (await readdir(trackDir, { withFileTypes: true })).filter(e => e.isD
 function gitListedAt(id) {
   try {
     const first = execFileSync('git', ['log', '--diff-filter=A', '--reverse', '--format=%aI', '--', `tracks/${id}/track.json`],
-      { cwd: fileURLToPath(root), encoding: 'utf8' }).trim().split('\n')[0];
+      { cwd: fileURLToPath(root), windowsHide: true, encoding: 'utf8' }).trim().split('\n')[0];
     return first || null;
   } catch { return null; }
 }
@@ -55,9 +64,13 @@ function cleanLinks(id, list) {
 }
 
 const songs = [];
+// Existing archive entries are already public; new entries need explicit approval.
+// The private manager records and R2 catalog are never read by this builder.
+const priorArchive = new Set(JSON.parse(await readFile(new URL('works.json', published),'utf8')).map(s=>s.id));
 for (const id of ids) {
   if (!/^[a-z0-9-]+$/.test(id)) throw new Error(`曲IDは英小文字・数字・ハイフンのみ: ${id}`);
   const data = JSON.parse(await readFile(new URL(`${id}/track.json`, trackDir), 'utf8'));
+  assertArchiveApproval(id,data,priorArchive);
   if (!data.title) throw new Error(`曲名がありません: ${id}`);
   if (data.releaseDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.releaseDate)) throw new Error(`公開日の形式が無効です: ${id}`);
   for (const size of ['web', '640']) if (!await exists(new URL(`${id}/cover-${size}.jpg`, trackDir)))
@@ -402,7 +415,9 @@ const listen = (r, song) => {
 // ── Top page ─────────────────────────────────────────────────────────
 {
   const r = '';
-  const cards = songs.map((s, i) => `<li class="work reveal" style="--i:${i}">
+  const kanaRank = new Map(sortedSongs(songs).map((s,i)=>[s.id,i]));
+  const azRank = new Map(sortedSongs(songs,'az').map((s,i)=>[s.id,i]));
+  const cards = songs.map((s, i) => `<li class="work reveal" style="--i:${i}" data-order-new="${i}" data-order-kana="${kanaRank.get(s.id)}" data-order-az="${azRank.get(s.id)}">
       <a class="work-link" href="${trackUrl(r, s.id)}">
         <span class="work-jacket">${jacket(r, s, { eager: i < 4, small: true })}</span>
         <span class="work-meta"><span class="work-no">${no(i)}</span>${s === latest ? '<span class="work-new">LATEST</span>' : ''}${s.audioPrivate ? '<span class="work-private">音源非公開</span>' : ''}</span>
@@ -461,6 +476,7 @@ ${topbar(r, true)}
       <p class="section-label"><span class="label-en">Works</span><span class="label-ja" id="works-title">楽曲一覧</span></p>
       <p class="works-count"><span>${songs.length}</span> 作品を掲載中</p>
     </header>
+    <div class="works-tools"><label for="works-order">表示順</label><select id="works-order"><option value="new">新着順（掲載順）</option><option value="kana">あいうえお順</option><option value="az">A〜Z順</option></select>${listeningUrl?`<a class="more" href="${esc(listeningUrl)}">一般視聴ページ <span aria-hidden="true">→</span></a>`:''}</div>
     <ol class="work-grid">
     ${cards}
     </ol>
@@ -484,6 +500,7 @@ ${topbar(r, true)}
 ${footer(r, true)}
 ${sharedScript}
 ${messageScript}
+<script src="assets/works-sort.js" defer></script>
 </body>
 </html>
 `);
@@ -766,7 +783,7 @@ ${sharedScript}
 // ── Assets ───────────────────────────────────────────────────────────
 await mkdir(new URL('assets/covers/', out), { recursive: true });
 await mkdir(new URL('assets/history/', out), { recursive: true });
-for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.js'])
+for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.js', 'works-sort.js'])
   await copyFile(new URL(`src/${f}`, root), new URL(`assets/${f}`, out));
 for (const a of albums) {
   if (a.visualSize) for (const [src, dst] of [['visual-web', 'visual'], ['visual-640', 'visual-640']])

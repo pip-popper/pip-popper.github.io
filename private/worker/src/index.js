@@ -60,11 +60,25 @@ async function route(request, env, url) {
     return redirect('/', { 'Set-Cookie': cookie('', 0) });
   }
 
-  const audio = /^\/audio\/([a-z0-9-]+)$/.exec(pathname);
+  const audio = /^\/audio\/([a-z0-9-]+)(?:\.(mp3|wav))?$/.exec(pathname);
   if (audio) {
     if (method !== 'GET') return text(405, '受け付けられないリクエストです。');
     if (!await hasSession(request, env)) return text(401, '入室が必要です。');
-    return serveAudio(request, env, audio[1], url);
+    return serveAudio(request, env, audio[1], url, audio[2]);
+  }
+  const jacket = /^\/jacket\/([a-z0-9-]+)$/.exec(pathname);
+  if (jacket) {
+    if (method !== 'GET') return text(405, '受け付けられないリクエストです。');
+    if (!await hasSession(request, env)) return text(401, '入室が必要です。');
+    const { cat } = await loadCatalog(env);
+    const song = cat.songs.find(s => s.id === jacket[1]);
+    // Only the jacket object assigned to this song is eligible for delivery.
+    const types = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+    const extension = ['jpg', 'png', 'webp'].find(ext => song?.coverKey === `jackets/${jacket[1]}.${ext}`);
+    if (!extension) return text(404, 'ジャケットが見つかりません。');
+    const object = await env.BUCKET.get(song.coverKey);
+    if (!object || object.httpMetadata?.contentType !== types[extension]) return text(404, 'ジャケットが見つかりません。');
+    return new Response(object.body, { headers: { 'Content-Type': types[extension], 'Cache-Control': 'no-store' } });
   }
   if (pathname === '/' && method === 'GET') {
     if (!await hasSession(request, env)) return html(200, loginPage({}));

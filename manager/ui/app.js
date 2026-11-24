@@ -8,7 +8,8 @@
 
   const $ = s => document.querySelector(s);
   const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); for (const k of kids) e.append(k); return e; };
-  let state = null, current = null, edits = new Map();
+  let state = null, current = null, edits = new Map(), privateLyricsDirty = false, privateLyricsBusy = false, releaseDirty = false, releaseBusy = false, registrationDirty=false, registrationBusy=false, registrationId=null;
+  let clearPrivateLyricsPassword = () => {};
 
   async function api(method, url, body) {
     if (method === 'POST') body = body ?? {};                    // the server accepts JSON bodies only
@@ -34,8 +35,9 @@
       d.querySelector('button[value="cancel"]')?.focus();
     });
   }
-  const unsaved = () => edits.size > 0;
+  const unsaved = () => edits.size > 0 || privateLyricsDirty || releaseDirty || registrationDirty;
   async function guard() {
+    if (privateLyricsBusy || releaseBusy || registrationBusy) { toast('処理が終わるまでお待ちください。', 'bad'); return false; }
     if (!unsaved()) return true;
     return (await ask('保存していない入力があります', el('p', { textContent: 'このまま移動すると、保存していない入力は消えます。' }),
       [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '入力を捨てて移動' }])) === 'go';
@@ -73,7 +75,12 @@
     };
     $('#lists').replaceChildren(...group('楽曲', state.list.tracks), ...group('HISTORY（アルバム）', state.list.history),
       ...group('その他の作品', state.list.other), ...group('サイトの文言', state.list.site),
-      ...(q ? [] : [el('h2', { textContent: 'PRIVATE管理' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen), onclick: openPrivate }, el('span', { textContent: 'PRIVATEのパスワード' }))))]),
+      ...(q?[]:[el('h2',{textContent:'新曲掲載準備'}),el('ul',{},el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&!registrationId),onclick:()=>openRegistration()},el('span',{textContent:'＋ 新曲を登録'}))))]),
+      ...((state.registrations??[]).filter(r=>!q||`${r.title} ${r.id}`.toLowerCase().includes(q)).length?[el('h2',{textContent:'登録中の楽曲（未公開）'}),el('ul',{},...(state.registrations??[]).filter(r=>!q||`${r.title} ${r.id}`.toLowerCase().includes(q)).map(r=>el('li',{},el('button',{type:'button',ariaCurrent:String(privateOpen==='registration'&&registrationId===r.id),onclick:()=>openRegistration(r.id)},el('span',{textContent:r.title})))) )]:[]),
+      ...(q ? [] : [el('h2', { textContent: '楽曲公開状況' }), el('ul', {}, el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'release'), onclick: openReleaseStatus }, el('span', { textContent: '全楽曲の公開状況' }))))]),
+      ...(q ? [] : [el('h2', { textContent: 'PRIVATE管理' }), el('ul', {},
+        el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'lyrics'), onclick: openPrivateLyrics }, el('span', { textContent: 'PRIVATE楽曲の歌詞・よみがな' }))),
+        el('li', {}, el('button', { type: 'button', ariaCurrent: String(privateOpen === 'password'), onclick: openPrivate }, el('span', { textContent: 'PRIVATEのパスワード' }))))]),
       ...(q ? [] : [el('h2', { textContent: '固定（変更はAIに依頼）' }), el('ul', { className: 'fixed' }, ...FIXED.map(([t, why]) => el('li', { title: why }, el('span', { textContent: t }), el('small', { textContent: why }))))]));
   }
   // what this tool does not change: kept fixed, ask an AI (Claude Code / ChatGPT Work) when a change is really needed
@@ -93,7 +100,7 @@
     if (!await guard()) return;
     try { current = await api('GET', `/api/item?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`); }
     catch (e) { return toast(e.message, 'bad'); }
-    edits = new Map(); privateOpen = false;
+    clearPrivateLyricsPassword(); edits = new Map(); privateOpen = false; privateLyricsDirty = false; releaseDirty = false; registrationDirty=false;
     renderLists();
     const kind = { track: '楽曲', album: 'アルバム', site: 'サイトの文言' }[type];
     const unsavedEl = el('span', { className: 'unsaved' });
@@ -124,7 +131,7 @@
   let privateOpen = false;
   async function openPrivate() {
     if (!await guard()) return;
-    current = null; edits = new Map(); privateOpen = true;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'password'; privateLyricsDirty = false; releaseDirty = false; registrationDirty=false;
     renderLists();
     const pw = (id, label, auto) => { const input = el('input', { id, type: 'password', autocomplete: auto, spellcheck: false });
       return [el('div', { className: 'field' }, el('label', { htmlFor: id, textContent: label }), input), input]; };
@@ -173,6 +180,231 @@
         el('div', { className: 'field' }, el('label', { htmlFor: 'pp-words', textContent: '確認の言葉' }), iWords), fRAdm, el('div', { className: 'field' }, rBtn), rResult));
     $('#main').scrollTop = 0;
     window.addEventListener('pagehide', () => clear(iNew, iConf, iAdm, iRAdm, iWords), { once: true });
+  }
+
+  async function openPrivateLyrics() {
+    if (!await guard()) return;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'lyrics'; privateLyricsDirty = false; releaseDirty = false; registrationDirty=false;
+    renderLists();
+    let catalog = null, selected = null, baselineLyrics = '';
+    const password = el('input', { id: 'pl-password', type: 'password', autocomplete: 'off', spellcheck: false });
+    clearPrivateLyricsPassword = () => { password.value = ''; };
+    const load = el('button', { type: 'button', textContent: 'PRIVATE曲一覧を読み込む' });
+    const chooser = el('select', { id: 'pl-song', disabled: true });
+    const reading = el('input', { id: 'pl-reading', type: 'text', disabled: true, spellcheck: false, maxLength: 100, placeholder: '例：ほしのみち（空欄でも表示）' });
+    const lyrics = el('textarea', { id: 'pl-lyrics', className: 'lyrics', disabled: true, spellcheck: false, maxLength: 100000 });
+    const status = el('p', { role: 'status', ariaLive: 'polite', className: 'note' });
+    const info = el('p', { className: 'note' });
+    const saveButton = el('button', { type: 'button', className: 'primary', textContent: '内容を確認して保存', disabled: true });
+    const result = (message, kind = 'note') => { status.textContent = message; status.className = kind; };
+    const sync = () => {
+      chooser.disabled = privateLyricsBusy || !catalog || !catalog.songs.length;
+      lyrics.disabled = reading.disabled = privateLyricsBusy || !selected;
+      load.disabled = privateLyricsBusy; password.disabled = privateLyricsBusy;
+      saveButton.disabled = privateLyricsBusy || !selected || !privateLyricsDirty;
+    };
+    const selectSong = song => {
+      selected = song; lyrics.value = song?.lyrics ?? ''; baselineLyrics = lyrics.value; reading.value = song?.reading ?? ''; privateLyricsDirty = false;
+      info.textContent = song ? `曲ID：${song.id} ／ ${song.lyrics.trim() ? 'PRIVATE歌詞登録済み' : 'PRIVATE歌詞未登録'}` : 'PRIVATEに楽曲がありません。';
+      if (song?.publicWork) info.append(' ／ ', el('a', { href: `https://pip-popper.github.io/tracks/${encodeURIComponent(song.id)}/`, target: '_blank', rel: 'noopener noreferrer', textContent: '公式サイトの歌詞・作品紹介' }));
+      sync();
+    };
+    const drawChoices = id => {
+      chooser.replaceChildren(...catalog.songs.map(s => el('option', { value: s.id, textContent: `${s.title}（${s.lyrics.trim() ? '登録済み' : '未登録'}）〔${s.id}〕` })));
+      if (id) chooser.value = id;
+    };
+    chooser.onchange = async () => {
+      const id = chooser.value;
+      if (!await guard()) { chooser.value = selected?.id ?? ''; return; }
+      selectSong(catalog.songs.find(s => s.id === id)); result('');
+    };
+    lyrics.oninput = reading.oninput = () => { privateLyricsDirty = !!selected && (lyrics.value !== baselineLyrics || reading.value.trim() !== (selected.reading ?? '')); sync(); };
+    load.onclick = async () => {
+      if (!await guard()) return;
+      if (!password.value) return result('管理者パスワードを入力してください。', 'err');
+      privateLyricsBusy = true; sync(); result('読み込んでいます…');
+      const credential = password.value; password.value = '';
+      try {
+        const data = await api('POST', '/api/private/lyrics/list', { adminPassword: credential });
+        catalog = data;
+        const next = data.songs.find(s => s.id === selected?.id) ?? data.songs[0];
+        drawChoices(next?.id);
+        selectSong(next); result(`${data.songs.length} 曲を読み込みました。`, 'done');
+      } catch (e) { result(`読み込めませんでした：${e.message}`, 'err'); }
+      finally { privateLyricsBusy = false; sync(); }
+    };
+    saveButton.onclick = async () => {
+      if (!selected || !privateLyricsDirty || privateLyricsBusy) return;
+      if (!password.value) return result('保存用の管理者パスワードを入力してください。', 'err');
+      const song = selected, text = lyrics.value, readingText = reading.value.trim(), rev = catalog.rev;
+      const lyricsChanged = text !== baselineLyrics, readingChanged = readingText !== (song.reading ?? '');
+      const answer = await ask('PRIVATE楽曲の変更確認', [el('p', { textContent: `対象：${song.title}（${song.id}）` }),
+        el('p', { className: 'warn', textContent: 'PRIVATE招待者にすぐ反映されます。音源や公式サイトは変更しません。' }),
+        ...(readingChanged ? [el('p', { textContent: `よみがな：${readingText || '（未設定に戻す）'}` })] : []),
+        ...(lyricsChanged ? [el('pre', { className: 'private-lyrics-preview', textContent: text || '（空の歌詞で上書きします）' })] : [])],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '保存する', primary: true }]);
+      if (answer !== 'go') { password.value = ''; return; }
+      if (song !== selected || text !== lyrics.value || readingText !== reading.value.trim() || rev !== catalog.rev) return result('入力内容が変わりました。再確認してください。', 'err');
+      privateLyricsBusy = true; sync(); result('保存しています…');
+      const credential = password.value; password.value = '';
+      try {
+        const data = await api('POST', '/api/private/lyrics/save', { adminPassword: credential, id: song.id, rev, ...(lyricsChanged?{lyrics:text}:{}), ...(readingChanged?{reading:readingText}:{}), confirm: true });
+        catalog.rev = data.rev; Object.assign(song, data.song);
+        if (Array.isArray(data.orderedIds) && data.orderedIds.length === catalog.songs.length && new Set(data.orderedIds).size === catalog.songs.length && data.orderedIds.every(id=>catalog.songs.some(s=>s.id===id))) {
+          const byId = new Map(catalog.songs.map(s=>[s.id,s])); catalog.songs = data.orderedIds.map(id=>byId.get(id));
+        }
+        drawChoices(song.id); selectSong(song); result(`✔ ${song.title}の変更を保存しました。`, 'done');
+      } catch (e) { result(`保存できませんでした：${e.message}\n入力は保持しています。競合時は内容を控えてから一覧を再読み込みしてください。`, 'err'); }
+      finally { privateLyricsBusy = false; sync(); }
+    };
+    $('#main').replaceChildren(el('div', { className: 'edit-head' }, el('h2', {}, el('span', { className: 'kind', textContent: 'PRIVATE管理' }), 'PRIVATE楽曲の歌詞・よみがな')),
+      el('p', { className: 'note', textContent: 'PRIVATE専用歌詞だけを登録します。一般公開歌詞は公式サイト側で管理し、同じ歌詞の再登録は不要です。保存するたびに管理者パスワードが必要です。' }),
+      el('div', { className: 'field' }, el('label', { htmlFor: password.id, textContent: '管理者パスワード' }), password, load),
+      el('div', { className: 'field' }, el('label', { htmlFor: chooser.id, textContent: 'PRIVATE楽曲' }), chooser, info),
+      el('div', { className: 'field' }, el('label', { htmlFor: reading.id, textContent: '曲名のよみがな（任意・PRIVATE表示順のみ）' }), reading, el('p', { className: 'note', textContent: 'かな→英字→数字→読み未設定の漢字・その他。漢字の曲などは必要に応じて読みを入力してください。空欄でも曲は表示されます。' })),
+      el('div', { className: 'field' }, el('label', { htmlFor: lyrics.id, textContent: 'PRIVATE専用歌詞（改行・空行は保持）' }), lyrics), saveButton, status);
+    $('#main').scrollTop = 0;
+    sync();
+  }
+  window.addEventListener('pagehide', () => clearPrivateLyricsPassword());
+
+  async function openReleaseStatus() {
+    if (!await guard()) return;
+    clearPrivateLyricsPassword(); current = null; edits = new Map(); privateOpen = 'release'; privateLyricsDirty = false; releaseDirty = false; registrationDirty=false;
+    renderLists();
+    const labels={all:'すべて',unknown:'未設定・要確認',general:'一般公開',site:'このサイトのみ',private:'PRIVATEのみ'};
+    const lyricLabels={unknown:'未設定・要確認',public:'一般公開サイト',private:'PRIVATEのみ',both:'一般公開サイト＋PRIVATE',none:'非公開・未登録'};
+    const serviceLabels={spotify:'Spotify','apple-music':'Apple Music',youtube:'YouTube',suno:'Suno',other:'その他'};
+    const options=(values)=>Object.entries(values).map(([value,textContent])=>el('option',{value,textContent}));
+    const password=el('input',{id:'rs-password',type:'password',autocomplete:'off'});
+    clearPrivateLyricsPassword=()=>{password.value='';};
+    const loadPrivate=el('button',{type:'button',textContent:'PRIVATE曲一覧も読み込む'});
+    const reload=el('button',{type:'button',textContent:'管理情報を再読み込み'});
+    const filter=el('select',{id:'rs-filter'},...options(labels)); filter.value='all';
+    const search=el('input',{id:'rs-search',type:'search',placeholder:'曲名・曲IDで検索'});
+    const counts=el('div',{className:'release-counts'}), table=el('tbody'), editor=el('section',{className:'release-editor'}), result=el('p',{role:'status',ariaLive:'polite'}), inventory=el('p',{className:'note'});
+    let data=null, selected=null;
+    const show=(text,kind='note')=>{result.textContent=text;result.className=kind;};
+    const observed=row=>`公式サイト：${row.site?'掲載あり':'掲載未確認'}／PRIVATE：${row.privatePresent===null?'未取得':row.privatePresent?'登録あり':'未登録'}`;
+    const observedLyrics=row=>`公式：${row.publicLyrics?'歌詞あり':'歌詞確認なし'}／PRIVATE：${row.privateLyrics===null?'未取得':row.privateLyrics?'歌詞あり':'歌詞なし'}`;
+    function drawRows(){
+      if(!data)return;
+      counts.replaceChildren(...Object.entries(labels).map(([key,label])=>el('button',{type:'button',ariaPressed:String(filter.value===key),textContent:`${label} ${data.counts[key]}曲`,onclick:()=>{filter.value=key;drawRows();}})));
+      const q=search.value.trim().toLowerCase();
+      const rows=data.rows.filter(r=>(filter.value==='all'||r.classification===filter.value)&&(!q||`${r.title} ${r.id}`.toLowerCase().includes(q)));
+      table.replaceChildren(...rows.map(row=>el('tr',{className:row.id===selected?.id?'selected':''},
+        el('td',{},el('button',{type:'button',textContent:row.title,onclick:async()=>{if(!await guard())return;drawEditor(row);drawRows();}}),el('small',{textContent:row.id})),
+        el('td',{textContent:labels[row.classification]}),el('td',{textContent:lyricLabels[row.lyricsScope]}),
+        el('td',{},el('small',{textContent:observed(row)}),el('small',{textContent:observedLyrics(row)})),
+        el('td',{textContent:`${row.links.length}件${row.warnings.length?' ⚠':''}`}),el('td',{textContent:row.registrationState?({draft:'下書き',registered:'登録済み',ready:'公開準備完了'}[row.registrationState]+'・未公開'):row.savedOnly?'一覧未確認':row.saved?'記録済':'要確認'}))));
+      if(!rows.length)table.replaceChildren(el('tr',{},el('td',{colSpan:6,textContent:'該当する楽曲はありません。'})));
+    }
+    function drawEditor(row){
+      selected=row;releaseDirty=false;
+      if(!row){editor.replaceChildren(el('p',{className:'note',textContent:'一覧から曲を選ぶと管理情報を編集できます。'}));return;}
+      if(row.registrationState){editor.replaceChildren(el('h3',{textContent:row.title}),el('p',{className:'note',textContent:'新曲の公開準備記録です。実際の公開・音源登録は未実施です。'}),el('button',{type:'button',textContent:'新曲登録画面で編集',onclick:()=>openRegistration(row.id)}));return;}
+      const classification=el('select',{id:'rs-class'},...options(Object.fromEntries(Object.entries(labels).filter(([key])=>key!=='all'))));classification.value=row.classification;
+      const scope=el('select',{id:'rs-scope'},...options(lyricLabels));scope.value=row.lyricsScope;
+      const linksBox=el('div',{className:'release-link-list'});const inputs=[];
+      const save=el('button',{type:'button',className:'primary',textContent:'確認して管理情報を保存',disabled:true});
+      const value=()=>({classification:classification.value,lyricsScope:scope.value,links:inputs.map(i=>({service:i.service.value,url:i.url.value,...(i.service.value==='other'?{label:i.label.value}:{})}))});
+      const changed=()=>{releaseDirty=true;save.disabled=releaseBusy;};
+      classification.onchange=scope.onchange=changed;
+      function addLink(link={service:'spotify',url:''}){
+        const service=el('select',{ariaLabel:'配信先'},...options(serviceLabels));service.value=link.service;
+        const url=el('input',{type:'url',placeholder:'https://…',value:link.url,ariaLabel:'配信URL'});
+        const label=el('input',{type:'text',placeholder:'その他の配信先名',value:link.label??'',ariaLabel:'その他の配信先名',hidden:link.service!=='other'});
+        const entry={service,url,label}; const remove=el('button',{type:'button',textContent:'欄を外す',onclick:()=>{inputs.splice(inputs.indexOf(entry),1);box.remove();changed();}});
+        const box=el('div',{className:'release-link-row'},service,url,label,remove);inputs.push(entry);linksBox.append(box);
+        service.onchange=()=>{label.hidden=service.value!=='other';changed();};url.oninput=label.oninput=changed;
+      }
+      row.links.forEach(addLink);
+      save.onclick=async()=>{
+        if(releaseBusy||!releaseDirty)return;
+        const settings=value(), id=row.id, rev=data.rev;
+        const answer=await ask('管理情報の保存確認',[el('p',{textContent:`${row.title}（${id}）`}),el('p',{textContent:`公開区分：${labels[settings.classification]}／歌詞：${lyricLabels[settings.lyricsScope]}`}),
+          el('pre',{className:'private-lyrics-preview',textContent:settings.links.map(l=>`${serviceLabels[l.service]} ${l.label??''} ${l.url}`).join('\n')||'配信先なし'}),el('p',{className:'warn',textContent:'この記録は管理用です。実際の公開サイト・PRIVATE・配信サービスには反映しません。'})],
+          [{value:'cancel',label:'キャンセル'},{value:'go',label:'保存する',primary:true}]);
+        if(answer!=='go')return;
+        releaseBusy=true;editor.inert=true;save.disabled=true;show('保存しています…');
+        try{data=await api('POST','/api/release-status/save',{id,rev,...settings,confirm:true});drawEditor(data.rows.find(r=>r.id===id));drawRows();show('✔ 管理情報をローカル保存しました。公開状態は変わりません。','done');}
+        catch(e){show(`保存できませんでした：${e.message} 入力は保持しています。`,'err');}
+        finally{releaseBusy=false;editor.inert=false;save.disabled=!releaseDirty;}
+      };
+      editor.replaceChildren(el('h3',{textContent:`${row.title}（${row.id}）`}),el('p',{className:'note',textContent:`${observed(row)} ／ ${observedLyrics(row)}（ローカル資料・取得時点の情報）`}),
+        ...row.warnings.map(w=>el('p',{className:'warn',textContent:w})),
+        el('div',{className:'release-fields'},el('div',{className:'field'},el('label',{htmlFor:classification.id,textContent:'公開区分（管理記録）'}),classification),el('div',{className:'field'},el('label',{htmlFor:scope.id,textContent:'歌詞の公開範囲（管理記録）'}),scope)),
+        el('p',{className:'note',textContent:'配信先とURL（管理記録。既存の配信リンクを初期表示）'}),linksBox,
+        el('button',{type:'button',textContent:'配信先を追加',onclick:()=>{addLink();changed();}}),
+        el('p',{className:'note',textContent:row.sourceLinks.length?'公式サイトの既存ソース登録URL：'+row.sourceLinks.map(l=>l.url).join(' ／ '):'公式サイトの既存ソースに配信URLの登録はありません。'}),save);
+    }
+    async function load(withPrivate=false){
+      if(!await guard())return;
+      if(withPrivate&&!password.value)return show('管理者パスワードを入力してください。','err');
+      const id=selected?.id, body=withPrivate?{adminPassword:password.value}:{};password.value='';
+      releaseBusy=true;editor.inert=true;loadPrivate.disabled=reload.disabled=true;show('読み込んでいます…');
+      try{data=await api('POST','/api/release-status/list',body);inventory.textContent=data.privateLoaded?'公式サイトのローカル資料と取得時点のPRIVATE一覧を照合済み。':'PRIVATE未取得：一覧・集計は公式サイトと保存済み記録のみ（全楽曲の確定数ではありません）。';drawEditor(data.rows.find(r=>r.id===id));drawRows();show('一覧を読み込みました。');}
+      catch(e){show(`読み込めませんでした：${e.message}`,'err');}
+      finally{releaseBusy=false;editor.inert=false;loadPrivate.disabled=reload.disabled=false;}
+    }
+    loadPrivate.onclick=()=>load(true);reload.onclick=()=>load(false);filter.onchange=drawRows;search.oninput=drawRows;
+    $('#main').replaceChildren(el('div',{className:'edit-head'},el('h2',{},el('span',{className:'kind',textContent:'楽曲管理'}),'全楽曲の公開状況')),
+      el('p',{className:'note',textContent:'管理記録と確認できた実際の掲載情報を分けて表示します。未設定の曲は自動分類せず、音源・公開ページ・配信サービスを変更しません。'}),
+      el('div',{className:'field'},el('label',{htmlFor:password.id,textContent:'PRIVATE一覧取得用 管理者パスワード'}),password,loadPrivate,reload),inventory,counts,
+      el('div',{className:'release-fields'},el('div',{className:'field'},el('label',{htmlFor:filter.id,textContent:'公開区分で絞り込み'}),filter),el('div',{className:'field'},el('label',{htmlFor:search.id,textContent:'検索'}),search)),
+      el('div',{className:'release-table-wrap'},el('table',{className:'release-table'},el('thead',{},el('tr',{},...['楽曲名・ID','公開区分','歌詞範囲','確認できた掲載・歌詞','配信先','記録状態'].map(textContent=>el('th',{textContent})))),table)),editor,result);
+    $('#main').scrollTop=0;await load();
+  }
+
+  async function openRegistration(id=null) {
+    if(!await guard())return;
+    clearPrivateLyricsPassword();current=null;edits=new Map();privateOpen='registration';registrationId=id;privateLyricsDirty=releaseDirty=registrationDirty=false;renderLists();
+    const classLabels={unknown:'未設定・要確認',general:'一般公開',site:'このサイトのみ',private:'PRIVATEのみ'},scopeLabels={public:'一般公開',private:'PRIVATEのみ',hidden:'非表示'},stateLabels={draft:'下書き',registered:'登録済み',ready:'公開準備完了',published:'公開済み（実反映確認後のみ）'};
+    const empty={title:'',reading:'',artist:'PIP POPPER',lyrics:'',impression:'',classification:'unknown',lyricsScope:'hidden',impressionScope:'hidden',channels:{hp:false,listen:false,private:false},state:'draft',links:[],memo:''};
+    let saved=null,pendingImage=null,history=[],previewData=null;
+    const controls={}, status=el('p',{role:'status',ariaLive:'polite',className:'note'}), idLabel=el('p',{className:'note'}), form=el('section',{}), imagePreview=el('img',{className:'registration-jacket',alt:'登録するジャケット',hidden:true}), imageInput=el('input',{type:'file',accept:'image/png,image/jpeg',id:'reg-image'}), previewBox=el('section',{className:'registration-preview'}), historySelect=el('select',{id:'reg-history'});
+    const show=(message,kind='note')=>{status.textContent=message;status.className=kind;};
+    const dirty=()=>{registrationDirty=true;previewData=null;previewBox.replaceChildren(el('p',{textContent:'保存してから掲載イメージを確認してください。'}));};
+    const input=(key,label,type='text',maxLength=100)=>{const tag=type==='textarea'?'textarea':'input';const node=el(tag,{id:`reg-${key}`,maxLength,...(type==='textarea'?{className:key==='lyrics'?'lyrics':''}:{type})});node.oninput=dirty;controls[key]=node;return el('div',{className:'field'},el('label',{htmlFor:node.id,textContent:label}),node);};
+    const select=(key,label,labels)=>{const node=el('select',{id:`reg-${key}`},...Object.entries(labels).map(([value,textContent])=>el('option',{value,textContent,disabled:value==='published'})));node.onchange=dirty;controls[key]=node;return el('div',{className:'field'},el('label',{htmlFor:node.id,textContent:label}),node);};
+    const check=(key,label)=>{const node=el('input',{type:'checkbox',id:`reg-${key}`});node.onchange=dirty;controls[key]=node;return el('div',{className:'field check'},node,el('label',{htmlFor:node.id,textContent:label}));};
+    const title=input('title','曲名（必須）','text',150),reading=input('reading','曲名のよみがな（任意）','text',100),artist=input('artist','アーティスト名','text',100),lyrics=input('lyrics','歌詞全文','textarea',100000),impression=input('impression','AIの感想','textarea',100000),classification=select('classification','公開区分',classLabels),lyricScope=select('lyricsScope','歌詞の公開範囲',scopeLabels),impressionScope=select('impressionScope','AIの感想の公開範囲',scopeLabels),recordState=select('state','登録状態',stateLabels),hp=check('hp','一般公開HPへの掲載を許可'),listen=check('listen','一般視聴ページへの掲載を許可'),privateCheck=check('private','PRIVATEへの掲載を許可'),urls=input('urls','外部配信先URL（任意・1行1件）','textarea',40000),memo=input('memo','公開メモ（管理用・非公開）','textarea',10000);
+    function syncChannels(){const allowed=['general','site'].includes(controls.classification.value);controls.hp.disabled=controls.listen.disabled=!allowed;if(!allowed){controls.hp.checked=false;controls.listen.checked=false;}}
+    controls.classification.onchange=()=>{syncChannels();dirty();};
+    function fill(response){saved=response?.record??null;pendingImage=null;previewData=null;history=response?.history??[];const r=saved??empty;registrationId=saved?.id??null;
+      for(const key of ['title','reading','artist','lyrics','impression','classification','lyricsScope','impressionScope','state','memo'])controls[key].value=r[key];
+      for(const a of ['hp','listen','private'])controls[a].checked=r.channels[a];controls.urls.value=r.links.map(l=>l.url).join('\n');syncChannels();
+      idLabel.textContent=saved?`楽曲ID：${saved.id} ／ 実際の公開：未公開 ／ 音源：未登録`:'楽曲ID：初回保存時に自動発行 ／ 実際の公開：未公開 ／ 音源：未登録';
+      imagePreview.hidden=!response?.thumbnail;if(response?.thumbnail)imagePreview.src=response.thumbnail;else imagePreview.removeAttribute?.('src');imageInput.value='';
+      historySelect.replaceChildren(...history.filter(h=>h.rev!==saved?.rev).map(h=>el('option',{value:h.rev,textContent:`${new Date(h.updatedAt).toLocaleString('ja-JP')}　${h.title}`})));historySelect.disabled=history.length<2;registrationDirty=false;renderLists();
+    }
+    const values=()=>({title:controls.title.value,reading:controls.reading.value,artist:controls.artist.value,lyrics:controls.lyrics.value,impression:controls.impression.value,classification:controls.classification.value,lyricsScope:controls.lyricsScope.value,impressionScope:controls.impressionScope.value,state:controls.state.value,channels:{hp:controls.hp.checked,listen:controls.listen.checked,private:controls.private.checked},urls:controls.urls.value.split('\n').map(x=>x.trim()).filter(Boolean),memo:controls.memo.value});
+    async function imageData(file){
+      if(!file||file.size>12*1024*1024)throw new Error('PNG/JPEGの画像は12MB以内にしてください。');
+      const mime=file.type||(/\.png$/i.test(file.name)?'image/png':/\.jpe?g$/i.test(file.name)?'image/jpeg':'');if(!['image/png','image/jpeg'].includes(mime))throw new Error('PNGまたはJPEGを選択してください。');
+      const original=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=()=>reject(new Error('画像を読み込めません。'));r.readAsDataURL(file);});
+      const url=URL.createObjectURL(file);try{const img=await new Promise((resolve,reject)=>{const x=new Image();x.onload=()=>resolve(x);x.onerror=()=>reject(new Error('画像を読み込めません。'));x.src=url;});
+        if(!img.naturalWidth||!img.naturalHeight||img.naturalWidth*img.naturalHeight>40e6)throw new Error('画像の大きさを確認してください。');
+        const render=(width,quality)=>{const canvas=document.createElement('canvas');canvas.width=width;canvas.height=Math.max(1,Math.round(img.naturalHeight*width/img.naturalWidth));if(canvas.height>4000)throw new Error('画像の縦横比を確認してください。');const ctx=canvas.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);return {mime:'image/jpeg',data:canvas.toDataURL('image/jpeg',quality).split(',')[1]};};
+        return {original:{mime,data:original},web:render(Math.min(1254,img.naturalWidth),.86),thumb:render(640,.84)};
+      }finally{URL.revokeObjectURL(url);}
+    }
+    imageInput.onchange=async()=>{const f=imageInput.files?.[0];if(!f)return;registrationBusy=true;form.inert=true;show('画像を準備しています…');try{pendingImage=await imageData(f);imagePreview.src=`data:image/jpeg;base64,${pendingImage.thumb.data}`;imagePreview.hidden=false;dirty();show('画像を準備しました。保存すると差し替わります。');}catch(e){show(e.message,'err');}finally{registrationBusy=false;form.inert=false;}};
+    const refreshRegistrationList=async()=>{state.registrations=(await api('POST','/api/song-registration/list',{})).songs;renderLists();};
+    const saveButton=el('button',{type:'button',className:'primary',textContent:'確認して保存',onclick:async()=>{
+      if(registrationBusy)return;if(saved&&!registrationDirty)return show('変更はありません。');const f=values();if(!f.title.trim())return show('曲名を入力してください。','err');
+      const answer=await ask('新曲登録の保存確認',[el('p',{textContent:`${f.title}（${saved?.id??'新規IDを発行'}）`}),el('p',{textContent:`${classLabels[f.classification]}／${stateLabels[f.state]}／歌詞：${scopeLabels[f.lyricsScope]}／AIの感想：${scopeLabels[f.impressionScope]}`}),el('p',{className:'warn',textContent:'この保存は非公開の掲載準備記録です。本番公開・音源アップロードは行いません。'})],[{value:'cancel',label:'キャンセル'},{value:'go',label:'保存する',primary:true}]);if(answer!=='go')return;
+      registrationBusy=true;form.inert=true;show('保存しています…');try{const result=await api('POST','/api/song-registration/save',{id:saved?.id,rev:saved?.rev,fields:f,image:pendingImage,confirm:true});fill(result);previewBox.replaceChildren(el('p',{textContent:'保存しました。掲載先を選んで確認できます。'}));await refreshRegistrationList();show('✔ 登録を保存しました。まだ公開されていません。','done');}catch(e){show(`保存できませんでした：${e.message}`,'err');}finally{registrationBusy=false;form.inert=false;}
+    }});
+    const previewMode=el('select',{id:'reg-preview-mode'},...Object.entries({hp:'一般公開HP',listen:'一般視聴ページ',private:'PRIVATE鑑賞ページ'}).map(([value,textContent])=>el('option',{value,textContent})));previewMode.value='hp';
+    const width=el('select',{id:'reg-preview-width'},el('option',{value:'pc',textContent:'PC表示'}),el('option',{value:'phone',textContent:'スマートフォン相当'}));width.value='pc';
+    function paintPreview(){if(!previewData)return;const p=previewData;previewBox.className=`registration-preview${width.value==='phone'?' phone':''}`;if(!p.visible){previewBox.replaceChildren(el('p',{className:'note',textContent:p.message}));return;}const audience={hp:'一般公開HP',listen:'一般視聴',private:'PRIVATE鑑賞'}[previewMode.value];const card=el('article',{className:'reg-candidate '+(previewMode.value==='hp'?'hp':'listen')},el('p',{className:'reg-candidate-kicker',textContent:`PIP POPPER ／ ${audience} ／ 未公開の掲載候補`}),...(previewMode.value!=='hp'?[el('div',{className:'reg-candidate-player'},el('button',{type:'button',disabled:true,textContent:'▶ 再生'}),el('span',{textContent:'音源未登録・再生不可'}))]:[]),el('div',{className:'reg-candidate-main'},p.thumbnail?el('img',{src:p.thumbnail,alt:'ジャケット'}):el('div',{className:'reg-cover-fallback',textContent:'ジャケット未登録'}),el('div',{},el('h2',{textContent:p.title}),el('p',{textContent:p.artist}),...(previewMode.value==='hp'?[el('p',{className:'warn',textContent:'音源未登録'} )]:[]))),...(p.lyrics?[el('h3',{textContent:'歌詞'}),el('div',{className:'reg-candidate-text',textContent:p.lyrics})]:[]),...(p.impression?[el('h3',{textContent:'AIの感想'}),el('div',{className:'reg-candidate-text',textContent:p.impression})]:[]),...(p.links.length?[el('p',{className:'note',textContent:p.links.map(l=>l.url).join('\n')})]:[]));previewBox.replaceChildren(card);}
+    width.onchange=paintPreview;previewMode.onchange=()=>{previewData=null;previewBox.replaceChildren(el('p',{textContent:'この掲載先のプレビューを表示してください。'}));};
+    const previewButton=el('button',{type:'button',textContent:'掲載イメージを見る',onclick:async()=>{if(!saved||registrationDirty)return show('先に登録内容を保存してください。','err');registrationBusy=true;form.inert=true;try{previewData=await api('POST','/api/song-registration/preview',{id:saved.id,audience:previewMode.value});paintPreview();show('掲載許可に従ったプレビューです。実際の公開ではありません。');}catch(e){show(e.message,'err');}finally{registrationBusy=false;form.inert=false;}}});
+    const restoreButton=el('button',{type:'button',textContent:'以前の保存版を復元',onclick:async()=>{if(!saved||!historySelect.value||registrationDirty)return show('保存済みの版を選んでください。未保存の入力は先に保存してください。','err');const answer=await ask('以前の保存版を復元します',el('p',{textContent:'現在の内容も履歴に残したまま、新しい保存版として復元します。'}),[{value:'cancel',label:'キャンセル'},{value:'go',label:'復元する',primary:true}]);if(answer!=='go')return;registrationBusy=true;form.inert=true;try{fill(await api('POST','/api/song-registration/restore',{id:saved.id,rev:saved.rev,restoreRev:historySelect.value,confirm:true}));await refreshRegistrationList();previewData=null;previewBox.replaceChildren(el('p',{textContent:'復元した内容を確認してください。'}));show('✔ 復元しました。','done');}catch(e){show(e.message,'err');}finally{registrationBusy=false;form.inert=false;}}});
+    form.replaceChildren(idLabel,el('div',{className:'release-fields'},title,reading),artist,el('div',{className:'field'},el('label',{htmlFor:imageInput.id,textContent:'ジャケット画像（PNG/JPEG・任意）'}),imageInput,imagePreview),lyrics,impression,classification,el('div',{className:'release-fields'},lyricScope,impressionScope),hp,listen,privateCheck,urls,memo,recordState,saveButton,el('h3',{textContent:'掲載イメージ（保存後）'}),el('div',{className:'registration-actions'},previewMode,width,previewButton),previewBox,el('h3',{textContent:'保存履歴・復元'}),el('div',{className:'registration-actions'},historySelect,restoreButton));
+    $('#main').replaceChildren(el('div',{className:'edit-head'},el('h2',{},el('span',{className:'kind',textContent:'楽曲管理'}),'新曲を登録')),el('p',{className:'note',textContent:'完成した画像・歌詞・AIの感想を登録し、公開先ごとの掲載準備を行います。ここから本番公開はされません。'}),form,status);$('#main').scrollTop=0;
+    registrationBusy=true;form.inert=true;let loadFailed=false;try{fill(id?await api('POST','/api/song-registration/get',{id}):null);}catch(e){loadFailed=true;show(e.message,'err');}finally{registrationBusy=false;form.inert=loadFailed;}
   }
 
   async function save() {
