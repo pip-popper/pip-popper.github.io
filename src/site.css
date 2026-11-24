@@ -158,7 +158,7 @@ main { position: relative; z-index: 1; }
   text-shadow: 0 4px 40px rgba(0,0,0,.8); }
 .latest h2 a:hover { text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: .04em; text-underline-offset: .2em; }
 .latest-artist { font: 500 15px/1 var(--f-en); letter-spacing: .4em; text-transform: uppercase; color: #ddd5cf; }
-.latest-note { max-width: 32em; color: #e2dbd5; font-size: 15px; line-height: 2; text-shadow: 0 1px 12px rgba(0,0,0,.8); }
+.latest-note { white-space: pre-line; max-width: 32em; color: #e2dbd5; font-size: 15px; line-height: 2; text-shadow: 0 1px 12px rgba(0,0,0,.8); }
 .note-label { display: block; margin-bottom: 6px; font: 700 12px/1 var(--f-head); letter-spacing: .24em; color: var(--red); }
 .more { display: inline-flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 2px; border-bottom: 1px solid var(--red);
   font: 500 15px/1 var(--f-body); letter-spacing: .14em; }
@@ -224,7 +224,7 @@ main { position: relative; z-index: 1; }
 .block-head .label-ja { font-size: clamp(20px, 1.9vw, 26px); }
 .text .block-head .label-en { font-size: clamp(30px, 2.8vw, 42px); color: var(--ink); }
 .text .block-head .label-en::after { content: ""; display: block; width: 40px; height: 1px; margin-top: 16px; background: var(--red); }
-.impression-text { max-width: 26em; font: 500 clamp(19px, 1.9vw, 28px)/2 var(--f-head); letter-spacing: .05em; line-break: strict; text-shadow: 0 2px 24px rgba(0,0,0,.7); }
+.impression-text { white-space: pre-line; max-width: 26em; font: 500 clamp(19px, 1.9vw, 28px)/2 var(--f-head); letter-spacing: .05em; line-break: strict; text-shadow: 0 2px 24px rgba(0,0,0,.7); }
 .story-text { max-width: 34em; color: #e2dcd7; line-height: 2.1; }
 .lyrics-text { max-width: 40em; line-break: strict;
   font-size: clamp(15px, 1.12vw, 17px); line-height: 2.25; letter-spacing: .04em; color: #ece6e1; }
