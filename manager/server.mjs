@@ -610,6 +610,7 @@ const server = http.createServer(async (req, res) => {
       else if (route.startsWith('POST /api/song-registration/')) r = await registrationAction(ROOT,url.pathname.slice('/api/song-registration/'.length),body,registrationCtx);
       else if (route === 'POST /api/album-registration/adopt') r = await adoptAlbum(body);
       else if (route.startsWith('POST /api/album-registration/')) r = await albumRegistrationAction(ROOT, url.pathname.slice('/api/album-registration/'.length), body, registrationCtx);
+      else if (route === 'POST /api/fetch-status') r = { status: 200, body: { ok: git(['fetch', REMOTE, BRANCH], { timeout: 15000 }).ok } };   // read GitHub's state only (no files change)
       else if (route === 'POST /api/hidden') r = await setHidden(body);
       else if (route === 'POST /api/album/move') r = await moveAlbum(body);
       else if (route === 'POST /api/album/tracks') r = await albumTracks(body);

@@ -97,6 +97,7 @@ export async function albumRegistrationAction(root, action, input = {}, ctx = {}
       if (!input.id && rev) return problem(409, '新しいアルバムIDを作れませんでした。');
       if (input.id && await marker(root, id, 'deleted.json')) return problem(409, '削除済みのアルバムです。先に復元してください。');
       const old = rev ? await record(root, id, rev) : null;
+      if (rev && data.state !== 'ready' && ['adopted', 'published'].includes((await publication(root, id, ctx)).state)) return problem(409, '公式HPへ取り込み済み・公開済みのアルバムは「下書き」に戻せません（登録状態は公開準備完了のまま）。');
       if (data.state === 'ready' && ((!upload && !old?.image) || !data.tracks.length)) return problem(400, '公開準備完了にはジャケットと収録曲が必要です。');
       return await writeVersion(root, id, rev, data, old, upload, ctx);
     }

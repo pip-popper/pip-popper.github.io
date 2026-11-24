@@ -146,3 +146,5 @@ details.restore summary { cursor: pointer; color: var(--muted); }
 .draft-open:hover { background: var(--panel2); }
 .draft-meta { color: var(--muted); font-size: 12px; }
 @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .side { max-height: none; overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); } #menu ul { grid-template-columns: 1fr 1fr; } .side-lists { max-height: 50vh; } }
+.live-note { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--ok); border-radius: 8px; background: var(--panel2); }
+.live-note[hidden] { display: none; }

@@ -132,6 +132,7 @@ export async function registrationAction(root,action,input={},ctx={}){
       const id=input.id??`new-${randomBytes(12).toString('hex')}`;if(!ID.test(id))return problem(400,'曲IDが正しくありません。');const rev=await current(root,id);
       if(input.id&&(!rev||input.rev!==rev))return problem(409,'対象曲または保存版が変わりました。再読み込みしてください。');if(!input.id&&rev)return problem(409,'新しい曲IDを作れませんでした。');
       const old=rev?await record(root,id,rev):null;
+      if(rev&&data.state!=='ready'&&['adopted','published'].includes((await publicationOf(root,id,ctx)).state))return problem(409,'公式HPへ取り込み済み・公開済みの曲は「下書き」に戻せません（登録状態は公開準備完了のまま）。');
       if(data.state==='ready'&&(!upload&&!old?.image||data.classification==='unknown'||!Object.values(data.channels).some(Boolean)))return problem(400,'公開準備完了にはジャケット・公開区分・掲載先の設定が必要です。');
       return await writeVersion(root,id,rev,data,old,upload,ctx);
     }

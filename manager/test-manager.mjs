@@ -3,7 +3,7 @@
 // 一時フォルダーに「検証用の送信先（bare リポジトリ）」と「作業コピー」を作り、現在の作業フォルダーの
 // build.mjs・content・manager を作業コピーへ入れてから、管理ツールのサーバーをその作業コピーに対して起動する。
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -53,7 +53,8 @@ try {
 
   console.log('2. 一覧と読み込み');
   let st = (await call('GET', '/api/state')).data;
-  ok(st.list.tracks.length === 25 && st.list.history.length === 16 && st.list.other.length === 6 && st.list.site.length === 6, `一覧：曲${st.list.tracks.length}・HISTORY${st.list.history.length}・その他${st.list.other.length}・文言${st.list.site.length}`);
+  const TRACK_COUNT = readdirSync(path.join(WORK, 'tracks')).filter(d => existsSync(path.join(WORK, 'tracks', d, 'track.json'))).length;
+  ok(st.list.tracks.length === TRACK_COUNT && st.list.history.length === 16 && st.list.other.length === 6 && st.list.site.length === 6, `一覧：曲${st.list.tracks.length}・HISTORY${st.list.history.length}・その他${st.list.other.length}・文言${st.list.site.length}`);
   ok(st.changes.items.length === 0 && st.remoteOk && st.branch === 'main', '変更なし・送信先とブランチが正しい');
   const pts = (await call('GET', '/api/item?type=album&id=place-to-stay')).data;
   const fIdx = pts.fields.findIndex(f => f.value === 'Showtime2010');
@@ -263,6 +264,14 @@ try {
     ok(r.status === 200 && ['tracks/kakuu-test/track.json', 'tracks/kakuu-test/cover-web.jpg', 'tracks/kakuu-test/cover-640.jpg', 'docs/tracks/kakuu-test/index.html', 'docs/assets/covers/kakuu-test.jpg'].every(f => remoteFiles.split('\n').includes(f)), '公開：新曲のページと画像が送信先に届く');
     ok(g(BARE, 'show', 'main:docs/index.html').includes('data-order-kana'), '公開されたトップに表示順の切替がある');
     ok((await reg('get', { id })).data.publication.state === 'published', '登録側は「公開済み」（送信先にある時だけ）');
+    {
+      const g2 = (await reg('get', { id })).data;
+      ok((await reg('save', { id, rev: g2.record.rev, fields: { ...fields, state: 'draft' }, confirm: true })).status === 409, '公開済みの曲の登録は「下書き」に戻せない');
+      const s3 = await reg('save', { id, rev: g2.record.rev, fields: { ...fields, memo: '公開後のメモ', state: 'ready' }, confirm: true });
+      ok(s3.status === 200 && s3.data.publication.state === 'published' && s3.data.record.state === 'ready', '公開済みの曲の登録を編集しても公開済みのまま');
+      ok((await call('GET', '/api/state')).data.registrations.find(x => x.id === id)?.publication.state === 'published', '一覧の状態も公開済み（その場で切り替わる）');
+      ok((await call('POST', '/api/fetch-status', {})).status === 200 && status() === '', '「更新」用の読み取りはファイルを変えない');
+    }
     const h = (await call('GET', '/api/history')).data.history;
     ok(h[0].undoable, '新曲の公開も管理ツールで取り消せる対象');
     ok((await call('POST', '/api/undo', { sha: h[0].sha })).status === 200 && !existsSync(path.join(WORK, 'tracks/kakuu-test/cover-web.jpg')), '取り消し：新曲のファイルが「公開していない変更（削除）」になる');
