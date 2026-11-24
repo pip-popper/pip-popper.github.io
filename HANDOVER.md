@@ -81,7 +81,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 - PRIVATE Worker：現在 `95d3da0c-c58a-47c9-b25f-048090183873`。戻すとき `private\worker` で `npx wrangler rollback c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`。
 - 公式HP：現在 `ee6b967`。戻すときは並び替えの commit（713da68）を `git revert` して push（履歴は消さない）。
-- 管理ツール：Producer が一度「終了」→ `PIP POPPER管理ツール.exe` を起動し直す（新機能を読み込む）。push 済みのため管理ツールからの公開も可能になった。
+- 管理ツール：Producer が一度「終了」→ `PIP POPPER管理ツール.exe` を起動し直す（新機能を読み込む）。この引継ぎ記録の commit（HANDOVER.md のみ、docs の変更なし）が未 push の間は「AI等の保存点」として管理ツールからの公開が止まる。Producer の承認で push すれば公開できるようになる。
 - 一般視聴ページ：本番化は Producer の判断後（公開する曲・音源・歌詞・ジャケット、専用Worker・R2の新規作成、URL）。
 
 ### Producer の確認・判断
