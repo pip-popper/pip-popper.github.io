@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 正式統合・検証完了。本番反映（PRIVATE Worker デプロイ・GitHub push）は Producer 承認待ち |
+| 状態 | 本番反映済み（PRIVATE Worker 95d3da0c・公式HP ee6b967）。Producer の実機確認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-24 Producer承認で本番反映。PRIVATE Worker：Version `95d3da0c-c58a-47c9-b25f-048090183873`（復元点 `c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`、バインディング・秘密の値・R2は変更なし、R2曲目 rev 78・23曲のまま）。公式HP：`git push`（1a0b059..ee6b967、17件）→ 公開中の173ファイルが docs と全一致、並び替え3種を実ブラウザで確認。確認：PRIVATE入口200・ログイン欄、未入室の音源・ジャケット・管理API 401、配信中の private.js・private.css が commit と一致。未確認（パスワードが必要）：本番PRIVATEへの入室・既存音源の再生・ジャケット/歌詞欄の表示（Producer確認）。一般視聴・新曲2曲の公開・R2への追加は承認範囲外で未実施。
 
 - 2026-11-24 Claude Code：Work成果の正式統合・検証を完了。追加実装：新曲の「公式HPへの取り込み」（公開準備完了の承認済み公開候補だけを `tracks/<URL名>/` へ、公開は既存の「公開する」、状態は未取り込み／取り込み済み／公開済みを自動判定、破棄・取り消しは画像を含めて可能）、曲の編集画面に「よみがな」、公開確認画面の項目名を日本語化。新曲データ移行：「低所得層サラリーマンより」new-0b13fe9f2b7ec0da5be794c9・「WE LOVE MUSIC」new-d7a4b7cbf64313f27cf51e6e を SHA-256 照合のうえ `.manager/song-registrations/` へ（下書きのまま、内容無変更、Git対象外）。公開候補 `docs/` を再生成（3ファイルのみ変更）。テスト：管理ツール103・PRIVATE既存61・パスワード53・一覧・公開状況・新曲登録・一般視聴・試作品 --check 合格。実ブラウザ確認：PRIVATE鑑賞（PC・スマホ、再生/一時停止/シーク/切替/歌詞/ジャケット/ダウンロード）、公式HP並び替え、一般視聴、PRIVATE歌詞・よみがな保存→反映、公開状況、新曲登録→画像選択→保存→取り込み→公開（一時フォルダーの検証用送信先）。本番R2の曲目（23曲）がすべてMP3で新しい配信処理に適合することを読み取りで確認。commit：7f846dd・b2ac275（Work成果）、cee0d97、5fef64f、4b300cc、713da68、本記録。
 
@@ -75,12 +77,12 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 残件・承認待ち
 
-### 本番反映の手順（Producer の承認後に担当AIが行う）
+### 本番反映（2026-11-24 実施済み）と復元
 
-1. **PRIVATE Worker**（鑑賞画面・歌詞・よみがな・▶/⏸・ダウンロード形式）：`private\worker` で `npx wrangler deploy`。バインディング・秘密の値・R2 は変わらない（新しい移行なし）。確認：入口200・未入室の音源401・Producer が入室して再生・歌詞欄・ダウンロード。**復元**：`npx wrangler rollback c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`（現在の本番版）。歌詞・よみがなは曲目の追加項目なので、旧版に戻しても曲目はそのまま読める。
-2. **公式HP**（並び替え）：`git push origin main`（未push の commit がすべて送られる。docs の変更は index.html・site.css・works-sort.js の3つだけ）。送信後、公開中の全ファイルを docs と照合。**復元**：`git revert` で docs を戻して push、または GitHub の main を `1a0b059` 相当へ戻す commit を作る（履歴は消さない）。
-3. **管理ツール**：Producer が今開いている管理ツール（11/23 起動）を「終了」し、`PIP POPPER管理ツール.exe` を起動し直す（新しい機能が読み込まれる）。push が済むまでは「AI等の保存点」があるため管理ツールからの公開はできない（保存・プレビュー・新曲登録・取り込みは使える）。
-4. **一般視聴ページ**：コードは候補として完成。本番化には Producer の判断が必要：公開する曲・音源・歌詞・ジャケットの選定、独立した Cloudflare Worker と専用R2バケット（無料枠内の見込みだが新規作成）、公開URL。決まったら `public-listening/README.md` の手順で設定し、`content/public-listening.json` に URL を入れて公式HPから案内する。
+- PRIVATE Worker：現在 `95d3da0c-c58a-47c9-b25f-048090183873`。戻すとき `private\worker` で `npx wrangler rollback c44a4e36-7dc8-4c88-9eed-b42a298cb3ad`。
+- 公式HP：現在 `ee6b967`。戻すときは並び替えの commit（713da68）を `git revert` して push（履歴は消さない）。
+- 管理ツール：Producer が一度「終了」→ `PIP POPPER管理ツール.exe` を起動し直す（新機能を読み込む）。push 済みのため管理ツールからの公開も可能になった。
+- 一般視聴ページ：本番化は Producer の判断後（公開する曲・音源・歌詞・ジャケット、専用Worker・R2の新規作成、URL）。
 
 ### Producer の確認・判断
 
@@ -92,7 +94,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 次の一手
 
-Producer が本番反映（上の1〜3）を承認 → 担当AIが反映・照合 → Producer が新しい管理ツールで新曲を確認・公開判断。
+Producer が本番PRIVATEに入室して再生・歌詞欄・ダウンロードを確認し、管理ツールを再起動 → 新曲2曲の内容を確認して公開判断。
 
 ## 交代の手順（PACS-10）
 
