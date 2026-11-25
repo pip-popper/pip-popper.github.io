@@ -1,11 +1,12 @@
 // PIP POPPER PRIVATE — administrator screen (/admin) and its API (/admin/api/...).
 // Secret (Cloudflare only, never in code/GitHub): ADMIN_PASSWORD — 12+ characters and different from PRIVATE_PASSWORD.
+import { ADMIN_CREDENTIAL_KEY, MIN_ADMIN_PASSWORD, loadAdminCredential, adminPasswordMatches, adminVersion, saveAdminCredential, removeAdminCredential } from './admin-credential.js';
 import { listenApi } from './listen-admin.js';
 import { SITE, MAX_PASSWORD, HttpError, html, json, text, redirect, sameOrigin, signValue, readSigned, secretMatches,
   secretVersion, guard, connection, lockMessage, wait } from './common.js';
 import { loadCatalog, commit, storeUpload, cleanup, RETIRE_GRACE, RESTORE_LIMIT, MAX_UPLOAD } from './catalog.js';
 import { adminLoginPage, adminPage, messagePage } from './pages.js';
-import { loadCredential, saveCredential, removeCredential, MIN_PASSWORD, CREDENTIAL_KEY } from './credential.js';
+import { loadCredential, saveCredential, removeCredential, memberPasswordMatches, MIN_PASSWORD, CREDENTIAL_KEY } from './credential.js';
 import { serveAudio } from './audio.js';
 import { validReading, sortedSongs } from './song-order.js';
 
@@ -13,7 +14,7 @@ const ADMIN_COOKIE = 'pp_admin';
 const ADMIN_HOURS = 12;
 const adminCookie = (value, maxAge) => `${ADMIN_COOKIE}=${value}; Path=/admin; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
 const adminReady = env => env.ADMIN_PASSWORD && env.ADMIN_PASSWORD.length >= 12 && env.ADMIN_PASSWORD !== env.PRIVATE_PASSWORD;
-const version = env => secretVersion(env, env.ADMIN_PASSWORD, 'admin-version');
+const version = env => adminVersion(env);   // follows auth/admin-password.json when it exists (2026-11-25)
 
 async function isAdmin(request, env) {
   const data = await readSigned(request, env, ADMIN_COOKIE, 'admin-session');
@@ -53,13 +54,18 @@ async function done(env, extra = {}) {
 // Invitee password (manager tool). Besides the admin cookie, the screen header and the same-site check that every
 // admin API call needs, each change asks for the administrator password again and counts every attempt.
 const RESTORE_WORDS = '旧パスワードに戻す';
+const ADMIN_RESTORE_WORDS = 'Cloudflareの管理者パスワードに戻す';
 async function passwordApi(request, env, path) {
   const method = request.method;
   if (path === 'private-password' && method === 'GET') {
     const cred = await loadCredential(env);
     return json(200, { mode: cred ? 'r2' : 'secret', changedAt: cred?.changedAt ?? null });
   }
-  if (method !== 'POST' || (path !== 'private-password' && path !== 'private-password/restore')) return null;
+  if (path === 'admin-password' && method === 'GET') {
+    const cred = await loadAdminCredential(env);
+    return json(200, { mode: cred ? 'r2' : 'secret', changedAt: cred?.changedAt ?? null });
+  }
+  if (method !== 'POST' || !['private-password', 'private-password/restore', 'admin-password', 'admin-password/restore'].includes(path)) return null;
   const tries = guard(env, 'pw-change', 'pwChange');
   const mine = guard(env, `admin:${connection(request)}`, 'admin');
   const all = guard(env, 'admin-all', 'adminAll');
@@ -69,10 +75,26 @@ async function passwordApi(request, env, path) {
   if (states.some(s => s.locked)) throw new HttpError(429, lockMessage(Math.max(...states.map(s => s.retryAfter))));
   const body = await bodyJson(request);
   const adminPassword = typeof body.adminPassword === 'string' ? body.adminPassword : '';
-  if (!adminPassword || adminPassword.length > MAX_PASSWORD || !await secretMatches(env, adminPassword, env.ADMIN_PASSWORD, 'admin-check')) {
+  if (!adminPassword || adminPassword.length > MAX_PASSWORD || !await adminPasswordMatches(env, adminPassword)) {
     await mine('fail'); await all('fail');
     await wait(1000);
     throw new HttpError(403, '管理者パスワードが違います。');
+  }
+  if (path === 'admin-password/restore') {
+    if (body.confirm !== ADMIN_RESTORE_WORDS) throw new HttpError(400, `確認のため「${ADMIN_RESTORE_WORDS}」と入力してください。`);
+    if (!await env.BUCKET.head(ADMIN_CREDENTIAL_KEY)) throw new HttpError(409, 'すでにCloudflareに登録された管理者パスワードを使っています。');
+    await removeAdminCredential(env);
+    if (await env.BUCKET.head(ADMIN_CREDENTIAL_KEY)) throw new HttpError(500, '元に戻せませんでした。今の管理者パスワードのままです。');
+    return json(200, { ok: true, mode: 'secret', message: 'Cloudflareに登録された管理者パスワードに戻しました。管理画面は入り直しになります。' });
+  }
+  if (path === 'admin-password') {
+    const next = typeof body.newPassword === 'string' ? body.newPassword : '';
+    if (next.length < MIN_ADMIN_PASSWORD || next.length > MAX_PASSWORD) throw new HttpError(400, `新しい管理者パスワードは${MIN_ADMIN_PASSWORD}〜${MAX_PASSWORD}文字にしてください。`);
+    if (next !== next.trim()) throw new HttpError(400, '新しい管理者パスワードの最初と最後に空白を入れないでください。');
+    if (next === adminPassword) throw new HttpError(400, '今の管理者パスワードと同じです。');
+    if (await memberPasswordMatches(env, next, await loadCredential(env))) throw new HttpError(400, '招待者のパスワードとは別のパスワードにしてください。');
+    const saved = await saveAdminCredential(env, next);
+    return json(200, { ok: true, mode: 'r2', changedAt: saved.changedAt, message: '管理者パスワードを変更しました。次からは新しい管理者パスワードで入ってください（古いパスワードでは入れません）。' });
   }
   if (path === 'private-password/restore') {
     if (body.confirm !== RESTORE_WORDS) throw new HttpError(400, `確認のため「${RESTORE_WORDS}」と入力してください。`);
@@ -84,7 +106,7 @@ async function passwordApi(request, env, path) {
   const pw = typeof body.newPassword === 'string' ? body.newPassword : '';
   if (pw.length < MIN_PASSWORD || pw.length > MAX_PASSWORD) throw new HttpError(400, `新しいパスワードは${MIN_PASSWORD}〜${MAX_PASSWORD}文字にしてください。`);
   if (pw !== pw.trim()) throw new HttpError(400, '新しいパスワードの最初と最後に空白を入れないでください。');
-  if (await secretMatches(env, pw, env.ADMIN_PASSWORD, 'admin-check')) throw new HttpError(400, '管理者パスワードとは別のパスワードにしてください。');
+  if (await adminPasswordMatches(env, pw)) throw new HttpError(400, '管理者パスワードとは別のパスワードにしてください。');
   const saved = await saveCredential(env, pw);
   return json(200, { ok: true, mode: 'r2', changedAt: saved.changedAt, message: 'パスワードを変更しました。招待者は全員、新しいパスワードで入り直しになります。' });
 }
@@ -225,7 +247,7 @@ export async function adminRoute(request, env, url) {
     if (a.locked || b.locked) { const s = Math.max(a.retryAfter, b.retryAfter); return html(429, adminLoginPage({ error: lockMessage(s) }), { 'Retry-After': String(s) }); }
     const form = await request.formData().catch(() => null);
     const input = String(form?.get('password') ?? '');
-    if (!input || input.length > MAX_PASSWORD || !await secretMatches(env, input, env.ADMIN_PASSWORD, 'admin-check')) {
+    if (!input || input.length > MAX_PASSWORD || !await adminPasswordMatches(env, input)) {
       const [c, d] = [await mine('fail'), await all('fail')];
       await wait(1000);
       if (c.locked || d.locked) { const s = Math.max(c.retryAfter, d.retryAfter); return html(429, adminLoginPage({ error: lockMessage(s) }), { 'Retry-After': String(s) }); }

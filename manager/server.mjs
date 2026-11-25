@@ -412,6 +412,16 @@ async function changePrivatePassword({ newPassword, confirmPassword, adminPasswo
   return privateCall(adminPassword, 'private-password', { newPassword });
 }
 const restorePrivatePassword = ({ adminPassword, confirm }) => privateCall(adminPassword, 'private-password/restore', { confirm });
+// 2026-11-25: the administrator password itself (signs in with the current one; the Worker checks it again)
+async function changeAdminPassword({ newPassword, confirmPassword, adminPassword }) {
+  if (typeof newPassword !== 'string' || typeof confirmPassword !== 'string') return { status: 400, body: { error: '新しい管理者パスワードを入力してください。' } };
+  if (newPassword !== confirmPassword) return { status: 400, body: { error: '新しい管理者パスワードと確認用が一致しません。' } };
+  if (newPassword.length < 12 || newPassword.length > 200) return { status: 400, body: { error: '新しい管理者パスワードは12〜200文字にしてください。' } };
+  if (newPassword !== newPassword.trim()) return { status: 400, body: { error: '新しい管理者パスワードの最初と最後に空白を入れないでください。' } };
+  if (newPassword === adminPassword) return { status: 400, body: { error: '今の管理者パスワードと同じです。' } };
+  return privateCall(adminPassword, 'admin-password', { newPassword });
+}
+const restoreAdminPassword = ({ adminPassword, confirm }) => privateCall(adminPassword, 'admin-password/restore', { confirm });
 
 // The inventory is held only in this local server process. Lyrics and credentials
 // are not part of the release-status data returned or persisted.
@@ -605,6 +615,8 @@ const server = http.createServer(async (req, res) => {
       else if (route === 'POST /api/check-publish') r = { status: 200, body: { problems: publishProblems() } };
       else if (route === 'POST /api/private/password') r = await changePrivatePassword(body);
       else if (route === 'POST /api/private/restore') r = await restorePrivatePassword(body);
+      else if (route === 'POST /api/private/admin-password') r = await changeAdminPassword(body);
+      else if (route === 'POST /api/private/admin-restore') r = await restoreAdminPassword(body);
       else if (route === 'POST /api/private/lyrics/list') r = await privateLyricsCall(PRIVATE_URL, body);
       else if (route === 'POST /api/private/lyrics/save') {
         r = await privateLyricsCall(PRIVATE_URL, body, true);

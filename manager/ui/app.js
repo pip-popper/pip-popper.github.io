@@ -530,6 +530,48 @@
         el('div', { className: 'field' }, el('label', { htmlFor: 'pp-words', textContent: '確認の言葉' }), iWords), fRAdm, el('div', { className: 'field' }, rBtn), rResult));
     $('#main').scrollTop = 0;
     window.addEventListener('pagehide', () => clear(iNew, iConf, iAdm, iRAdm, iWords), { once: true });
+    // ── 2026-11-25: the administrator password (the one used for PRIVATE's admin screen, lyrics and 一般視聴の管理) ──
+    const [faCur, aCur] = pw('pa-cur', '今の管理者パスワード', 'current-password');
+    const [faNew, aNew] = pw('pa-new', '新しい管理者パスワード（12〜200文字、招待者のパスワードとは別のもの）', 'new-password');
+    const [faConf, aConf] = pw('pa-conf', '新しい管理者パスワード（確認用・もう一度）', 'new-password');
+    const aShow = el('input', { id: 'pa-show', type: 'checkbox' });
+    aShow.onchange = () => [aCur, aNew, aConf].forEach(i => { i.type = aShow.checked ? 'text' : 'password'; });
+    const aResult = el('p', { className: 'note', role: 'status', ariaLive: 'polite' });
+    const aBtn = el('button', { type: 'button', className: 'primary', textContent: '管理者パスワードを変更' });
+    aBtn.onclick = async () => {
+      if (!aCur.value) { aResult.className = 'err'; aResult.textContent = '今の管理者パスワードを入力してください。'; return; }
+      if (!aNew.value || aNew.value !== aConf.value) { aResult.className = 'err'; aResult.textContent = '新しい管理者パスワードと確認用が一致しません。'; return; }
+      const ok = await ask('管理者パスワードを変更します', [el('p', { textContent: '変更すると、次からはPRIVATEの管理画面・歌詞・一般視聴の管理に新しい管理者パスワードが必要になります。古いパスワードでは入れなくなります。' }),
+        el('p', { className: 'warn', textContent: '新しい管理者パスワードを、忘れない方法で控えてから変更してください（このツールやパソコンには残りません）。招待者のパスワード・音源・歌詞・一般視聴の公開内容は変わりません。' })],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '変更する', primary: true }]);
+      if (ok !== 'go') return;
+      aBtn.disabled = true; aResult.className = 'note'; aResult.textContent = '変更しています…';
+      try { const r = await api('POST', '/api/private/admin-password', { newPassword: aNew.value, confirmPassword: aConf.value, adminPassword: aCur.value }); aResult.className = 'done'; aResult.textContent = `✔ ${r.message ?? '変更しました。'}`; }
+      catch (e) { aResult.className = 'err'; aResult.textContent = `変更できませんでした：${e.message}`; }
+      finally { clear(aCur, aNew, aConf); aBtn.disabled = false; }
+    };
+    const [faRCur, aRCur] = pw('pa-rcur', '今の管理者パスワード（管理ツールで変更したもの）', 'off');
+    const aWords = el('input', { id: 'pa-words', type: 'text', autocomplete: 'off', placeholder: 'Cloudflareの管理者パスワードに戻す' });
+    const aRResult = el('p', { className: 'note', role: 'status', ariaLive: 'polite' });
+    const aRBtn = el('button', { type: 'button', textContent: 'Cloudflareの管理者パスワードに戻す' });
+    aRBtn.onclick = async () => {
+      const ok = await ask('Cloudflareに登録された管理者パスワードに戻します', [el('p', { textContent: '管理ツールで設定した管理者パスワードは使えなくなり、Cloudflareに登録されている管理者パスワードで入るようになります。' })],
+        [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '戻す' }]);
+      if (ok !== 'go') return;
+      aRBtn.disabled = true; aRResult.className = 'note'; aRResult.textContent = '戻しています…';
+      try { const r = await api('POST', '/api/private/admin-restore', { adminPassword: aRCur.value, confirm: aWords.value.trim() }); aRResult.className = 'done'; aRResult.textContent = `✔ ${r.message ?? '戻しました。'}`; }
+      catch (e) { aRResult.className = 'err'; aRResult.textContent = `戻せませんでした：${e.message}`; }
+      finally { clear(aRCur, aWords); aRBtn.disabled = false; }
+    };
+    $('#main').append(el('h3', { textContent: '管理者パスワード（PRIVATEの管理画面・歌詞・一般視聴の管理に使うもの）' }),
+      el('p', { className: 'note', textContent: '管理者パスワードを変えます。変更は直ちに反映され、入力したパスワードはこの画面にもパソコンにも残りません。' }),
+      faCur, faNew, faConf, el('div', { className: 'field check' }, aShow, el('label', { htmlFor: 'pa-show', textContent: 'パスワードを表示' })), el('div', { className: 'field' }, aBtn), aResult,
+      el('details', { className: 'restore' }, el('summary', { textContent: 'Cloudflareに登録した管理者パスワードに戻す・忘れたとき' }),
+        el('p', { className: 'note', textContent: '管理ツールで設定した管理者パスワードをやめて、Cloudflareに登録されている管理者パスワードに戻します。確認のため、下の欄に「Cloudflareの管理者パスワードに戻す」と入力してください。' }),
+        el('p', { className: 'note', textContent: '新しい管理者パスワードを忘れたとき：Cloudflareのダッシュボード → R2 → pip-popper-private-audio → auth/admin-password.json を削除すると、Cloudflareに登録されている管理者パスワードで入れるようになります（保守マニュアルの手順）。' }),
+        el('div', { className: 'field' }, el('label', { htmlFor: 'pa-words', textContent: '確認の言葉' }), aWords), faRCur, el('div', { className: 'field' }, aRBtn), aRResult));
+    window.addEventListener('pagehide', () => clear(aCur, aNew, aConf, aRCur, aWords), { once: true });
+
   }
 
   async function openPrivateLyrics() {

@@ -137,3 +137,4 @@
 !/private/dev/test-display-text.mjs
 !/private/dev/test-listen.mjs
 !/private/dev/test-listen-admin.mjs
+!/private/dev/test-admin-password.mjs

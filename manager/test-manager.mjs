@@ -256,6 +256,22 @@ try {
         ok(!log2.includes(ADM) && /listen\/upload status=200/.test(log2), '一般視聴：記録にパスワードは残らない');
         ok(status() === '', '一般視聴：公式サイトのデータは変わらない');
       }
+      // ── 管理者パスワードの変更（2026-11-25）──
+      {
+        const ADM2 = 'admin-changed-by-tool-9', pvAdmin = async pw => (await fetch(`http://localhost:${PV_PORT}/admin/login`, { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ password: pw }) })).status;
+        ok((await call('POST', '/api/private/admin-password', { newPassword: ADM2, confirmPassword: ADM2 + 'x', adminPassword: ADM })).status === 400, '管理者パスワード：確認用が一致しないと送らない');
+        ok((await call('POST', '/api/private/admin-password', { newPassword: 'short', confirmPassword: 'short', adminPassword: ADM })).status === 400, '管理者パスワード：12文字未満は送らない');
+        r = await call('POST', '/api/private/admin-password', { newPassword: ADM2, confirmPassword: ADM2, adminPassword: ADM });
+        ok(r.status === 200 && r.data.ok, '管理者パスワード：管理ツールから変更できる');
+        ok(await pvAdmin(ADM2) === 303 && await pvAdmin(ADM) === 401, '管理者パスワード：新しいもので入れて、古いものでは入れない');
+        ok((await call('POST', '/api/listen/list', { adminPassword: ADM2 })).status === 200 && (await call('POST', '/api/listen/list', { adminPassword: ADM })).status === 403, '管理者パスワード：一般視聴の管理も新しいパスワードで使える');
+        ok(await pvLogin(OLD) === 303, '管理者パスワード：招待者のパスワードは変わらない');
+        r = await call('POST', '/api/private/admin-restore', { adminPassword: ADM2, confirm: 'Cloudflareの管理者パスワードに戻す' });
+        ok(r.status === 200 && await pvAdmin(ADM) === 303, '管理者パスワード：Cloudflareのパスワードに戻せる');
+        const log3 = readFileSync(path.join(WORK, '.manager', 'manager.log'), 'utf8');
+        const leaks2 = spawnSync('git', ['grep', '-l', '--no-index', '-e', ADM2, '--', '.manager', 'content', 'tracks', 'albums', 'docs'], { cwd: WORK, encoding: 'utf8' }).stdout.trim();
+        ok(!log3.includes(ADM2) && !log3.includes(ADM) && /admin-password status=200/.test(log3) && leaks2 === '', '管理者パスワード：記録・管理ツールのフォルダーに残らない');
+      }
     } finally { pv.kill(); }
   }
 

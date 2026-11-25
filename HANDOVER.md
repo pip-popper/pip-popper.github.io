@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | **予定の機能開発は一区切り**（2026-11-25 一般視聴まで本番反映：公式HP 126b034・PRIVATE Worker 5db87a90）。Producer が「PIP POPPER管理ツール一式」で運用中 |
+| 状態 | 管理者パスワード変更機能をローカル実装・検証済み。本番反映（push・PRIVATE Worker デプロイ）は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-25 Claude Code：**管理者パスワードの変更機能**（ローカル）。管理メニュー「PRIVATEパスワード」に管理者パスワードの変更・Cloudflareの値に戻すを追加。Worker：`private/worker/src/admin-credential.js`（非公開R2 `auth/admin-password.json` に HMAC の照合値のみ、変更ごとに新しい版番号で以前の管理Cookieは即無効、壊れていたら管理者は入れない＝安全側、招待者は影響なし）。管理者の照合（入室・各API の再確認・招待者パスワード変更時の確認）をすべてこれ経由に。API：`/admin/api/admin-password`（GET 状態／POST 変更）・`/admin-password/restore`（確認の言葉）、回数制限は招待者パスワード変更と共通（1時間10回）。新しい管理者パスワードは12〜200文字・招待者パスワードと別。忘れたときの最終手段：Cloudflare ダッシュボードで R2 の `auth/admin-password.json` を削除。テスト：Worker 21・管理ツール169（管理者パスワード8を追加）・既存の PRIVATE／一般視聴テスト合格。実ブラウザ（模擬 PRIVATE）：変更→新で入れて旧では入れない→招待者は不変→Cloudflareの値に戻す、平文はログ・R2に残らない（ブラウザ枠が非表示で確認画面の close 通知が届かないため、その通知だけ手動で送って確認）。本番未反映。
 
 - 2026-11-25 **一般視聴機能を本番反映（Producer 承認）・予定の機能開発を一区切り**。PRIVATE Worker：Version `5db87a90-8e7f-48f8-9c48-ace8a374e7a1`（復元点 `1d66ecec-be29-4fcf-bfae-a760e0ceaf02`）。公式HP：push b9f686a..126b034、公開中179ファイルが docs と全一致（復元点 b9f686a）。確認：メニュー「LISTEN｜音楽を聴く」→ /listen/（パスワードなし、0曲で「準備中」）、PRIVATE 入口200・未入室の音源401・管理API 401・/listen/ から管理記録や PRIVATE 音源は404、R2 の PRIVATE 曲目 rev 78・23曲のまま・公開カタログ未作成。一式：起動時に 126b034 を自動取得、公開前チェック0件、曲27・登録2を保持。未実施（承認外）：楽曲の一般公開・R2 書込み・PRIVATE 音源コピー・公開範囲／パスワード変更。
 
