@@ -19,11 +19,14 @@
 !/src/site.css
 !/src/works-sort.js
 !/docs/assets/works-sort.js
+!/src/listen-links.js
+!/docs/assets/listen-links.js
 !/public-listening/
 /public-listening/**
 !/public-listening/worker.mjs
 !/public-listening/approval.mjs
 !/public-listening/test.mjs
+!/public-listening/test-site-links.mjs
 !/public-listening/stage.mjs
 !/public-listening/README.md
 !/src/stage.jpg

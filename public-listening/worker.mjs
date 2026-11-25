@@ -38,6 +38,8 @@ export async function publicListening(request, env, {base='',siteUrl='https://pi
     const url=new URL(request.url);const pathname=url.pathname;
     if(request.method!=='GET')return secure(response(405,'受け付けられないリクエストです。'));
     if(ASSETS.has(pathname))return secure(await env.ASSETS.fetch(request));
+    // 2026-11-25: the IDs of the songs listenable right now, for the official site's "▶ 試聴する" links (IDs only, nothing else)
+    if(pathname==='/available.json'){const songs=await loadApproved(env);return secure(new Response(JSON.stringify({version:1,ids:songs.map(s=>s.id)}),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'}}));}
     if(pathname!=='/'&&!/^\/(?:audio\/[a-z0-9-]+\.(?:mp3|wav)|jacket\/[a-z0-9-]+)$/.test(pathname))return secure(response(404,'見つかりません。'));
     const songs=await loadApproved(env);
     if(pathname==='/')return secure(response(200,libraryPage({songs,publicMode:true,base,siteUrl}),'text/html; charset=utf-8'));

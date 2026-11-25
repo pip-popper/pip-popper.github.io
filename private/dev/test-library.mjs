@@ -38,7 +38,7 @@ assert.ok(libraryPage({songs:[]}).includes('現在、登録されている音源
 const listeners=new Map();
 const classes=()=>{const values=new Set();return {add:v=>values.add(v),toggle:(v,b)=>b?values.add(v):values.delete(v),contains:v=>values.has(v)};};
 const entries=songs.map(s=>{
-  const item={classList:classes()},button={hidden:true,attrs:{},setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,v){this[k]=v;}};
+  const item={classList:classes(),dataset:{songId:s.id}},button={hidden:true,attrs:{},setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,v){this[k]=v;}};
   const body={insertBefore(a){a.parent=this;},querySelector(){return {};}};
   const events={};
   const audio={src:'/audio/'+s.id,currentTime:0,paused:true,ended:false,parent:body,
@@ -57,9 +57,12 @@ const listening={hidden:true,querySelector:q=>q==='.pv-current-lyrics'?lyrics:q=
 const list={querySelectorAll:()=>entries.map(e=>e.item)};
 const document={documentElement:{classList:classes()},querySelector:q=>q==='.pv-library-list'?list:q==='.pv-listening'?listening:player,
   querySelectorAll:()=>entries.map(e=>e.audio),addEventListener(k,v){listeners.set(k,[...(listeners.get(k)||[]),v]);}};
-vm.runInNewContext(readFileSync(new URL('../worker/public/assets/private.js',import.meta.url),'utf8'),{document});
+const privateJs=readFileSync(new URL('../worker/public/assets/private.js',import.meta.url),'utf8');
+vm.runInNewContext(privateJs,{document,location:{hash:''},window:{addEventListener(){}}});
 assert.equal(player.hidden,false);
 assert.equal(entries[0].audio.paused,true); // never autoplay on entry
+assert.equal(title.textContent,songs[0].title); // no #song-<ID>: the first song is selected
+assert.ok(html.includes(`id="song-${songs[3].id}" data-song-id="${songs[3].id}"`));
 assert.equal(entries[0].button.textContent,'▶ 再生');
 assert.equal(entries[0].button.attrs['aria-current'],'true');
 assert.equal(entries[0].button.attrs['aria-pressed'],'false');
@@ -237,5 +240,11 @@ const readingSave=(reading,rev=nowRev)=>privateLyricsCall(base,{adminPassword,id
 assert.equal((await readingSave('漢字')).status,400);assert.equal((await readingSave('かき',nowRev-1)).status,409);
 assert.equal((await readingSave('')).status,200);assert.equal(inventory.songs[1].reading,'');
 assert.equal(inventory.songs[1].lyrics,'管理画面の歌詞\n\n二行目');assert.deepEqual(inventory.songs.map(s=>s.id),originalOrder);
+{ // 2026-11-25: /listen/#song-<ID> (the official site's "▶ 試聴する") selects that song, without playing it
+  const fresh={...player,hidden:true},want=songs[3];
+  vm.runInNewContext(privateJs,{document:{...document,querySelector:q=>q==='.pv-library-list'?list:q==='.pv-listening'?listening:fresh},location:{hash:'#song-'+want.id},window:{addEventListener(){}}});
+  assert.equal(title.textContent,want.title);
+  assert.ok(entries.every(e=>e.audio.paused));
+}
 console.log('PASS: manager UI navigation, list, password clearing, draft protection, canceled confirmation, confirmed save and success state');
 console.log('PASS: kana/half-width/English/numeric/unset order, new track insertion, optional reading edit/clear, invalid/stale rejection, catalog order and lyrics preserved');

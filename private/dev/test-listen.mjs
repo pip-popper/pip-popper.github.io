@@ -19,6 +19,7 @@ const env = mockEnv({ r2Dir: r2, publicDir: path.join(here, '..', 'worker', 'pub
 const rawGet = env.BUCKET.get.bind(env.BUCKET);
 env.BUCKET.get = async (k, o) => { const x = await rawGet(k, o); if (x && k.endsWith('.jpg')) x.httpMetadata = { contentType: 'image/jpeg' }; return x; };
 const get = (p, headers = {}) => worker.fetch(new Request(O + p, { headers: { 'CF-Connecting-IP': '198.51.100.9', ...headers } }), env);
+const available = async () => { const r = await get('/listen/available.json'); return { status: r.status, cors: r.headers.get('Access-Control-Allow-Origin'), text: await r.text() }; };
 const mp3 = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(997, 1)]);
 const put = (key, body, type) => env.BUCKET.put(key, body, { httpMetadata: { contentType: type } });
 
@@ -32,6 +33,8 @@ try {
   let body = await r.text();
   ok(r.status === 200 && !body.includes('type="password"') && !body.includes('PRIVATE_ONLY'), 'パスワードなしで開け、曲は0件（PRIVATEの曲は出ない）');
   ok((await get('/listen')).status === 303 || (await get('/listen')).status === 302, '/listen は /listen/ へ案内');
+  let a = await available();
+  ok(a.status === 200 && JSON.parse(a.text).ids.length === 0 && !a.text.includes('secret-song'), '公式サイト用の公開中ID一覧：0曲（PRIVATEの曲は入らない）');
 
   console.log('2. 承認済みの公開コピーだけが出る');
   await put('public-audio/manner.mp3', mp3, 'audio/mpeg');
@@ -48,6 +51,21 @@ try {
   ok(r.status === 206 && r.headers.get('Content-Type') === 'audio/mpeg' && !/attachment/.test(r.headers.get('Content-Disposition') ?? ''), '公開音源は再生できる（Range対応・ダウンロード指定なし）');
   ok((await get('/listen/audio/manner.mp3?download=1')).headers.get('Content-Disposition')?.startsWith('inline'), 'download=1 でも保存用にはならない');
   ok((await get('/listen/jacket/manner')).status === 200, '承認済みのジャケットは表示できる');
+  a = await available();
+  ok(a.status === 200 && a.cors === '*' && a.text === '{"version":1,"ids":["manner"]}', '公開中ID一覧：承認済みの曲のIDだけ（曲名・歌詞・未承認・PRIVATEを指す曲は入らない）');
+  ok(body.includes('id="song-manner"'), '一般視聴ページの曲に #song-<ID> の目印がある（公式サイトの「試聴する」の行き先）');
+
+  console.log('2b. 公開・停止に合わせて自動で切り替わる');
+  await put('public-catalog.json', JSON.stringify({ version: 1, songs: [] }), 'application/json');
+  ok(JSON.parse((await available()).text).ids.length === 0, '掲載を停止すると一覧から消える');
+  const broken = env.BUCKET.get; env.BUCKET.get = async k => k === 'public-catalog.json' ? { json: async () => ({ version: 9 }) } : broken(k);
+  a = await available();
+  ok(a.status === 503 && !a.cors, '公開カタログが壊れていたら503（公式サイトはリンクを出さない）');
+  env.BUCKET.get = broken;
+  await put('public-catalog.json', JSON.stringify({ version: 1, songs: [
+    { id: 'manner', title: 'Manner', classification: 'general', publicAudioApproved: true, audioKey: 'public-audio/manner.mp3', size: mp3.length, lyricsScope: 'public', publicLyricsApproved: true, lyrics: 'PUBLIC_LYRIC', jacketKey: 'public-jackets/manner.jpg', publicJacketApproved: true },
+  ] }), 'application/json');
+  ok(JSON.parse((await available()).text).ids.join() === 'manner', '再び公開すると一覧に戻る');
 
   console.log('3. 公開側からPRIVATEには届かない');
   ok((await get('/listen/audio/secret-song.mp3')).status === 404, 'PRIVATEの曲IDを指定しても404');

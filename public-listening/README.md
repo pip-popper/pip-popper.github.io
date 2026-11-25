@@ -8,6 +8,13 @@
 - **掲載できる曲**：公式サイトですでに公開している曲だけ（`docs/works.json` にあり、音源非公開の指定がないもの）。歌詞・ジャケット・AIの感想は、公式サイトで公開済みのものを、Producer が承認した項目だけ載せる。新曲は公式サイトで公開した後に対象になる。
 - **公開カタログがない間は0曲**（ページは「準備中」状態で、PRIVATE のデータは一切出ない）。
 
+### 公式サイトの「▶ 試聴する」（2026-11-25）
+
+- `/listen/available.json` = 今公開中の曲の **IDだけ**（`{"version":1,"ids":[...]}`、公開カタログを `approvedSongs` で検証した結果。曲名・歌詞などは含めない。`Cache-Control: no-store`、`Access-Control-Allow-Origin: *`）。公開カタログが壊れている・読めないときは 503。
+- 公式サイト（`build.mjs`）は、音源非公開でない曲の楽曲一覧カードと曲ページに `hidden` の「▶ 試聴する」（`data-listen-id="<曲ID>"`、行き先 `/listen/#song-<曲ID>`）を書いておき、`assets/listen-links.js`（`src/listen-links.js`）が上の一覧を取り、**IDが完全一致した曲だけ**表示する。取得失敗・形式違い・8秒で応答なしは全部非表示のまま。
+- 一般視聴ページは `#song-<曲ID>` で開くとその曲を選んだ状態にする（自動再生はしない）。
+- テスト：`node public-listening/test-site-links.mjs`（生成ページ・表示切替・失敗時）、`node private/dev/test-listen.mjs`（ID一覧・公開/停止/壊れたとき）。
+
 ### 公開の手順（Producer の承認後）
 
 1. 承認内容を `.manager/public-listening/approvals.json`（Git対象外）に書く：`{"approvedBy":"Producer","approvedAt":"YYYY-MM-DD","songs":[{"id":"manner","lyrics":true,"jacket":true,"impression":false}]}`。

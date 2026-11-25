@@ -209,6 +209,14 @@ main { position: relative; z-index: 1; }
   font: 500 14px/1 var(--f-body); letter-spacing: .1em; background: rgba(0,0,0,.3); transition: background .25s, color .25s; }
 .listen-link span { color: var(--red); }
 .listen-link:hover { background: var(--ink); color: #000; }
+/* 2026-11-25: "▶ 試聴する" (shown by assets/listen-links.js only for songs on the listening page) */
+.listen-trial span { color: var(--red); }
+.listen:has(> .listen-trial[hidden]:only-child) { display: none; }
+.work-trial { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; min-height: 36px; padding: 0 14px; border: 1px solid rgba(255,255,255,.45);
+  font: 500 12px/1 var(--f-body); letter-spacing: .1em; background: rgba(0,0,0,.3); transition: background .25s, color .25s; }
+.work-trial span { color: var(--red); font-size: 10px; }
+.work-trial:hover { background: var(--ink); color: #000; }
+.work-trial[hidden], .listen-trial[hidden] { display: none; }
 .listen-audio { flex: 0 1 460px; min-width: 0; height: 44px; color-scheme: dark; }
 /* Audio not released to the public (track.json "audioRelease": "private"): a light joke, not a warning. */
 .listen-private { display: grid; gap: 12px; margin-top: 8px; padding: 16px 24px 18px; border-left: 2px solid var(--red); background: rgba(0,0,0,.32); }

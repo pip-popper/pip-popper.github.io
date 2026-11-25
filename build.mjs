@@ -421,9 +421,14 @@ const PRIVATE_NOTE = `<div class="listen-private" role="note">
         <p class="lp-status"><span class="lp-key">音源</span><span class="lp-val">一般非公開</span></p>
         <p class="lp-cond"><span class="lp-key">${esc(SITE.track.privateCondLabel)}</span><span class="lp-val lp-heart">${esc(SITE.track.privateCond)}</span></p>
       </div>`;
+// 2026-11-25: "▶ 試聴する" — written hidden for every song whose audio is not private; assets/listen-links.js shows it only when
+// the listening page's ID list (/listen/available.json, matched by song ID) has the song. No list / an error = stays hidden.
+const trialUrl = id => `${listeningUrl}#song-${encodeURIComponent(id)}`;
+const trialLink = (song, cls) => listeningUrl && !song.audioPrivate ? `<a class="${cls}" data-listen-id="${esc(song.id)}" href="${esc(trialUrl(song.id))}" aria-label="${esc(song.title)}を一般視聴ページで試聴する" hidden><span aria-hidden="true">▶</span> 試聴する</a>` : '';
+const trialScript = r => listeningUrl ? `<script src="${r}assets/listen-links.js" data-src="${esc(/^https:/.test(listeningUrl) ? new URL('available.json', listeningUrl).href : listeningUrl.replace(/[^/]*$/, '') + 'available.json')}" defer></script>\n` : '';
 const listen = (r, song) => {
   if (song.audioPrivate) return PRIVATE_NOTE;
-  const links = song.links.map(l => `<a class="listen-link" data-service="${l.service}" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} <span aria-hidden="true">↗</span></a>`).join('');
+  const links = song.links.map(l => `<a class="listen-link" data-service="${l.service}" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} <span aria-hidden="true">↗</span></a>`).join('') + trialLink(song, 'listen-link listen-trial');
   return links ? `<div class="listen">${links}</div>` : '';
 };
 
@@ -438,7 +443,7 @@ const listen = (r, song) => {
         <span class="work-meta"><span class="work-no">${no(i)}</span>${s === latest ? '<span class="work-new">LATEST</span>' : ''}${s.audioPrivate ? '<span class="work-private">音源非公開</span>' : ''}</span>
         <span class="work-title" style="--fit:${titleParts(s.title).fit}">${titleParts(s.title).html}</span>
         ${s.aiImpression ? `<span class="work-note">${esc(s.aiImpression)}</span>` : ''}
-      </a>
+      </a>${trialLink(s, 'work-trial')}
     </li>`).join('\n    ');
   // Latest title (finish layout): main title large, a "-subtitle-" or "feat." part on its own line.
   const rel = (m => m ? { main: m[1], sub: m[2] } : { main: latest.title, sub: null })(latest.title.match(/^(.+?)\s+((?:-|feat\.|～|~).+)$/));
@@ -516,7 +521,7 @@ ${footer(r, true)}
 ${sharedScript}
 ${messageScript}
 <script src="assets/works-sort.js" defer></script>
-</body>
+${trialScript(r)}</body>
 </html>
 `);
 }
@@ -555,7 +560,7 @@ ${topbar(r, false)}
 </main>
 ${footer(r, false)}
 ${sharedScript}
-</body>
+${s.audioPrivate ? '' : trialScript(r)}</body>
 </html>
 `);
 }
@@ -798,7 +803,7 @@ ${sharedScript}
 // ── Assets ───────────────────────────────────────────────────────────
 await mkdir(new URL('assets/covers/', out), { recursive: true });
 await mkdir(new URL('assets/history/', out), { recursive: true });
-for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.js', 'works-sort.js'])
+for (const f of ['third-design.css', 'history.css', 'page-fade.css', 'page-fade.js', 'works-sort.js', 'listen-links.js'])
   await copyFile(new URL(`src/${f}`, root), new URL(`assets/${f}`, out));
 for (const a of albums) {
   if (a.visualSize) for (const [src, dst] of [['visual-web', 'visual'], ['visual-640', 'visual-640']])

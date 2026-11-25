@@ -81,7 +81,7 @@ export const libraryPage = ({ songs, publicMode=false, base='', siteUrl=SITE }) 
     <div class="pv-lyrics-panel"><h3>歌詞</h3><div class="pv-current-lyrics" tabindex="0" aria-label="選択曲の歌詞"${publicMode?' data-empty-message="公開歌詞はありません。"':''}></div><a class="pv-public-lyrics" target="_blank" rel="noopener noreferrer" hidden>公式サイトの歌詞・作品紹介を見る ↗</a><section class="pv-impression" hidden><h3>AIの感想</h3><div class="pv-current-impression"></div></section></div>
   </section>
   <ol class="pv-list pv-library-list" aria-label="楽曲一覧">
-${sortedSongs(songs).map((s, i) => { const format=audioFormat(s); const audioUrl=`${base}/audio/${esc(s.id)}${format?'.'+format.ext:''}`; return `<li class="pv-item">
+${sortedSongs(songs).map((s, i) => { const format=audioFormat(s); const audioUrl=`${base}/audio/${esc(s.id)}${format?'.'+format.ext:''}`; return `<li class="pv-item" id="song-${esc(s.id)}" data-song-id="${esc(s.id)}">
       <span class="pv-jacket"><span class="jacket-fallback">${esc(s.title)}</span>${coverUrl(s,base) ? `<img src="${esc(coverUrl(s,base))}" width="640" height="640" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">` : ''}</span>
       <div class="pv-body">
         <p class="pv-no"><span>${no(i)}</span></p>

@@ -94,5 +94,8 @@ if (list && player) {
   document.documentElement.classList.add('pv-enhanced');
   player.hidden = false;
   if (listening) listening.hidden = false;
-  if (entries.length) select(entries[0], false);
+  // 2026-11-25: a link like /listen/#song-<ID> (the official site's "▶ 試聴する") opens with that song selected
+  const fromHash = () => entries.find(e => location.hash === '#song-' + e.item.dataset.songId);
+  if (entries.length) select(fromHash() ?? entries[0], false);
+  window.addEventListener('hashchange', () => { const e = fromHash(); if (e) select(e, false); });
 }
