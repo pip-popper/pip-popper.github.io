@@ -9,5 +9,11 @@
   "lyrics": null,
   "background": null,
   "streamingUrl": null,
-  "downloadUrl": null
+  "downloadUrl": null,
+  "display": {
+    "lyrics": false,
+    "jacket": true,
+    "impression": true,
+    "lyricsNotice": "general"
+  }
 }
