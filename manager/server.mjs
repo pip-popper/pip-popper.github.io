@@ -690,16 +690,29 @@ if (process.argv.includes('--launcher')) {
 // 2026-11-24: the manager folder can be copied (PIP POPPER管理ツール一式). When this copy has no unpublished
 // changes and nothing unsent, take in what was published from elsewhere (fast-forward only, never a merge).
 function syncFromGitHub() {
-  if (process.env.PP_MANAGER_NO_SYNC) return;
-  if (changedFiles().length || currentBranch() !== BRANCH || normUrl(remoteUrl()) !== normUrl(EXPECTED_REMOTE)) return;
-  if (!git(['fetch', REMOTE, BRANCH], { timeout: 15000 }).ok) return;
-  if (git(['rev-list', '--count', `${REMOTE}/${BRANCH}..HEAD`]).out !== '0') return;
-  if (git(['rev-list', '--count', `HEAD..${REMOTE}/${BRANCH}`]).out === '0') return;
+  if (process.env.PP_MANAGER_NO_SYNC) return false;
+  if (changedFiles().length || currentBranch() !== BRANCH || normUrl(remoteUrl()) !== normUrl(EXPECTED_REMOTE)) return false;
+  if (!git(['fetch', REMOTE, BRANCH], { timeout: 15000 }).ok) return false;
+  if (git(['rev-list', '--count', `${REMOTE}/${BRANCH}..HEAD`]).out !== '0') return false;
+  if (git(['rev-list', '--count', `HEAD..${REMOTE}/${BRANCH}`]).out === '0') return false;
   const m = git(['merge', '--ff-only', '-q', `${REMOTE}/${BRANCH}`]);
   log(`sync from GitHub ${m.ok ? 'ok' : 'failed'}`);
+  return m.ok;
 }
-try { syncFromGitHub(); } catch {}
-server.listen(PORT, '127.0.0.1', () => {
+let updated = false;
+try { updated = syncFromGitHub(); } catch {}
+// 2026-11-25: this process was loaded before the update, so its own code is the old version. Start the updated
+// manager in its place right away (same window and output, so the EXE finds the address as before; this process
+// only waits and ends with it — and when the EXE or the window goes away, both end). If that cannot start, carry on.
+if (updated) {
+  // its own input pipe: on Windows two processes reading one inherited pipe can stall the new one. When this process
+  // ends (the EXE or the window went away) that pipe closes, and the new one (--launcher) ends too.
+  const next = spawn(process.execPath, process.argv.slice(1), { stdio: ['pipe', 'inherit', 'inherit'], windowsHide: true, env: { ...process.env, PP_MANAGER_NO_SYNC: '1' } });
+  next.on('exit', code => process.exit(code ?? 0));
+  next.on('error', () => { log('restart after update failed'); startServer(); });
+  log('restart after update');
+} else startServer();
+function startServer() { server.listen(PORT, '127.0.0.1', () => {
   PORT = server.address().port;
   const open = `http://127.0.0.1:${PORT}/#t=${TOKEN}`;
   console.log('PIP POPPER 管理ツールを起動しました。');
@@ -708,4 +721,4 @@ server.listen(PORT, '127.0.0.1', () => {
   log(`start root=${ROOT}`);
   if (OPEN) spawn('cmd.exe', ['/c', 'start', '', open], { detached: true, stdio: 'ignore' }).unref();
   if (process.env.PP_MANAGER_PRINT_TOKEN) console.log(`TOKEN=${TOKEN}`);
-});
+}); }

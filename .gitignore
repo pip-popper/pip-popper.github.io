@@ -126,6 +126,7 @@
 !/manager/test-release-status.mjs
 !/manager/prototype-preview.mjs
 !/manager/test-manager.mjs
+!/manager/test-update-restart.mjs
 !/manager/README.md
 !/manager/Launcher.cs
 !/manager/build-launcher.ps1
