@@ -155,3 +155,11 @@ details.restore summary { cursor: pointer; color: var(--muted); }
 .listen-player { display: block; width: 100%; max-width: 520px; margin: 8px 0; }
 .draft-open[aria-current="true"] { background: var(--panel2); box-shadow: inset 3px 0 0 var(--red); }
 @media (max-width: 900px) { .listen-layout { grid-template-columns: 1fr; } .listen-layout .drafts { max-height: 40vh; } }
+
+/* 2026-11-25: 公式HPに表示する内容 */
+.display-box { margin: 18px 0 6px; padding: 14px 16px 6px; border: 1px solid var(--line); border-radius: 6px; }
+.display-box.changed { border-color: var(--warn); }
+.display-box .field.check { margin-top: 0; margin-bottom: 10px; }
+.display-box h3 { margin-top: 0; }
+.display-box .notice-field { margin-left: 26px; }
+.display-box .notice-sample { margin: 6px 0 0; font-size: 13px; opacity: .85; }

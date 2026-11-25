@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 管理者パスワード機能・確認画面の修正は本番反映済み（Worker 88c05372・6a274d3）。公式サイトの「▶ 試聴する」自動リンクをローカル実装・検証済み、push・Worker デプロイは Producer 承認待ち |
+| 状態 | 「▶ 試聴する」まで本番反映済み（Worker 291f0777・1e501b1）。公式HPに表示する内容（曲ごと）をローカル実装・検証済み、push は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,9 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-25 Claude Code：**公式HPに表示する内容（曲ごと）**（ローカル）。曲の編集画面に「歌詞を表示する／ジャケットを表示する／AIの感想を表示する」と「歌詞を載せない理由」（①一般的な案内・②女性の理解を得るのが難しい・③心の広い人限定・理由を表示しない）。`track.json` の `display`（すべて表示なら書かない＝既存27曲は不変、生成結果も site.css 以外同一）、文は `src/track-display.mjs`。保存→プレビュー→公開する で反映、原文・画像は消さない、画像ファイル・works.json は従来どおり（PRIVATE が使う）。テスト：管理ツール183（表示内容14を追加）・曲登録・公開状況・一般視聴・PRIVATE 歌詞のテスト合格。実ブラウザ（管理ツールの写し）：歌詞だけ非表示→①②③の文→理由なしで歌詞欄なし→歌詞・ジャケット・感想の再表示、すべて戻すと変更0件。本番未反映（push は Producer 承認待ち、Worker の変更なし）。
+- 2026-11-25 Claude Code：「▶ 試聴する」自動リンクを本番反映（Producer 承認）：PRIVATE Worker 291f0777（復元点 88c05372）、GitHub 1e501b1。
 
 - 2026-11-25 Claude Code：**公式サイトの「▶ 試聴する」自動リンク**（ローカル）。PRIVATE Worker に `/listen/available.json`（公開中の曲IDだけ、no-store）を追加。公式サイトの楽曲一覧カード・曲ページに非表示のリンクを用意し、`assets/listen-links.js` が一覧を取得してIDが一致した曲だけ表示（取得失敗は非表示のまま、音源非公開の曲はリンク自体なし）。一般視聴ページは `#song-<ID>` でその曲を選択。公開・停止はサイトの再公開なしで反映。テスト：test-site-links 16・test-listen 26・test-library・public-listening/test・test-listen-admin・test-admin・管理ツール169 合格。実ブラウザ（模擬 PRIVATE・別オリジン）PC・スマホ：公開中の2曲だけ表示→押すとその曲が選ばれて再生できる→停止で消える→再公開で出る→一般視聴停止で0件。本番反映は push（サイト・docs 再生成済み）と PRIVATE Worker デプロイ（復元点 88c05372）が必要、Producer 承認待ち。順序はどちらが先でも安全（Worker が古い間はリンクが出ないだけ）。
 

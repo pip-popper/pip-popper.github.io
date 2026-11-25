@@ -420,6 +420,41 @@ try {
     ok(status() === '', '作業フォルダーに残りなし');
   }
 
+  console.log('8f. 公式HPに表示する内容（歌詞・ジャケット・AIの感想、歌詞を載せない理由）');
+  {
+    const T = 'manner', file = `tracks/${T}/track.json`, orig = read(file);
+    let it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    ok(JSON.stringify(it.display) === JSON.stringify({ lyrics: true, jacket: true, impression: true, lyricsNotice: null }) && it.notices.length === 3, '既存曲の初期値は「すべて表示」（今の表示のまま）・理由は3種類');
+    const page = async () => { await call('POST', '/api/preview', { type: 'track', id: T }); return read(`.manager/preview/tracks/${T}/index.html`); };
+    const before = await page(), homeBefore = read('.manager/preview/index.html'), worksBefore = read('.manager/preview/works.json');
+    const save = async display => { it = (await call('GET', `/api/item?type=track&id=${T}`)).data; return call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, display }); };
+    const all = { lyrics: true, jacket: true, impression: true };
+    let r = await save({ ...all, lyrics: false, lyricsNotice: 'general' });
+    let html = await page();
+    const saved = JSON.parse(read(file));
+    ok(r.status === 200 && saved.lyrics === JSON.parse(orig).lyrics && saved.aiImpression === JSON.parse(orig).aiImpression && saved.display.lyrics === false, '歌詞だけ非表示で保存（歌詞・感想の原文は残る）');
+    ok(!html.includes('class="lyrics-text"') && html.includes('この楽曲には一部不適切な表現が含まれるため、歌詞の掲載を控えています。') && html.includes(`assets/covers/${T}.jpg`) && html.includes('id="ai-title"'), '歌詞の代わりに①の案内、ジャケットとAIの感想は表示');
+    ok(status() === `M ${file}`, '保存だけでは公開されない（docs は変わらない）');
+    for (const [v, text] of [['women', 'この楽曲の歌詞は、女性の皆さまからご理解をいただくことが難しいと判断したため、掲載を控えています。'], ['broadminded', 'この楽曲の歌詞は、非常に心の広い方にしか受け止めていただけない可能性があるため、掲載を控えています。']]) {
+      await save({ ...all, lyrics: false, lyricsNotice: v }); html = await page();
+      ok(html.includes(text) && !html.includes('一部不適切な表現') && !html.includes('class="lyrics-text"'), `理由「${v}」の文が歌詞欄に出る`);
+    }
+    await save({ ...all, lyrics: false, lyricsNotice: null }); html = await page();
+    ok(!html.includes('id="text"') && !html.includes('掲載を控えています') && !html.includes('href="#text"'), '「理由を表示しない」で歌詞欄ごと消える');
+    const items = (await call('GET', '/api/state')).data.changes.items.filter(c => c.item === '曲「Manner」');
+    ok(items.some(c => c.label === '公式HP：歌詞' && c.before === '表示する' && c.after === '表示しない') && items.some(c => c.label === '公式HP：歌詞を載せない理由' && c.after === '理由を表示しない'), '公開前の変更一覧に「公式HP：歌詞 表示する→表示しない」が出る');
+    await save({ lyrics: true, jacket: false, impression: false }); html = await page();
+    const home = read('.manager/preview/index.html');
+    const card = home.match(new RegExp(`<li class="work[^>]*>\\s*<a class="work-link" href="tracks/${T}/index.html"[\\s\\S]*?</li>`))?.[0] ?? '';
+    ok(!html.includes(`assets/covers/${T}`) && html.includes('jacket-fallback') && !html.includes('id="ai-title"') && html.includes('class="lyrics-text"'), 'ジャケット・AIの感想を非表示（曲名の表示）、歌詞を再掲載すると原文が戻る');
+    ok(card !== '' && !card.includes(`covers/${T}-640`) && !card.includes('work-note'), '楽曲一覧のカードにも反映');
+    ok(existsSync(path.join(WORK, '.manager', 'preview', 'assets', 'covers', `${T}-640.jpg`)) && read('.manager/preview/works.json') === worksBefore, '画像ファイル・作品一覧（PRIVATE・一般視聴が使う）は変わらない');
+    ok((await save({ ...all, lyrics: false, lyricsNotice: 'free text' })).status === 400 && (await save({ lyrics: 'no' })).status === 400 && (await call('POST', '/api/item', { type: 'site', id: 'home', rev: 'x', display: all })).status !== 200, '決められた理由以外・不正な値は保存しない');
+    await save(all); html = await page();
+    ok(read(file) === orig && status() === '', 'すべて表示に戻すと track.json は元どおり（変更なし）');
+    ok(html === before && read('.manager/preview/index.html') === homeBefore, '公開ページも変更前と同じに戻る');
+  }
+
   console.log('9. 終了');
   ok((await call('POST', '/api/quit')).status === 200, '終了できる');
 } catch (e) {

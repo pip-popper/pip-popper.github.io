@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { sortedSongs } from './private/worker/src/song-order.js';
 import { assertArchiveApproval } from './public-listening/approval.mjs';
 import { displayText } from './private/worker/src/display-text.js';
+import { readDisplay, noticeText } from './src/track-display.mjs';
 
 const root = new URL('./', import.meta.url);
 const argv = process.argv.slice(2);
@@ -95,8 +96,11 @@ for (const id of ids) {
     return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 19) + '+09:00'; };
   const gitAt = gitListedAt(id);
   const listedAt = data.releaseDate ?? data.listedAt ?? gitAt ?? await localAt();
+  // display (2026-11-25): lyrics / jacket / AI impression can each be left off the site (track.json keeps them all)
+  let show; try { show = readDisplay(data.display); } catch (e) { throw new Error(`${e.message}: ${id}`); }
   // aiImpression: shown without ChatGPT's Markdown marks (track.json keeps the original)
-  songs.push({ ...data, aiImpression: displayText(data.aiImpression), id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
+  songs.push({ ...data, lyrics: show.lyrics ? data.lyrics : null, lyricsNotice: show.lyrics ? null : noticeText(show.lyricsNotice),
+    aiImpression: show.impression ? displayText(data.aiImpression) : null, hideJacket: !show.jacket, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
 }
 // Newest listing first; listOrder breaks ties (higher = registered later).
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
@@ -324,8 +328,10 @@ const sharedScript = `<script>
   update();
 })();
 </script>`;
-const jacket = (r, song, { eager = false, small = false, alt = '' } = {}) => `<span class="jacket-fallback">${esc(song.title)}</span>
-        <img src="${coverUrl(r, song.id, small)}" width="${small ? 640 : 1254}" height="${small ? 640 : 1254}" alt="${esc(alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async" onerror="this.style.display='none'">`;
+const jacket = (r, song, { eager = false, small = false, alt = '' } = {}) => `<span class="jacket-fallback">${esc(song.title)}</span>${song.hideJacket ? '' : `
+        <img src="${coverUrl(r, song.id, small)}" width="${small ? 640 : 1254}" height="${small ? 640 : 1254}" alt="${esc(alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async" onerror="this.style.display='none'">`}`;
+// the blurred light behind a page uses the jacket too: none when the jacket is not shown
+const glowOf = (r, song) => song.hideJacket ? '' : ` style="${glowStyle(coverUrl(r, song.id, true))}"`;
 
 // ── Message form (Formspree) ─────────────────────────────────────────
 // Only the form ID appears in the page; the receiving address is set in the Formspree dashboard
@@ -456,7 +462,7 @@ const listen = (r, song) => {
         </a></li>`).join('\n        ');
   await write('index.html', `${head(r, `PIP POPPER（${NAME_KANA}）｜OFFICIAL MUSIC SITE`, ' page-home', { verify: true, homeOpening: true, third: true })}
 <a class="skip" href="#latest">最新楽曲へ移動</a>
-${world(`<div class="glow" data-key="${latest.id}" style="${glowStyle(coverUrl(r, latest.id, true))}"></div>`)}
+${world(`<div class="glow" data-key="${latest.id}"${glowOf(r, latest)}></div>`)}
 <p class="rail" aria-hidden="true"><span>PIP POPPER</span><span>OFFICIAL MUSIC SITE</span></p>
 ${topbar(r, true)}
 <main>
@@ -531,7 +537,7 @@ for (const [i, s] of songs.entries()) {
   const r = '../../';
   const step = (other, label) => other ? `<a href="${trackUrl(r, other.id)}"><small>${label}</small><span>${esc(other.title)}</span></a>` : '<span></span>';
   await write(`tracks/${s.id}/index.html`, `${head(r, `${esc(s.title)}｜PIP POPPER`, ' page-track', { path: `tracks/${s.id}/`, description: trackDescription(s) })}
-${s.lyrics ? `<a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>\n` : ''}${world(`<div class="glow on" data-key="${s.id}" style="${glowStyle(coverUrl(r, s.id, true))}"></div>`)}
+${s.lyrics || s.lyricsNotice ? `<a class="skip" href="#text">${esc(s.lyricsLabel)}へ移動</a>\n` : ''}${world(`<div class="glow on" data-key="${s.id}"${glowOf(r, s)}></div>`)}
 ${topbar(r, false)}
 <main class="track">
   <a class="back" href="${sec(r, 'works')}">← 楽曲一覧</a>
@@ -555,6 +561,9 @@ ${topbar(r, false)}
   ${s.lyrics ? `<section class="block text reveal" id="text" aria-labelledby="text-title">
     <h2 class="block-head" id="text-title"><span class="label-en">${esc(s.lyricsLabel)}</span></h2>
     <div class="lyrics-text" lang="ja">${lyricsHtml(s.lyrics)}</div>
+  </section>` : s.lyricsNotice ? `<section class="block text reveal" id="text" aria-labelledby="text-title">
+    <h2 class="block-head" id="text-title"><span class="label-en">${esc(s.lyricsLabel)}</span></h2>
+    <p class="lyrics-notice">${esc(s.lyricsNotice)}</p>
   </section>` : ''}
   <nav class="steps" aria-label="ほかの楽曲">${step(songs[i - 1], '← 新しい曲')}${step(songs[i + 1], '前の曲 →')}</nav>
 </main>

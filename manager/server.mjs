@@ -20,6 +20,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { privateLyricsCall } from './private-lyrics.mjs';
+import { readDisplay, storedDisplay, LYRICS_NOTICES } from '../src/track-display.mjs';
 import { listenList, listenUpload, listenAction, listenAudio } from './listen-admin.mjs';
 import { listReleaseStatus, saveReleaseStatus, sanitizePrivateRows } from './release-status.mjs';
 import { registrationAction, listRegistrations, images as checkImages } from './song-registration.mjs';
@@ -184,18 +185,22 @@ async function loadItem(type, id) {
     fields = stringLeaves(f.data[id]).map(p => ({ path: p, label: siteLabel(id, p), kind: kindOf(p, getAt(f.data[id], p)), required: true, nullable: false, value: getAt(f.data[id], p) }));
   }
   const title = type === 'track' ? f.data.title : type === 'album' ? f.data.albums[base[1]].title : LABEL[id];
-  const extra = type === 'track' ? { hidden: f.data.hidden === true }
+  // display (2026-11-25): what the official site shows for this song; the texts themselves are never changed by it
+  const extra = type === 'track' ? { hidden: f.data.hidden === true, display: readDisplay(f.data.display), notices: LYRICS_NOTICES, hasLyrics: !!f.data.lyrics, hasImpression: !!f.data.aiImpression }
     : type === 'album' ? (a => ({ hidden: a.hidden === true, section: a.section === 'other' ? 'other' : 'history', tracks: a.discs ? null : (a.tracks ?? []).map(t => ({ title: t.title, music: t.music ?? null })), hasJacket: existsSync(path.join(ROOT, 'albums', id, 'visual-web.jpg')), joint: !!a.works }))(f.data.albums[base[1]]) : {};
   return { type, id, file: rel, rev: f.rev, title, fields, base, ...extra };
 }
-async function saveItem({ type, id, rev, changes }) {
+async function saveItem({ type, id, rev, changes, display }) {
   const rel = fileOf(type, id);
   const f = await readJson(rel);
   if (f.rev !== rev) return { status: 409, body: { error: 'このデータは画面を開いた後に変更されています。いったん読み込み直してください（あなたの入力はまだ保存されていません）。' } };
   const item = await loadItem(type, id);
   const allowed = new Map(item.fields.map(fd => [JSON.stringify(fd.path), fd]));
-  if (!Array.isArray(changes) || !changes.length) return { status: 400, body: { error: '変更がありません。' } };
-  for (const c of changes) {
+  const hasDisplay = display !== undefined;
+  if (hasDisplay && type !== 'track') return { status: 400, body: { error: '編集できない項目が含まれています。' } };
+  if (changes !== undefined && !Array.isArray(changes)) return { status: 400, body: { error: '変更がありません。' } };
+  if (!changes?.length && !hasDisplay) return { status: 400, body: { error: '変更がありません。' } };
+  for (const c of changes ?? []) {
     const fd = allowed.get(JSON.stringify(c.path));
     if (!fd) return { status: 400, body: { error: '編集できない項目が含まれています。' } };
     if (typeof c.value !== 'string') return { status: 400, body: { error: '文字以外は保存できません。' } };
@@ -205,6 +210,11 @@ async function saveItem({ type, id, rev, changes }) {
     if (fd.kind === 'url' && value.trim() && linkProblem(value.trim())) return { status: 400, body: { error: linkProblem(value.trim()) } };
     if (fd.kind === 'reading') { if (!validReading(value)) return { status: 400, body: { error: 'よみがなは、ひらがな・カタカナ・英数字で入力してください。' } }; f.data.reading = value.trim() || null; continue; }
     setAt(f.data, [...item.base, ...c.path], (fd.kind === 'url' ? value.trim() : value) === '' && fd.nullable && type === 'track' ? null : (fd.kind === 'url' ? value.trim() : value));
+  }
+  if (hasDisplay) {
+    let d;
+    try { d = storedDisplay(display); } catch { return { status: 400, body: { error: '公式HPに表示する内容の指定が正しくありません。' } }; }
+    if (d) f.data.display = d; else delete f.data.display;      // everything shown = no "display" (as before)
   }
   const newRev = await writeJsonAtomic(rel, f.data, f.indent, f.eol);
   return { status: 200, body: { ok: true, rev: newRev } };
@@ -271,7 +281,16 @@ async function describeChanges() {
       }
       continue;
     }
-    walk(before, now, []);
+    // 2026-11-25: 公式HPに表示する内容 — shown as one line per item, compared with the defaults filled in
+    if (file.startsWith('tracks/')) {
+      const safe = d => { try { return readDisplay(d); } catch { return null; } };
+      const dB = safe(before?.display), dN = safe(now.display);
+      const fmt = (k, d) => !d ? '（読めない値）' : k === 'lyricsNotice' ? (d.lyrics ? '' : LYRICS_NOTICES.find(n => n.value === d.lyricsNotice)?.label ?? '理由を表示しない') : d[k] ? '表示する' : '表示しない';
+      const names = { lyrics: '公式HP：歌詞', jacket: '公式HP：ジャケット', impression: '公式HP：AIの感想', lyricsNotice: '公式HP：歌詞を載せない理由' };
+      for (const k of Object.keys(names)) if (fmt(k, dB) !== fmt(k, dN)) items.push({ path: ['display', k], before: fmt(k, dB), after: fmt(k, dN), item: `曲「${now.title}」`, label: names[k] });
+    }
+    const noDisplay = d => file.startsWith('tracks/') && d && typeof d === 'object' ? (({ display, ...rest }) => rest)(d) : d;
+    walk(noDisplay(before), noDisplay(now), []);
     const named = diffs.map(d => {
       if (file === 'content/site.json') return { ...d, item: `サイトの文言（${LABEL[d.path[0]] ?? d.path[0]}）`, label: siteLabel(d.path[0], d.path.slice(1)) };
       return { ...d, item: `曲「${now.title}」`, label: d.path[0] === 'hidden' ? '掲載' : (TRACK_FIELDS.find(t => t[0] === d.path[0]) ?? [, TRACK_EXTRA_LABEL[d.path[0]] ?? d.path.join('.')])[1] };

@@ -209,6 +209,8 @@ main { position: relative; z-index: 1; }
   font: 500 14px/1 var(--f-body); letter-spacing: .1em; background: rgba(0,0,0,.3); transition: background .25s, color .25s; }
 .listen-link span { color: var(--red); }
 .listen-link:hover { background: var(--ink); color: #000; }
+/* 2026-11-25: lyrics left off the site (track.json "display"): the chosen notice in place of the lyrics */
+.lyrics-notice { margin: 0; padding: 18px 24px 20px; border-left: 2px solid var(--red); background: rgba(0,0,0,.32); font: 500 15px/1.9 var(--f-body); letter-spacing: .04em; color: #e9e2dc; }
 /* 2026-11-25: "▶ 試聴する" (shown by assets/listen-links.js only for songs on the listening page) */
 .listen-trial span { color: var(--red); }
 .listen:has(> .listen-trial[hidden]:only-child) { display: none; }

@@ -304,8 +304,45 @@
       return box;
     });
     const tip = el('p', { className: 'note', textContent: type === 'album' ? '上の欄で文字を直せます（改行はそのまま表示に反映）。下の「掲載の管理」で、掲載停止・掲載順・収録曲・ジャケットを変えられます。特設デザインの構成や色は変わりません。' : '文字だけを直せます。デザインは変わりません。' });
-    $('#main').replaceChildren(head, tip, ...fields, ...(type === 'site' ? [] : manageBox(current)));
+    const displayBox = type === 'track' && current.display ? displayEditor(current, () => {
+      saveBtn.disabled = !edits.size;
+      unsavedEl.textContent = edits.size ? `未保存の入力 ${edits.size} 件` : '';
+    }) : [];
+    $('#main').replaceChildren(head, tip, ...fields, ...displayBox, ...(type === 'site' ? [] : manageBox(current)));
     $('#main').scrollTop = 0;
+  }
+
+  // ── 2026-11-25: 公式HPに表示する内容 (lyrics / jacket / AI impression, and the notice shown instead of the lyrics) ──
+  // A change is one more unsaved edit (key 'display'): 保存 → プレビュー → 公開する, as for the texts. Nothing is deleted.
+  function displayEditor(item, onChange) {
+    const base = item.display, now = { ...base };
+    const norm = d => JSON.stringify({ lyrics: d.lyrics, jacket: d.jacket, impression: d.impression, lyricsNotice: d.lyrics ? null : (d.lyricsNotice ?? null) });
+    const box = el('section', { className: 'display-box' });
+    const check = (key, label, missing) => {
+      const input = el('input', { id: `disp-${key}`, type: 'checkbox', checked: now[key] });
+      input.onchange = () => { now[key] = input.checked; update(); };
+      return el('div', { className: 'field check' }, input, el('label', { htmlFor: `disp-${key}`, textContent: label }), ...(missing ? [el('span', { className: 'note', textContent: missing })] : []));
+    };
+    const sel = el('select', { id: 'disp-notice' }, el('option', { value: '', textContent: '理由を表示しない（歌詞欄ごと表示しない）' }), ...item.notices.map(n => el('option', { value: n.value, textContent: n.label })));
+    sel.value = now.lyricsNotice ?? '';
+    sel.onchange = () => { now.lyricsNotice = sel.value || null; update(); };
+    const sample = el('p', { className: 'notice-sample' });
+    const noticeBox = el('div', { className: 'field notice-field' }, el('label', { htmlFor: 'disp-notice', textContent: '歌詞を載せない理由（公式HPの歌詞欄に、歌詞の代わりに表示する文）' }), sel, sample);
+    function update() {
+      noticeBox.hidden = now.lyrics;
+      const t = item.notices.find(n => n.value === sel.value)?.text;
+      sample.textContent = t ? `表示する文：「${t}」` : '歌詞欄は表示されません。';
+      if (norm(now) === norm(base)) edits.delete('display'); else edits.set('display', { lyrics: now.lyrics, jacket: now.jacket, impression: now.impression, lyricsNotice: now.lyrics ? null : (now.lyricsNotice ?? null) });
+      box.classList.toggle('changed', edits.has('display'));
+      onChange();
+    }
+    box.append(el('h3', { textContent: '公式HPに表示する内容' }),
+      el('p', { className: 'note', textContent: 'チェックを外した項目は公式HPに表示しません。登録済みの歌詞・ジャケット画像・AIの感想は消えず、チェックを戻すと元どおり表示されます。「保存」→「プレビュー」→「公開する」で反映します（チェックしただけでは公開されません）。PRIVATE・一般視聴には影響しません。' }),
+      check('lyrics', '歌詞を表示する', item.hasLyrics ? '' : '（この曲は歌詞が未登録です）'), noticeBox,
+      check('jacket', 'ジャケットを表示する（表示しないときは曲名の表示になります）'),
+      check('impression', 'AIの感想を表示する', item.hasImpression ? '' : '（この曲はAIの感想が未登録です）'));
+    update();
+    return [box];
   }
 
   // ── 2026-11-24: publication, order, album tracks and jacket for songs/albums already on the site ──
@@ -823,9 +860,10 @@
 
   async function save() {
     if (!current || !edits.size) return;
-    const changes = [...edits].map(([i, value]) => ({ path: current.fields[i].path, value }));
+    const display = edits.get('display');
+    const changes = [...edits].filter(([i]) => i !== 'display').map(([i, value]) => ({ path: current.fields[i].path, value }));
     try {
-      await api('POST', '/api/item', { type: current.type, id: current.id, rev: current.rev, changes });
+      await api('POST', '/api/item', { type: current.type, id: current.id, rev: current.rev, changes, ...(display ? { display } : {}) });
       edits = new Map();
       toast('保存しました（まだ公開されていません）。プレビューで確認できます。');
       const { type, id } = current; current = null;
