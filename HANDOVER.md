@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 起動時更新後の即時再起動まで本番反映済み（Worker 291f0777・GitHub 8a4a3a1）。AIの感想の後からの追加・編集をローカル実装・検証済み、push は Producer 承認待ち |
+| 状態 | AIの感想の編集まで本番反映済み（GitHub 566a5df）。3c38033 は GitHub Pages の配信失敗で公式サイト未反映。配信結果の確認と送り直しをローカル実装・検証済み、push と本番の送り直しは Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,9 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-26 Claude Code：**AIの感想が公式HPに出ない件の調査・修正**（ローカル）。原因は管理ツールではなく GitHub 側：Producer の公開 3c38033（TRY ANGLE・PIPPOPPER ENTERTAINMENT の AIの感想）の GitHub Pages 配信が「Failed to create deployment (status: 500)」で失敗し、公式サイトは 566a5df の版のまま。track.json の aiImpression・display（表示）・docs の HTML・GitHub 上のファイルはすべて正しい。管理ツールは push 成功で「公開しました」とし、配信結果を見ていなかったため気づけなかった。修正：起動時・公開後に GitHub 公開API（読み取り・鍵なし）で配信結果を確認し、失敗なら上部に警告と「公式サイトへ送り直す」（空の保存点を送る＝内容不変）。テスト：管理ツール 201 合格（8h：配信待ち・配信中・成功・不明・失敗検出・確認なし拒否・送り直しでファイル不変・成功で警告解除）、本物の GitHub API で 3c38033=failure・566a5df=success を判定、実ブラウザ（検証用の送信先と模擬API）で警告表示と送り直しを確認。本番の再配信（送り直し）と push は Producer 承認待ち。
+- 2026-11-25 Claude Code：AIの感想を後から追加・修正・削除を本番反映（Producer 承認、GitHub 566a5df）。
 
 - 2026-11-25 Claude Code：**AIの感想を後から追加・修正・削除**（ローカル、`manager/server.mjs`・`manager/ui/app.js`）。保存先は既存の `track.json` の `aiImpression`（重複データなし）。以前は「紹介文」という名前で、`aiImpression` の無い曲（新曲登録で感想なしで取り込んだ曲）には欄が出ず、保存もできなかった。欄名を「AIの感想」にし、常に表示・無い曲には新しく追加・空で保存すると null。「AIの感想を表示する」チェックの横の案内は入力内容に合わせて変わる。テスト：管理ツール 193 合格（8g：感想なしの公開済み曲に追加→プレビュー→公開→非表示でも文章は残る→修正→削除、ほかの項目は不変）、新曲登録テスト合格、サイト生成は docs と内容差分なし、実ブラウザ（検証用の複製）で入力・保存・プレビュー・チェック外しを確認。push は Producer 承認待ち。
 - 2026-11-25 Claude Code：起動時更新後の即時再起動を本番反映（Producer 承認、GitHub 8a4a3a1）。管理ツール一式の写しで f176101→8a4a3a1 の自動更新・公開前チェック問題なしを確認。

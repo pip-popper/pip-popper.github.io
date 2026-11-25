@@ -61,7 +61,26 @@
     if (state.otherUnpushed) { s.className = 'status dirty'; s.textContent += `（AI等の作業でまだ公開していない保存点が ${state.otherUnpushed} 件あるため、今は公開できません。保存・プレビュー・破棄は使えます）`; }
     $('#btn-publish').disabled = !(n || state.pendingPush);
     $('#btn-discard').disabled = !n;
+    applyPages();
     renderLists();
+  }
+  // 2026-11-26: whether GitHub Pages delivered what was sent (a GitHub-side failure used to go unnoticed)
+  let pages = null, pagesTimer = null;
+  async function checkPages(round = 1) {
+    clearTimeout(pagesTimer);
+    try { pages = await api('GET', '/api/pages-status'); } catch { pages = null; }
+    applyPages(round);
+    // still being delivered: look again every 30 seconds, for up to about 6 minutes
+    if (pages && ['waiting', 'running'].includes(pages.state) && round < 12) pagesTimer = setTimeout(() => checkPages(round + 1), 30000);
+  }
+  function applyPages(round = 0) {
+    const s = $('#status'), failed = pages?.state === 'failed';
+    $('#btn-redeploy').hidden = !failed;
+    s.querySelector('.pages-note')?.remove();
+    if (failed) {
+      s.className = 'status dirty';
+      s.append(el('span', { className: 'pages-note err', textContent: '　公式サイトに未反映（GitHub側の配信失敗）→「公式サイトへ送り直す」' }));
+    } else if (round && pages && ['waiting', 'running'].includes(pages.state)) s.append(el('span', { className: 'pages-note', textContent: '　（公式サイトへ配信中…）' }));
   }
   // 2026-11-24: the side bar = 管理メニュー (always visible) + 曲・アルバム・ページの一覧 (folded, scrolls on its own)
   const openGroups = new Set();
@@ -910,7 +929,7 @@
       if (ok !== 'go') return;
       try { await api('POST', '/api/push-pending', { confirm: true }); toast('送信しました。1〜3分で公式サイトに反映されます。'); }
       catch (e) { toast(e.message, 'bad', 12000); }
-      return refresh();
+      await refresh(); return checkPages();
     }
     let problems = [];
     try { problems = (await api('POST', '/api/check-publish')).problems; } catch (e) { problems = [e.message]; }
@@ -927,10 +946,23 @@
     $('#status').textContent = '公開しています…（ページを作り直して送信中。1分ほどかかることがあります）';
     try {
       const r = await api('POST', '/api/publish', { confirm: true, summary: summary.value });
-      await ask('公開しました', [el('p', { textContent: `保存点 ${r.head} を公式サイトへ送信しました。1〜3分で反映されます。` }), el('p', { className: 'note', textContent: '確認するときは公式サイトを開き、Ctrl＋F5 で再読み込みしてください。' })],
+      await ask('公開しました', [el('p', { textContent: `保存点 ${r.head} を公式サイトへ送信しました。1〜3分で反映されます。` }), el('p', { className: 'note', textContent: '確認するときは公式サイトを開き、Ctrl＋F5 で再読み込みしてください。GitHub側の配信が失敗したときは、画面上部に表示されます。' })],
         [{ value: 'cancel', label: '閉じる' }]);
     } catch (e) { toast(e.message, 'bad', 15000); }
     await reloadScreen();
+    checkPages();
+  };
+
+  $('#btn-redeploy').onclick = async () => {
+    if (!await guard()) return;
+    const ans = await ask('公式サイトへ送り直します', [el('p', { textContent: `GitHub側で、公式サイトへの配信が失敗しています（保存点 ${pages?.head ?? ''}）。公開した内容はGitHubに保存されています。` }),
+      el('p', { textContent: '内容は変えずに、同じものをもう一度公式サイトへ送ります（履歴に「公式サイトへの送り直し」が1件増えます）。' })],
+      [{ value: 'cancel', label: 'キャンセル' }, { value: 'go', label: '送り直す', primary: true }]);
+    if (ans !== 'go') return;
+    try { const r = await api('POST', '/api/redeploy', { confirm: true }); toast(`送り直しました（保存点 ${r.head}）。1〜3分で公式サイトに反映されます。`); }
+    catch (e) { toast(e.message, 'bad', 15000); }
+    await refresh();
+    checkPages();
   };
 
   $('#btn-discard').onclick = async () => {
@@ -975,5 +1007,5 @@
   $('#filter').addEventListener('input', () => state && renderLists());
 
   if (!token) { $('#status').textContent = '起動用のファイル「PIP POPPER管理ツールを起動.bat」から開いてください。'; return; }
-  refresh().catch(e => { $('#status').textContent = e.message; });
+  refresh().then(() => checkPages()).catch(e => { $('#status').textContent = e.message; });
 })();

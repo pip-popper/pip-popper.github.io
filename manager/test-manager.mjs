@@ -30,7 +30,10 @@ g(WORK, 'config', 'user.name', 'Producer'); g(WORK, 'config', 'user.email', 'tes
 g(WORK, 'add', '-f', 'build.mjs', 'content', 'manager', 'src', 'private/worker/src/song-order.js', 'public-listening/approval.mjs'); g(WORK, 'commit', '-q', '--allow-empty', '-m', 'test base'); g(WORK, 'push', '-q', 'origin', 'main');
 g(WORK, 'branch', '-q', '-u', 'origin/main');
 
-const env = { ...process.env, PP_MANAGER_EXPECTED_REMOTE: BARE, PP_MANAGER_PRINT_TOKEN: '1', PP_MANAGER_PRIVATE_URL: 'http://localhost:18995/' };
+// stands in for GitHub's API listing the Pages deployments (8h sets what it answers; null = server error)
+let pagesRuns = [];
+const pagesMock = (await import('node:http')).createServer((q, s) => { s.writeHead(pagesRuns === null ? 500 : 200, { 'Content-Type': 'application/json' }); s.end(JSON.stringify({ workflow_runs: pagesRuns ?? [] })); }).listen(18996, '127.0.0.1');
+const env = { ...process.env, PP_MANAGER_EXPECTED_REMOTE: BARE, PP_MANAGER_PRINT_TOKEN: '1', PP_MANAGER_PRIVATE_URL: 'http://localhost:18995/', PP_MANAGER_PAGES_API: 'http://127.0.0.1:18996/runs' };
 const srv = spawn(process.execPath, [path.join(WORK, 'manager', 'server.mjs'), '--root', WORK, '--no-open', '--port', String(PORT)], { env });
 const token = await new Promise((res, rej) => { let out = ''; srv.stdout.on('data', d => { out += d; const m = out.match(/TOKEN=([0-9a-f]+)/); if (m) res(m[1]); }); setTimeout(() => rej(new Error('server did not start')), 15000); });
 const base = `http://127.0.0.1:${PORT}`;
@@ -491,12 +494,39 @@ try {
     ok(r.status === 200 && read(file) === orig && status() === '', '元の感想に戻して公開・作業フォルダーに残りなし');
   }
 
+  console.log('8h. 公式サイトへの配信（GitHub Pages）の失敗を知らせ、内容を変えずに送り直す');
+  {
+    const run = (sha, st, conclusion) => ({ name: 'pages build and deployment', head_sha: sha, status: st, conclusion });
+    const remoteHead = () => g(BARE, 'rev-parse', 'main');
+    const ps = async () => (await call('GET', '/api/pages-status')).data;
+    pagesRuns = [];
+    ok((await ps()).state === 'waiting', '配信の記録がまだないときは「配信待ち」');
+    pagesRuns = [run(remoteHead(), 'in_progress', null)];
+    ok((await ps()).state === 'running', '配信中');
+    pagesRuns = [run(remoteHead(), 'completed', 'success')];
+    ok((await ps()).state === 'ok' && (await call('POST', '/api/redeploy', { confirm: true })).status === 400, '配信成功・成功しているときは送り直さない');
+    pagesRuns = null;
+    ok((await ps()).state === 'unknown', 'GitHubに問い合わせできないときは「不明」（失敗扱いにしない）');
+    const before = remoteHead(), tree = g(BARE, 'rev-parse', 'main^{tree}');
+    pagesRuns = [run(before, 'completed', 'failure'), run('0'.repeat(40), 'completed', 'success')];
+    const p = await ps();
+    ok(p.state === 'failed' && p.head === before.slice(0, 7) && status() === '' && (await call('GET', '/api/state')).data.changes.items.length === 0, '公開済み・未公開の変更なしでも、GitHub側の配信失敗を検出');
+    ok((await call('POST', '/api/redeploy', {})).status === 400, '確認なしの送り直しは拒否');
+    const r = await call('POST', '/api/redeploy', { confirm: true });
+    const after = remoteHead();
+    ok(r.status === 200 && after !== before && g(BARE, 'rev-parse', 'main^{tree}') === tree && g(BARE, 'log', '-1', '--format=%s', 'main').startsWith('[管理ツール] 公式サイトへの送り直し') && g(BARE, 'show', '--name-only', '--format=', 'main') === '',
+      '送り直し：新しい保存点を送信し、ファイルの中身（曲データ・公式HP）は一切変わらない');
+    pagesRuns = [run(after, 'completed', 'success'), run(before, 'completed', 'failure')];
+    ok((await ps()).state === 'ok' && status() === '', '送り直した版の配信が成功すれば警告は消える・作業フォルダーに残りなし');
+  }
+
   console.log('9. 終了');
   ok((await call('POST', '/api/quit')).status === 200, '終了できる');
 } catch (e) {
   fail++; console.log('  NG  例外：', e.message);
 } finally {
   try { srv.kill(); } catch {}
+  pagesMock.close();
   await new Promise(r => setTimeout(r, 400));
   rmSync(TMP, { recursive: true, force: true });
 }

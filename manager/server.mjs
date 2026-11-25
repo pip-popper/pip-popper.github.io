@@ -364,6 +364,45 @@ async function pushPending() {
   return p.ok ? { status: 200, body: { ok: true, url: LIVE_URL } } : { status: 502, body: { error: 'GitHubへの送信に失敗しました。時間をおいてもう一度お試しください。' } };
 }
 
+// ── 2026-11-26: did GitHub Pages actually deliver what was sent? ─────────
+// A push can succeed while GitHub's own Pages deployment fails (2026-11-26: "Failed to create deployment
+// (status: 500)"), leaving the official site old with nothing unpublished here. GitHub's public API (read
+// only, no token) tells whether the deployment for the commit GitHub has now succeeded.
+const PAGES_RUNS = process.env.PP_MANAGER_PAGES_API
+  ?? (m => m ? `https://api.github.com/repos/${m[1]}/actions/runs?per_page=20` : null)(EXPECTED_REMOTE.match(/github\.com[/:]([^/]+\/[^/]+?)(?:\.git)?$/));
+async function pagesStatus() {
+  const sha = git(['rev-parse', `${REMOTE}/${BRANCH}`]).out;
+  if (!PAGES_RUNS || !sha) return { state: 'unknown' };
+  const head = sha.slice(0, 7);
+  let runs;
+  try {
+    const r = await fetch(PAGES_RUNS, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'pip-popper-manager' }, signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return { state: 'unknown', head };
+    runs = (await r.json()).workflow_runs;
+  } catch { return { state: 'unknown', head }; }
+  if (!Array.isArray(runs)) return { state: 'unknown', head };
+  const run = runs.find(x => x.name === 'pages build and deployment' && x.head_sha === sha);   // newest first
+  if (!run) return { state: 'waiting', head };
+  if (run.status !== 'completed') return { state: 'running', head };
+  return { state: run.conclusion === 'success' ? 'ok' : 'failed', head };
+}
+// send the same content again: an empty saved point (no file changes) makes GitHub deliver the site once more
+async function redeploy() {
+  const st = await pagesStatus();
+  if (st.state !== 'failed') return { status: 400, body: { error: '送り直しは不要です（公式サイトへの配信は失敗していません）。' } };
+  const problems = publishProblems();
+  if (problems.length) return { status: 409, body: { error: problems.join('\n') } };
+  if (unpushed().tool) return { status: 409, body: { error: 'GitHubへの送信待ちの保存点があります。先に「公開する」で送信してください。' } };
+  if (!git(['diff', '--cached', '--quiet']).ok) return { status: 409, body: { error: '想定外の状態のため、送り直しを中止しました。' } };
+  const c = git(['commit', '-q', '--allow-empty', '-m', `${COMMIT_PREFIX} 公式サイトへの送り直し（内容の変更なし）`]);
+  if (!c.ok) return { status: 500, body: { error: '保存点（commit）を作れませんでした。' } };
+  const head = git(['rev-parse', '--short', 'HEAD']).out;
+  const p = git(['push', REMOTE, `${BRANCH}:${BRANCH}`]);
+  if (!p.ok) return { status: 502, body: { error: 'GitHubへの送信に失敗しました。時間をおいて「公開する」を押すと送信をやり直します。' } };
+  log(`redeploy ${head} (was ${st.head})`);
+  return { status: 200, body: { ok: true, head, url: LIVE_URL } };
+}
+
 // ── history and undo ──────────────────────────────────────────────────
 function history() {
   const r = git(['log', '-40', '--date=format:%Y-%m-%d %H:%M', `--format=%H%x1f%h%x1f%ad%x1f%s`, BRANCH]);
@@ -617,6 +656,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (route === 'GET /api/item') return send(res, 200, await loadItem(url.searchParams.get('type'), url.searchParams.get('id')));
     if (route === 'GET /api/history') return send(res, 200, { history: history() });
+    if (route === 'GET /api/pages-status') return send(res, 200, await pagesStatus());
     if (req.method !== 'POST') return send(res, 404, { error: '見つかりません。' });
     if (busy) return send(res, 409, { error: '前の操作を処理中です。少し待ってください。' });
     busy = true;
@@ -633,6 +673,7 @@ const server = http.createServer(async (req, res) => {
       else if (route === 'POST /api/discard') r = body.confirm === true ? await discard() : { status: 400, body: { error: '確認が必要です。' } };
       else if (route === 'POST /api/publish') r = body.confirm === true ? await publish(body) : { status: 400, body: { error: '確認が必要です。' } };
       else if (route === 'POST /api/push-pending') r = body.confirm === true ? await pushPending() : { status: 400, body: { error: '確認が必要です。' } };
+      else if (route === 'POST /api/redeploy') r = body.confirm === true ? await redeploy() : { status: 400, body: { error: '確認が必要です。' } };
       else if (route === 'POST /api/undo') r = await undo(body);
       else if (route === 'POST /api/check-publish') r = { status: 200, body: { problems: publishProblems() } };
       else if (route === 'POST /api/private/password') r = await changePrivatePassword(body);
