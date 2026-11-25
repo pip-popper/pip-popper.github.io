@@ -293,9 +293,13 @@
       const input = f.kind === 'url' ? el('input', { id, type: 'url', value: f.value, placeholder: 'https://open.spotify.com/…' })
         : f.kind === 'line' || f.kind === 'reading' ? el('input', { id, type: 'text', value: f.value }) : el('textarea', { id, value: f.value, className: f.kind === 'lyrics' ? 'lyrics' : '' });
       if (f.kind === 'text') input.rows = Math.min(14, Math.max(3, Math.ceil(f.value.length / 60) + (f.value.match(/\n/g) || []).length));
-      const box = el('div', { className: 'field' }, el('label', { htmlFor: id, textContent: f.label }, ...(f.required ? [el('span', { className: 'req', textContent: '（必須）' })] : [])), input);
+      const isImpression = type === 'track' && f.path[0] === 'aiImpression';
+      if (isImpression) input.rows = Math.max(input.rows, 5);
+      const box = el('div', { className: 'field' }, el('label', { htmlFor: id, textContent: f.label }, ...(f.required ? [el('span', { className: 'req', textContent: '（必須）' })] : [])), input,
+        ...(isImpression ? [el('p', { className: 'note', textContent: '公式HPの曲ページ「AIの感想」欄の文章です（制作背景とは別）。複数行で入力できます。空にして保存すると削除されます。表示だけ止めるときは、下の「AIの感想を表示する」のチェックを外してください（文章は残ります）。' })] : []));
       input.addEventListener('input', () => {
         const v = input.value.replace(/\r\n?/g, '\n');
+        if (isImpression) impressionNote(v.trim() !== '');
         if (v === f.value) edits.delete(i); else edits.set(i, v);
         box.classList.toggle('changed', edits.has(i));
         saveBtn.disabled = !edits.size;
@@ -309,7 +313,14 @@
       unsavedEl.textContent = edits.size ? `未保存の入力 ${edits.size} 件` : '';
     }) : [];
     $('#main').replaceChildren(head, tip, ...fields, ...displayBox, ...(type === 'site' ? [] : manageBox(current)));
+    if (type === 'track') impressionNote(!!(current.fields.find(f => f.path[0] === 'aiImpression')?.value ?? '').trim());
     $('#main').scrollTop = 0;
+  }
+
+  // the note beside 「AIの感想を表示する」 follows what is typed in the AIの感想 field (before saving too)
+  function impressionNote(has) {
+    const n = document.querySelector('#disp-impression ~ .note');
+    if (n) n.textContent = has ? '' : '（AIの感想が未入力のため、チェックしても表示されません。上の「AIの感想」欄に入力できます）';
   }
 
   // ── 2026-11-25: 公式HPに表示する内容 (lyrics / jacket / AI impression, and the notice shown instead of the lyrics) ──
@@ -340,7 +351,7 @@
       el('p', { className: 'note', textContent: 'チェックを外した項目は公式HPに表示しません。登録済みの歌詞・ジャケット画像・AIの感想は消えず、チェックを戻すと元どおり表示されます。「保存」→「プレビュー」→「公開する」で反映します（チェックしただけでは公開されません）。PRIVATE・一般視聴には影響しません。' }),
       check('lyrics', '歌詞を表示する', item.hasLyrics ? '' : '（この曲は歌詞が未登録です）'), noticeBox,
       check('jacket', 'ジャケットを表示する（表示しないときは曲名の表示になります）'),
-      check('impression', 'AIの感想を表示する', item.hasImpression ? '' : '（この曲はAIの感想が未登録です）'));
+      check('impression', 'AIの感想を表示する', ' '));
     update();
     return [box];
   }

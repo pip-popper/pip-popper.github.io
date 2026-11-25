@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 公式HPに表示する内容まで本番反映済み（Worker 291f0777・GitHub 07f1269）。起動時更新後の即時再起動をローカル実装・検証済み、push は Producer 承認待ち |
+| 状態 | 起動時更新後の即時再起動まで本番反映済み（Worker 291f0777・GitHub 8a4a3a1）。AIの感想の後からの追加・編集をローカル実装・検証済み、push は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,9 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-25 Claude Code：**AIの感想を後から追加・修正・削除**（ローカル、`manager/server.mjs`・`manager/ui/app.js`）。保存先は既存の `track.json` の `aiImpression`（重複データなし）。以前は「紹介文」という名前で、`aiImpression` の無い曲（新曲登録で感想なしで取り込んだ曲）には欄が出ず、保存もできなかった。欄名を「AIの感想」にし、常に表示・無い曲には新しく追加・空で保存すると null。「AIの感想を表示する」チェックの横の案内は入力内容に合わせて変わる。テスト：管理ツール 193 合格（8g：感想なしの公開済み曲に追加→プレビュー→公開→非表示でも文章は残る→修正→削除、ほかの項目は不変）、新曲登録テスト合格、サイト生成は docs と内容差分なし、実ブラウザ（検証用の複製）で入力・保存・プレビュー・チェック外しを確認。push は Producer 承認待ち。
+- 2026-11-25 Claude Code：起動時更新後の即時再起動を本番反映（Producer 承認、GitHub 8a4a3a1）。管理ツール一式の写しで f176101→8a4a3a1 の自動更新・公開前チェック問題なしを確認。
 
 - 2026-11-25 Claude Code：**起動時の自動更新のあと、その場で新しい版で起動し直す**（ローカル、`manager/server.mjs`）。以前は更新を取り込んだ回の起動では管理ツール本体が古い版のまま動き、新機能は次の起動からだった。取り込み成功時は新しい版を子プロセスとして起動（出力は同じ。入力は専用のパイプ＝Windows で同じパイプを2つのプロセスが読むと止まるため）、元のプロセスは待つだけで一緒に終わる。起動できなければ従来どおりそのまま動く。テスト：test-update-restart 7（A→B 更新で最初の起動から新しい版・EXE と同じ方法でアドレス取得・EXE 終了で全終了・更新なしでは起動し直さない）、test-launcher（EXE、正式・移動先フォルダー）、管理ツール183 合格。push は Producer 承認待ち。
 - 2026-11-25 Claude Code：公式HPに表示する内容（曲ごと）を本番反映（Producer 承認、GitHub 07f1269）。公開後のトップ＋27曲が docs と完全一致。

@@ -455,6 +455,42 @@ try {
     ok(html === before && read('.manager/preview/index.html') === homeBefore, '公開ページも変更前と同じに戻る');
   }
 
+  console.log('8g. AIの感想を後から追加・修正・削除（制作背景とは別の欄、公開済みの曲）');
+  {
+    const T = 'manner', file = `tracks/${T}/track.json`, orig = read(file);
+    // a published song taken in without an impression: no aiImpression key at all
+    const { aiImpression: _drop, ...noImp } = JSON.parse(orig);
+    writeFileSync(path.join(WORK, file), JSON.stringify(noImp, null, 2) + '\n');
+    g(WORK, 'commit', '-q', '-am', 'test: song without impression'); g(WORK, 'push', '-q', 'origin', 'main');
+    let it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    const field = () => it.fields.find(f => f.path[0] === 'aiImpression');
+    ok(field()?.value === '' && field()?.label === 'AIの感想' && it.hasImpression === false && it.fields.some(f => f.path[0] === 'background'), '感想のない曲にも「AIの感想」欄（空）が出る・制作背景は別の欄');
+    const edit = async value => { it = (await call('GET', `/api/item?type=track&id=${T}`)).data; return call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, changes: [{ path: ['aiImpression'], value }] }); };
+    const show = async display => { it = (await call('GET', `/api/item?type=track&id=${T}`)).data; return call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, display }); };
+    const page = async () => { await call('POST', '/api/preview', { type: 'track', id: T }); return read(`.manager/preview/tracks/${T}/index.html`); };
+    const others = d => JSON.stringify({ ...d, aiImpression: undefined, display: undefined });
+    let r = await edit('一行目の感想\r\n\r\n二行目の感想');
+    let now = JSON.parse(read(file));
+    ok(r.status === 200 && now.aiImpression === '一行目の感想\n\n二行目の感想' && others(now) === others(noImp), '新規入力を保存（複数行。歌詞・制作背景・音源などほかの項目は同じ）');
+    let html = await page();
+    ok(html.includes('id="ai-title"') && html.includes('一行目の感想') && html.includes('二行目の感想'), 'プレビューの曲ページに「AIの感想」が出る');
+    const items = (await call('GET', '/api/state')).data.changes.items.filter(c => c.item === '曲「Manner」');
+    ok(items.length === 1 && items[0].label === 'AIの感想' && items[0].before === '', '公開前の変更一覧に「AIの感想」（追加）が出る');
+    r = await call('POST', '/api/publish', { confirm: true, summary: 'AIの感想：Manner' });
+    ok(r.status === 200 && g(BARE, 'show', `main:docs/tracks/${T}/index.html`).includes('二行目の感想') && g(BARE, 'show', `main:${file}`).includes('一行目の感想'), '公開すると公式HPの曲ページに反映');
+    r = await show({ lyrics: true, jacket: true, impression: false }); html = await page(); now = JSON.parse(read(file));
+    ok(r.status === 200 && !html.includes('id="ai-title"') && now.aiImpression === '一行目の感想\n\n二行目の感想', '「AIの感想を表示する」を外すと非表示・文章は残る');
+    it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    ok(field().value === '一行目の感想\n\n二行目の感想' && it.display.impression === false, '非表示中も編集欄に現在の文章が出る');
+    r = await edit('修正した感想'); await show({ lyrics: true, jacket: true, impression: true }); html = await page(); now = JSON.parse(read(file));
+    ok(r.status === 200 && html.includes('修正した感想') && !html.includes('一行目の感想') && !('display' in now), '修正して表示に戻すと修正後の文章が出る');
+    r = await edit(''); html = await page(); now = JSON.parse(read(file));
+    ok(r.status === 200 && now.aiImpression === null && !html.includes('id="ai-title"') && others(now) === others(noImp) && (await call('GET', `/api/item?type=track&id=${T}`)).data.hasImpression === false, '空にして保存すると削除（ほかの項目は同じ）');
+    writeFileSync(path.join(WORK, file), orig);
+    r = await call('POST', '/api/publish', { confirm: true, summary: '元に戻す' });
+    ok(r.status === 200 && read(file) === orig && status() === '', '元の感想に戻して公開・作業フォルダーに残りなし');
+  }
+
   console.log('9. 終了');
   ok((await call('POST', '/api/quit')).status === 200, '終了できる');
 } catch (e) {

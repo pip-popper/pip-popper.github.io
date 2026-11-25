@@ -92,7 +92,7 @@ async function writeJsonAtomic(rel, data, indent, eol = '\n') {
 }
 
 // ── what can be edited (text values only; ids, colours, image settings, links stay as they are) ──
-const TRACK_FIELDS = [['title', '曲名', 'line', true], ['reading', '曲名のよみがな（あいうえお順の並び替えに使う。ひらがな。空欄なら曲名で並ぶ）', 'reading'], ['artist', 'アーティスト名', 'line'], ['aiImpression', '紹介文', 'text'], ['lyrics', '歌詞', 'lyrics'], ['background', '制作背景', 'text'],
+const TRACK_FIELDS = [['title', '曲名', 'line', true], ['reading', '曲名のよみがな（あいうえお順の並び替えに使う。ひらがな。空欄なら曲名で並ぶ）', 'reading'], ['artist', 'アーティスト名', 'line'], ['aiImpression', 'AIの感想', 'text'], ['lyrics', '歌詞', 'lyrics'], ['background', '制作背景', 'text'],
   ['streamingUrl', '配信リンク（Spotify・YouTube・Suno・Apple Music のURL。空欄なら表示なし）', 'url']];
 // the services build.mjs shows as a "…で聴く" button (other sites need a label, which v1 does not edit)
 const LINK_HOSTS = ['open.spotify.com', 'spotify.link', 'suno.com', 'www.suno.com', 'app.suno.ai', 'suno.ai', 'www.youtube.com', 'youtube.com', 'youtu.be', 'music.youtube.com', 'music.apple.com'];
@@ -169,7 +169,8 @@ async function loadItem(type, id) {
   let base, fields;
   if (type === 'track') {
     base = [];
-    fields = TRACK_FIELDS.filter(([k]) => (k in f.data || k === 'reading') && (f.data[k] == null || typeof f.data[k] === 'string') && !(k === 'streamingUrl' && f.data.audioRelease === 'private'))
+    // the AI impression (aiImpression, the site's 「AIの感想」) is always offered, so a song registered without one can get it later
+    fields = TRACK_FIELDS.filter(([k]) => (k in f.data || k === 'reading' || k === 'aiImpression') && (f.data[k] == null || typeof f.data[k] === 'string') && !(k === 'streamingUrl' && f.data.audioRelease === 'private'))
       .map(([k, label, kind, required]) => ({ path: [k], label, kind, required: !!required, nullable: f.data[k] === null || !required, value: f.data[k] ?? '' }));
   } else if (type === 'album') {
     const i = f.data.albums.findIndex(a => a.id === id);
@@ -208,6 +209,8 @@ async function saveItem({ type, id, rev, changes, display }) {
     if (fd.required && !value.trim()) return { status: 400, body: { error: `「${fd.label}」は空にできません。` } };
     if (value.length > 20000) return { status: 400, body: { error: `「${fd.label}」が長すぎます。` } };
     if (fd.kind === 'url' && value.trim() && linkProblem(value.trim())) return { status: 400, body: { error: linkProblem(value.trim()) } };
+    // AIの感想 can be added to a song that has none (the key is created); emptied = removed from the site (null)
+    if (type === 'track' && c.path[0] === 'aiImpression') { if (value.trim() || 'aiImpression' in f.data) f.data.aiImpression = value.trim() ? value : null; continue; }
     if (fd.kind === 'reading') { if (!validReading(value)) return { status: 400, body: { error: 'よみがなは、ひらがな・カタカナ・英数字で入力してください。' } }; f.data.reading = value.trim() || null; continue; }
     setAt(f.data, [...item.base, ...c.path], (fd.kind === 'url' ? value.trim() : value) === '' && fd.nullable && type === 'track' ? null : (fd.kind === 'url' ? value.trim() : value));
   }
