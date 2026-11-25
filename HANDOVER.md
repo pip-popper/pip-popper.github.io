@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 管理者パスワード変更機能をローカル実装・検証済み。本番反映（push・PRIVATE Worker デプロイ）は Producer 承認待ち |
+| 状態 | 管理者パスワード変更機能は本番反映済み（Worker 88c05372・cbf51b9）。確認画面の修正をローカル保存・実クリック検証済み、push は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-25 Claude Code：**確認画面の修正**（`manager/ui/app.js` の `ask()`）。確認画面の答えを、ダイアログの close 通知を待たずにボタンを押した時点で受け取るように変更（通知が遅れると「変更する」を押しても処理が進まなかった。招待者パスワード等ほかの確認画面も同じ部品）。表示中のブラウザ・模擬 PRIVATE で、実際のクリックと入力だけで確認：管理者パスワード変更→完了表示、新パスワード 303・旧 401・招待者 303／Cloudflareの値に戻す→完了表示、元のパスワード 303・変更したもの 401・招待者 303。平文は R2・`.manager`・ログに残らない（ログは route と status のみ）。既存UIテスト（曲登録・公開状態・ライブラリ）合格。本番：Worker 88c05372・GitHub cbf51b9 は反映済み（管理者パスワード機能は R2 に照合ファイルが無いため未使用状態）。この修正の push は Producer 承認待ち。
 
 - 2026-11-25 Claude Code：**管理者パスワードの変更機能**（ローカル）。管理メニュー「PRIVATEパスワード」に管理者パスワードの変更・Cloudflareの値に戻すを追加。Worker：`private/worker/src/admin-credential.js`（非公開R2 `auth/admin-password.json` に HMAC の照合値のみ、変更ごとに新しい版番号で以前の管理Cookieは即無効、壊れていたら管理者は入れない＝安全側、招待者は影響なし）。管理者の照合（入室・各API の再確認・招待者パスワード変更時の確認）をすべてこれ経由に。API：`/admin/api/admin-password`（GET 状態／POST 変更）・`/admin-password/restore`（確認の言葉）、回数制限は招待者パスワード変更と共通（1時間10回）。新しい管理者パスワードは12〜200文字・招待者パスワードと別。忘れたときの最終手段：Cloudflare ダッシュボードで R2 の `auth/admin-password.json` を削除。テスト：Worker 21・管理ツール169（管理者パスワード8を追加）・既存の PRIVATE／一般視聴テスト合格。実ブラウザ（模擬 PRIVATE）：変更→新で入れて旧では入れない→招待者は不変→Cloudflareの値に戻す、平文はログ・R2に残らない（ブラウザ枠が非表示で確認画面の close 通知が届かないため、その通知だけ手動で送って確認）。本番未反映。
 

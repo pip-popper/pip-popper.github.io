@@ -27,9 +27,15 @@
     const d = $('#dlg');
     $('#dlg-title').textContent = title;
     $('#dlg-body').replaceChildren(...[].concat(body));
-    $('#dlg-actions').replaceChildren(...buttons.map(b => el('button', { value: b.value, textContent: b.label, className: b.primary ? 'primary' : '' })));
+    // 2026-11-25: the answer is taken from the button press itself. Waiting only for the dialog's "close" event
+    // could leave the screen stuck when that event arrives late (e.g. a window in the background).
     return new Promise(res => {
-      d.onclose = () => res(d.returnValue || 'cancel');
+      let done = false;
+      const finish = value => { if (done) return; done = true; if (d.open) d.close(value); res(value || 'cancel'); };
+      $('#dlg-actions').replaceChildren(...buttons.map(b => el('button', { type: 'button', value: b.value, textContent: b.label, className: b.primary ? 'primary' : '',
+        onclick: () => finish(b.value) })));
+      d.onclose = () => finish(d.returnValue || 'cancel');          // Esc key or any other way of closing = cancel
+      d.oncancel = () => finish('cancel');
       d.returnValue = 'cancel';
       d.showModal();
       d.querySelector('button[value="cancel"]')?.focus();
