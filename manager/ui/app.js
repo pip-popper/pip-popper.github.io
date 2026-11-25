@@ -80,7 +80,7 @@
     if (failed) {
       s.className = 'status dirty';
       s.append(el('span', { className: 'pages-note err', textContent: '　公式サイトに未反映（GitHub側の配信失敗）→「公式サイトへ送り直す」' }));
-    } else if (round && pages && ['waiting', 'running'].includes(pages.state)) s.append(el('span', { className: 'pages-note', textContent: '　（公式サイトへ配信中…）' }));
+    } else if (round && round < 12 && pages && ['waiting', 'running'].includes(pages.state)) s.append(el('span', { className: 'pages-note', textContent: '　（公式サイトへ配信中…）' }));
   }
   // 2026-11-24: the side bar = 管理メニュー (always visible) + 曲・アルバム・ページの一覧 (folded, scrolls on its own)
   const openGroups = new Set();

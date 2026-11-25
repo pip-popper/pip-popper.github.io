@@ -518,6 +518,14 @@ try {
       '送り直し：新しい保存点を送信し、ファイルの中身（曲データ・公式HP）は一切変わらない');
     pagesRuns = [run(after, 'completed', 'success'), run(before, 'completed', 'failure')];
     ok((await ps()).state === 'ok' && status() === '', '送り直した版の配信が成功すれば警告は消える・作業フォルダーに残りなし');
+    // GitHub may list no run for the newest commit; a run for a commit with the same docs/ is the site's state
+    pagesRuns = [run(before, 'completed', 'success')];
+    ok((await ps()).state === 'ok', '最新の版の配信記録がなくても、公式サイトの中身（docs）が同じ版の配信成功なら「成功」');
+    pagesRuns = [run(before, 'completed', 'failure')];
+    ok((await ps()).state === 'failed', '同じ中身の版の配信失敗なら「失敗」');
+    const older = g(BARE, 'log', '--format=%H', 'main').split('\n').find(h => g(BARE, 'rev-parse', `${h}:docs`) !== g(BARE, 'rev-parse', 'main:docs'));
+    pagesRuns = [run(older, 'completed', 'success'), run('f'.repeat(40), 'completed', 'failure')];
+    ok(!!older && (await ps()).state === 'waiting', '中身の違う古い版の成功は数えない（「配信待ち」）');
   }
 
   console.log('9. 終了');

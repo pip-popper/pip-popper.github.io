@@ -381,7 +381,11 @@ async function pagesStatus() {
     runs = (await r.json()).workflow_runs;
   } catch { return { state: 'unknown', head }; }
   if (!Array.isArray(runs)) return { state: 'unknown', head };
-  const run = runs.find(x => x.name === 'pages build and deployment' && x.head_sha === sha);   // newest first
+  // newest first. GitHub does not always list a run for the very commit it has (2026-11-26: a manager-only
+  // commit after a re-run): what matters is the site, so a run for a commit with the same docs/ counts too
+  const docsOf = s => (r => r.ok ? r.out : '')(git(['rev-parse', '--verify', '-q', `${s}:docs`]));
+  const want = docsOf(sha);
+  const run = runs.find(x => x.name === 'pages build and deployment' && (x.head_sha === sha || (want && /^[0-9a-f]{40}$/.test(x.head_sha ?? '') && docsOf(x.head_sha) === want)));
   if (!run) return { state: 'waiting', head };
   if (run.status !== 'completed') return { state: 'running', head };
   return { state: run.conclusion === 'success' ? 'ok' : 'failed', head };

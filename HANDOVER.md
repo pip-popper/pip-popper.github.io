@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | AIの感想の編集まで本番反映済み（GitHub 566a5df）。3c38033 は GitHub Pages の配信失敗で公式サイト未反映。配信結果の確認と送り直しをローカル実装・検証済み、push と本番の送り直しは Producer 承認待ち |
+| 状態 | 配信結果の確認と送り直しまで本番反映済み（GitHub b6c30da、公式HPに AIの感想 表示済み）。配信判定の不備修正をローカル実装・検証済み、push は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -20,6 +20,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 進捗
 
+- 2026-11-26 Claude Code：**本番反映（Producer 承認、GitHub b6c30da）**。GitHub Pages の配信は 3c38033 として 01:40 に成功（b6c30da は管理ツールだけの変更で docs は同一）、公式HPの TRY ANGLE・PIPPOPPER ENTERTAINMENT に「AIの感想」が表示され、ページは docs と完全一致（実ブラウザでも確認）。確認中に判定の不備を発見：GitHub が b6c30da 自体の配信記録を作らなかったため、管理ツールは「配信待ち」のまま（上部に「配信中…」が残る）。修正（ローカル）：docs が同じ版の最新の配信結果を使う・確認打ち切り後は「配信中…」を消す。テスト 204 合格（8h に3件追加）、本物の GitHub API で b6c30da＝ok・実ブラウザで警告なしを確認。push は Producer 承認待ち。
 - 2026-11-26 Claude Code：**AIの感想が公式HPに出ない件の調査・修正**（ローカル）。原因は管理ツールではなく GitHub 側：Producer の公開 3c38033（TRY ANGLE・PIPPOPPER ENTERTAINMENT の AIの感想）の GitHub Pages 配信が「Failed to create deployment (status: 500)」で失敗し、公式サイトは 566a5df の版のまま。track.json の aiImpression・display（表示）・docs の HTML・GitHub 上のファイルはすべて正しい。管理ツールは push 成功で「公開しました」とし、配信結果を見ていなかったため気づけなかった。修正：起動時・公開後に GitHub 公開API（読み取り・鍵なし）で配信結果を確認し、失敗なら上部に警告と「公式サイトへ送り直す」（空の保存点を送る＝内容不変）。テスト：管理ツール 201 合格（8h：配信待ち・配信中・成功・不明・失敗検出・確認なし拒否・送り直しでファイル不変・成功で警告解除）、本物の GitHub API で 3c38033=failure・566a5df=success を判定、実ブラウザ（検証用の送信先と模擬API）で警告表示と送り直しを確認。本番の再配信（送り直し）と push は Producer 承認待ち。
 - 2026-11-25 Claude Code：AIの感想を後から追加・修正・削除を本番反映（Producer 承認、GitHub 566a5df）。
 
