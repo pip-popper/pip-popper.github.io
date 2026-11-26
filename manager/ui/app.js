@@ -327,11 +327,16 @@
       return box;
     });
     const tip = el('p', { className: 'note', textContent: type === 'album' ? '上の欄で文字を直せます（改行はそのまま表示に反映）。下の「掲載の管理」で、掲載停止・掲載順・収録曲・ジャケットを変えられます。特設デザインの構成や色は変わりません。' : '文字だけを直せます。デザインは変わりません。' });
-    const displayBox = type === 'track' && current.display ? displayEditor(current, () => {
+    let syncJacket = () => {};
+    const changed = () => {
       saveBtn.disabled = !edits.size;
       unsavedEl.textContent = edits.size ? `未保存の入力 ${edits.size} 件` : '';
-    }) : [];
-    $('#main').replaceChildren(head, tip, ...fields, ...displayBox, ...(type === 'site' ? [] : manageBox(current)));
+      syncJacket();
+    };
+    const jacketBox = type === 'track' && current.jacket ? (b => { syncJacket = b.sync; return [b.box]; })(jacketEditor(current, changed)) : [];
+    const displayBox = type === 'track' && current.display ? displayEditor(current, changed) : [];
+    $('#main').replaceChildren(head, tip, ...fields, ...jacketBox, ...displayBox, ...(type === 'site' ? [] : manageBox(current)));
+    syncJacket();
     if (type === 'track') impressionNote(!!(current.fields.find(f => f.path[0] === 'aiImpression')?.value ?? '').trim());
     $('#main').scrollTop = 0;
   }
@@ -340,6 +345,37 @@
   function impressionNote(has) {
     const n = document.querySelector('#disp-impression ~ .note');
     if (n) n.textContent = has ? '' : '（AIの感想が未入力のため、チェックしても表示されません。上の「AIの感想」欄に入力できます）';
+  }
+
+  // ── 2026-11-26: ジャケット画像 of a song (new or already published) ──
+  // Choosing a picture is one more unsaved edit (key 'jacket'): nothing is written until 保存, nothing is public until 公開する.
+  // The picture is converted in the browser exactly as for a new song (prepareImage), and only the two display JPEGs change.
+  function jacketEditor(item, onChange) {
+    const box = el('section', { className: 'jacket-box' });
+    const fig = (label, img) => el('figure', { className: 'jacket-fig' }, img, el('figcaption', { textContent: label }));
+    const nowImg = el('img', { className: 'registration-jacket', alt: '現在のジャケット', src: item.jacket.src ?? '' });
+    const newImg = el('img', { className: 'registration-jacket', alt: '新しいジャケット' });
+    const newFig = fig('新しいジャケット（未保存）', newImg); newFig.hidden = true;
+    const input = el('input', { type: 'file', accept: 'image/png,image/jpeg', id: 'track-jacket', hidden: true });
+    const pick = el('button', { type: 'button', textContent: '画像を変更', onclick: () => input.click() });
+    const undo = el('button', { type: 'button', textContent: '選択を取り消す', hidden: true, onclick: () => { edits.delete('jacket'); input.value = ''; newImg.removeAttribute('src'); newFig.hidden = true; undo.hidden = true; box.classList.remove('changed'); onChange(); } });
+    const off = el('p', { className: 'warn', hidden: true, textContent: '下の「ジャケットを表示する」のチェックが外れているため、公式HPにはジャケットを表示しません（画像は保存されます。チェックを戻すと表示されます）。' });
+    input.onchange = async () => {
+      const f = input.files?.[0]; if (!f) return;
+      try {
+        const image = await prepareImage(f);
+        edits.set('jacket', image);
+        newImg.src = `data:image/jpeg;base64,${image.thumb.data}`; newFig.hidden = false; undo.hidden = false; box.classList.add('changed');
+        onChange();
+      } catch (e) { toast(e.message, 'bad', 9000); }
+      input.value = '';
+    };
+    box.append(el('h3', { textContent: 'ジャケット画像' }),
+      el('div', { className: 'jacket-figs' }, fig(item.jacket.changed ? '現在のジャケット（公開していない変更あり）' : '現在のジャケット', nowImg), newFig),
+      el('div', { className: 'registration-actions' }, pick, undo, input), off,
+      el('p', { className: 'note', textContent: 'PNG/JPEGの画像を選ぶと、ここで確認できます。「保存」→「プレビュー」→「公開する」で公式HPに反映します（選んだだけ・保存しただけでは公開されません）。前の画像はこのパソコンの控えに残り、公開前は「変更を破棄」、公開後は「公開履歴・取り消し」で戻せます。曲名・歌詞・AIの感想・ページのURLは変わりません。' }),
+      el('p', { className: 'note', textContent: 'PRIVATE：公式HPのジャケットを使っている曲は、公開後にPRIVATEでも新しい画像で表示されます（PRIVATEで別の画像を登録した曲は変わりません）。一般視聴：公開中の画像は変わりません。一般視聴も新しい画像にするときは、公開後に「一般視聴の管理」で公開内容を保存し直してください。' }));
+    return { box, sync: () => { const c = document.getElementById('disp-jacket'); off.hidden = !c || c.checked; } };
   }
 
   // ── 2026-11-25: 公式HPに表示する内容 (lyrics / jacket / AI impression, and the notice shown instead of the lyrics) ──
@@ -890,10 +926,10 @@
 
   async function save() {
     if (!current || !edits.size) return;
-    const display = edits.get('display');
-    const changes = [...edits].filter(([i]) => i !== 'display').map(([i, value]) => ({ path: current.fields[i].path, value }));
+    const display = edits.get('display'), jacket = edits.get('jacket');
+    const changes = [...edits].filter(([i]) => i !== 'display' && i !== 'jacket').map(([i, value]) => ({ path: current.fields[i].path, value }));
     try {
-      await api('POST', '/api/item', { type: current.type, id: current.id, rev: current.rev, changes, ...(display ? { display } : {}) });
+      await api('POST', '/api/item', { type: current.type, id: current.id, rev: current.rev, changes, ...(display ? { display } : {}), ...(jacket ? { jacket } : {}) });
       edits = new Map();
       toast('保存しました（まだ公開されていません）。プレビューで確認できます。');
       const { type, id } = current; current = null;

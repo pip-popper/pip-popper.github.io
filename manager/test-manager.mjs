@@ -494,6 +494,52 @@ try {
     ok(r.status === 200 && read(file) === orig && status() === '', '元の感想に戻して公開・作業フォルダーに残りなし');
   }
 
+  console.log('8i. 公開済みの曲のジャケット画像を変更（保存 → プレビュー → 公開 → 取り消し）');
+  {
+    const T = 'manner', file = `tracks/${T}/track.json`, orig = read(file);
+    const bin = rel => readFileSync(path.join(WORK, rel));
+    const remoteBin = rel => spawnSync('git', ['show', `main:${rel}`], { cwd: BARE }).stdout;
+    const oldWeb = bin(`tracks/${T}/cover-web.jpg`), oldThumb = bin(`tracks/${T}/cover-640.jpg`), otherThumb = bin('tracks/menkui/cover-640.jpg');
+    const newWeb = readFileSync(path.join(REPO, 'tracks/diet/cover-web.jpg')), newThumb = readFileSync(path.join(REPO, 'tracks/diet/cover-640.jpg'));
+    const image = { original: { mime: 'image/jpeg', data: newWeb.toString('base64') }, web: { mime: 'image/jpeg', data: newWeb.toString('base64') }, thumb: { mime: 'image/jpeg', data: newThumb.toString('base64') } };
+    let it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    ok(it.jacket?.src === `data:image/jpeg;base64,${oldThumb.toString('base64')}` && it.jacket.changed === false, '編集画面に現在のジャケット（公開中の画像）が出る');
+    const bad = { ...image, thumb: { mime: 'image/png', data: 'AAAA' } };
+    ok((await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, changes: [{ path: ['title'], value: '書き換え' }], jacket: bad })).status === 400 && read(file) === orig && status() === '', '画像として読めないものは保存しない（文字の変更も書かない）');
+    ok((await call('POST', '/api/item', { type: 'album', id: 'pip-popper', rev: (await call('GET', '/api/item?type=album&id=pip-popper')).data.rev, jacket: image })).status === 400, 'アルバムの文字の保存では画像を受け付けない（アルバムは専用の差し替え）');
+    let r = await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, changes: [], jacket: image });
+    ok(r.status === 200 && read(file) === orig && bin(`tracks/${T}/cover-web.jpg`).equals(newWeb) && bin(`tracks/${T}/cover-640.jpg`).equals(newThumb), '保存：表示用の2枚だけ差し替わり、track.json（曲名・歌詞・AIの感想・URL）は1バイトも変わらない');
+    ok(status().split('\n').map(l => l.trim()).sort().join('|') === `M tracks/${T}/cover-640.jpg|M tracks/${T}/cover-web.jpg`,'保存だけでは公開されない（docs も GitHub も変わらない）');
+    ok(existsSync(path.join(WORK, '.manager', 'backup')) && g(WORK, 'ls-files', '-o', '--exclude-standard') === '', '前の画像は .manager の控えに残る（Gitには入らない）');
+    const items = (await call('GET', '/api/state')).data.changes.items.filter(c => c.item === '曲「Manner」');
+    ok(items.length === 2 && items.every(c => c.label === 'ジャケット画像'), '公開前の変更一覧に「ジャケット画像」が出る');
+    it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    ok(it.jacket.changed === true && it.jacket.src === `data:image/jpeg;base64,${newThumb.toString('base64')}`, '再表示すると新しい画像（公開していない変更あり）');
+    await call('POST', '/api/preview', { type: 'track', id: T });
+    const pv = rel => readFileSync(path.join(WORK, '.manager', 'preview', rel));
+    ok(pv(`assets/covers/${T}.jpg`).equals(newWeb) && pv(`assets/covers/${T}-640.jpg`).equals(newThumb) && pv('assets/covers/menkui-640.jpg').equals(otherThumb) && read(`.manager/preview/tracks/${T}/index.html`).includes(`assets/covers/${T}.jpg`), 'プレビュー：この曲だけ新しい画像（ほかの曲の画像は同じ）');
+    r = await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, display: { lyrics: true, jacket: false, impression: true } });
+    await call('POST', '/api/preview', { type: 'track', id: T });
+    ok(r.status === 200 && !read(`.manager/preview/tracks/${T}/index.html`).includes(`assets/covers/${T}`) && bin(`tracks/${T}/cover-web.jpg`).equals(newWeb), '「ジャケットを表示する」を外すと表示しない（画像は残る）');
+    it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, display: { lyrics: true, jacket: true, impression: true } });
+    const worksBefore = g(BARE, 'show', 'main:docs/works.json'), trackBefore = g(BARE, 'show', `main:${file}`);
+    ok(read(file) === orig, '表示設定を戻すと track.json は保存前と同じ');
+    r = await call('POST', '/api/publish', { confirm: true, summary: 'ジャケット：Manner' });
+    const changedInCommit = g(BARE, 'show', '--name-only', '--format=', 'main').split('\n').filter(f => !f.startsWith('docs/'));
+    ok(r.status === 200 && remoteBin(`docs/assets/covers/${T}.jpg`).equals(newWeb) && remoteBin(`docs/assets/covers/${T}-640.jpg`).equals(newThumb) && changedInCommit.sort().join('|') === `tracks/${T}/cover-640.jpg|tracks/${T}/cover-web.jpg`, '公開：公式HPの画像が新しくなり、元データで変わるのは画像2枚だけ');
+    ok(g(BARE, 'show', `main:${file}`) === trackBefore, '曲データ（track.json）は変わらない');
+    ok(g(BARE, 'show', 'main:docs/works.json') === worksBefore, '作品一覧（PRIVATE・一般視聴が参照）は変わらない');
+    ok(g(BARE, 'ls-tree', '--name-only', 'main', `docs/tracks/${T}/index.html`) !== '', '曲ページのURLは変わらない');
+    const h = (await call('GET', '/api/history')).data.history;
+    ok(h[0].undoable && (await call('POST', '/api/undo', { sha: h[0].sha })).status === 200 && bin(`tracks/${T}/cover-web.jpg`).equals(oldWeb) && bin(`tracks/${T}/cover-640.jpg`).equals(oldThumb), '公開履歴から取り消すと前の画像に戻る（公開していない変更として）');
+    r = await call('POST', '/api/publish', { confirm: true, summary: 'ジャケットを戻す' });
+    ok(r.status === 200 && remoteBin(`docs/assets/covers/${T}.jpg`).equals(remoteBin(`tracks/${T}/cover-web.jpg`)) && remoteBin(`tracks/${T}/cover-web.jpg`).equals(oldWeb) && status() === '', '戻して公開・作業フォルダーに残りなし');
+    it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, changes: [], jacket: image });
+    ok((await call('POST', '/api/discard', { confirm: true })).status === 200 && bin(`tracks/${T}/cover-web.jpg`).equals(oldWeb) && status() === '', '公開前なら「変更を破棄」で前の画像に戻る');
+  }
+
   console.log('8h. 公式サイトへの配信（GitHub Pages）の失敗を知らせ、内容を変えずに送り直す');
   {
     const run = (sha, st, conclusion) => ({ name: 'pages build and deployment', head_sha: sha, status: st, conclusion });

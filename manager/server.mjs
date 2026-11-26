@@ -3,7 +3,8 @@
 //
 // できること：曲・アルバム・サイトの文言の文字を編集 → 保存 → プレビュー → 公開（GitHub Pages）→ 取り消し。
 // 触るファイル：tracks/<曲ID>/track.json・albums/albums.json・content/site.json（文字の値だけ。項目の追加・削除はしない）。
-// 公開時だけ docs/ を作り直して commit・push する。PRIVATE（private/）・デザイン（src/）・画像・build.mjs には触れない。
+// 公開時だけ docs/ を作り直して commit・push する。PRIVATE（private/）・デザイン（src/）・build.mjs には触れない。
+// 画像は曲・アルバムの表示用JPEG（cover-web/640・visual-web/640）だけを差し替える（前の画像は .manager/backup に控える）。
 // 秘密情報は持たない：GitHubへの送信はこのパソコンに保存済みのGitのログイン情報を使う。
 //
 // 安全：127.0.0.1 でだけ待ち受け、起動ごとの合言葉（token）とHost確認がない要求は拒否。
@@ -187,20 +188,29 @@ async function loadItem(type, id) {
   }
   const title = type === 'track' ? f.data.title : type === 'album' ? f.data.albums[base[1]].title : LABEL[id];
   // display (2026-11-25): what the official site shows for this song; the texts themselves are never changed by it
-  const extra = type === 'track' ? { hidden: f.data.hidden === true, display: readDisplay(f.data.display), notices: LYRICS_NOTICES, hasLyrics: !!f.data.lyrics, hasImpression: !!f.data.aiImpression }
+  const extra = type === 'track' ? { hidden: f.data.hidden === true, display: readDisplay(f.data.display), notices: LYRICS_NOTICES, hasLyrics: !!f.data.lyrics, hasImpression: !!f.data.aiImpression, jacket: await trackJacket(id) }
     : type === 'album' ? (a => ({ hidden: a.hidden === true, section: a.section === 'other' ? 'other' : 'history', tracks: a.discs ? null : (a.tracks ?? []).map(t => ({ title: t.title, music: t.music ?? null })), hasJacket: existsSync(path.join(ROOT, 'albums', id, 'visual-web.jpg')), joint: !!a.works }))(f.data.albums[base[1]]) : {};
   return { type, id, file: rel, rev: f.rev, title, fields, base, ...extra };
 }
-async function saveItem({ type, id, rev, changes, display }) {
+// 2026-11-26: the song's current jacket (the list-size JPEG the site uses) for the edit screen, and whether it differs from the last save point
+async function trackJacket(id) {
+  const rel = `tracks/${id}/cover-640.jpg`;
+  let src = null; try { src = `data:image/jpeg;base64,${(await readFile(path.join(ROOT, rel))).toString('base64')}`; } catch {}
+  return { src, changed: !!git(['status', '--porcelain=v1', '--', `tracks/${id}/cover-web.jpg`, rel]).out };
+}
+async function saveItem({ type, id, rev, changes, display, jacket }) {
   const rel = fileOf(type, id);
   const f = await readJson(rel);
   if (f.rev !== rev) return { status: 409, body: { error: 'このデータは画面を開いた後に変更されています。いったん読み込み直してください（あなたの入力はまだ保存されていません）。' } };
   const item = await loadItem(type, id);
   const allowed = new Map(item.fields.map(fd => [JSON.stringify(fd.path), fd]));
   const hasDisplay = display !== undefined;
-  if (hasDisplay && type !== 'track') return { status: 400, body: { error: '編集できない項目が含まれています。' } };
+  if ((hasDisplay || jacket !== undefined) && type !== 'track') return { status: 400, body: { error: '編集できない項目が含まれています。' } };
+  // 2026-11-26: a new jacket for the song (same browser conversion and checks as a new song); checked before anything is written
+  let img = null;
+  if (jacket !== undefined) { try { img = checkImages(jacket); } catch (e) { return { status: 400, body: { error: e.message } }; } if (!img) return { status: 400, body: { error: '画像を選んでください。' } }; }
   if (changes !== undefined && !Array.isArray(changes)) return { status: 400, body: { error: '変更がありません。' } };
-  if (!changes?.length && !hasDisplay) return { status: 400, body: { error: '変更がありません。' } };
+  if (!changes?.length && !hasDisplay && !img) return { status: 400, body: { error: '変更がありません。' } };
   for (const c of changes ?? []) {
     const fd = allowed.get(JSON.stringify(c.path));
     if (!fd) return { status: 400, body: { error: '編集できない項目が含まれています。' } };
@@ -219,6 +229,9 @@ async function saveItem({ type, id, rev, changes, display }) {
     try { d = storedDisplay(display); } catch { return { status: 400, body: { error: '公式HPに表示する内容の指定が正しくありません。' } }; }
     if (d) f.data.display = d; else delete f.data.display;      // everything shown = no "display" (as before)
   }
+  // only the two display JPEGs change; track.json (titles, lyrics, the AI impression, the page URL) is not rewritten for a jacket alone
+  if (img) await replaceImages(`tracks/${id}`, 'cover', img);
+  if (!changes?.length && !hasDisplay) return { status: 200, body: { ok: true, rev: f.rev } };
   const newRev = await writeJsonAtomic(rel, f.data, f.indent, f.eol);
   return { status: 200, body: { ok: true, rev: newRev } };
 }
@@ -558,13 +571,18 @@ async function albumJacket({ id, image, confirm }) {
   if (a.works) return { status: 400, body: { error: '複数作品の構成のジャケットはAIに依頼してください。' } };
   let img; try { img = checkImages(image); } catch (e) { return { status: 400, body: { error: e.message } }; }
   if (!img) return { status: 400, body: { error: '画像を選んでください。' } };
-  const folder = path.join(ROOT, 'albums', id); await mkdir(folder, { recursive: true });
-  for (const [name, bytes] of [['visual-web.jpg', img.web.bytes], ['visual-640.jpg', img.thumb.bytes]]) {
+  await replaceImages(`albums/${id}`, 'visual', img);
+  return { status: 200, body: { ok: true } };
+}
+// the two display JPEGs (<prefix>-web.jpg, <prefix>-640.jpg) of an album or a song; the previous files are kept in .manager/backup first
+async function replaceImages(dirRel, prefix, img) {
+  const folder = path.join(ROOT, dirRel); await mkdir(folder, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  for (const [name, bytes] of [[`${prefix}-web.jpg`, img.web.bytes], [`${prefix}-640.jpg`, img.thumb.bytes]]) {
     const target = path.join(folder, name);
-    if (existsSync(target)) { const bk = path.join(WORK, 'backup', new Date().toISOString().replace(/[:.]/g, '-'), 'albums', id, name); await mkdir(path.dirname(bk), { recursive: true }); await copyFile(target, bk); }
+    if (existsSync(target)) { const bk = path.join(WORK, 'backup', stamp, dirRel, name); await mkdir(path.dirname(bk), { recursive: true }); await copyFile(target, bk); }
     await writeFile(`${target}.tmp`, bytes); await rename(`${target}.tmp`, target);
   }
-  return { status: 200, body: { ok: true } };
 }
 async function adoptAlbum({ id, rev, slug, confirm }) {
   if (confirm !== true) return { status: 400, body: { error: '取り込み前の確認が必要です。' } };
@@ -647,7 +665,7 @@ const server = http.createServer(async (req, res) => {
       rawUpload = Buffer.concat(chunks);
     } else if (req.method === 'POST') {
       if (!(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: '形式が正しくありません。' });
-      const limit=['/api/song-registration/save','/api/album-registration/save','/api/album/jacket'].includes(url.pathname)?30e6:2e6;let length=0;const chunks=[];
+      const limit=['/api/song-registration/save','/api/album-registration/save','/api/album/jacket','/api/item'].includes(url.pathname)?30e6:2e6;let length=0;const chunks=[];
       for await(const c of req){length+=c.length;if(length>limit)return send(res,413,{error:'大きすぎます。'});chunks.push(c);}
       try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { return send(res, 400, { error: '形式が正しくありません。' }); }   // never logged: a body may hold a password
     }

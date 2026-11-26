@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 配信結果の確認と送り直しまで本番反映済み（GitHub b6c30da、公式HPに AIの感想 表示済み）。配信判定の不備修正をローカル実装・検証済み、push は Producer 承認待ち |
+| 状態 | 配信判定の修正まで本番反映済み（GitHub 605038d）。曲のジャケット画像の変更をローカル実装・検証済み、push は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -19,6 +19,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 本Workの差分 | Work成果の一覧は b2ac275 の commit と各 README（private/README.md、public-listening/README.md、manager/README.md、manager/EXE-VERIFICATION.md）を参照 |
 
 ## 進捗
+
+- 2026-11-26 Claude Code：**曲のジャケット画像の変更**（ローカル、`manager/server.mjs`・`manager/ui/app.js`・`app.css`）。曲の編集画面に「ジャケット画像」欄（現在の画像・「画像を変更」・選んだ画像のプレビュー・「選択を取り消す」）。画像の変換は新曲登録と同じ `prepareImage`（ブラウザで表示用JPEG 2枚）、検査は同じ `images()`、書き込みはアルバムと共通の `replaceImages`（前の画像は `.manager/backup`）。選んだだけでは何も書かず、「保存」で `tracks/<曲ID>/cover-web.jpg`・`cover-640.jpg` だけ差し替え（track.json・曲名・歌詞・AIの感想・URL は書き換えない）、「プレビュー」→「公開する」で反映。「ジャケットを表示する」が外れていると欄に案内。影響調査：PRIVATE は公式HPの `assets/covers/<ID>-640.jpg` を参照している曲だけ公開後に新しい画像になる（R2 に別画像を登録した曲は不変）、一般視聴は R2 の複製のため不変（反映は一般視聴の管理で保存し直し）、works.json は不変。テスト：管理ツール 222 合格（8i 追加：保存・不正画像拒否・プレビュー・表示オフ・公開・取り消し・破棄）、サイト生成は docs と同一、実ブラウザ（検証用の写し）で選択→取り消し→チェック連動→保存→プレビュー→公開（変わったのは画像2枚＋docs の画像2枚だけ）。test-song-registration・test-release-status の UI 模擬は変更前から失敗（既存の問題、今回は未対応）。push は Producer 承認待ち。
 
 - 2026-11-26 Claude Code：**本番反映（Producer 承認、GitHub b6c30da）**。GitHub Pages の配信は 3c38033 として 01:40 に成功（b6c30da は管理ツールだけの変更で docs は同一）、公式HPの TRY ANGLE・PIPPOPPER ENTERTAINMENT に「AIの感想」が表示され、ページは docs と完全一致（実ブラウザでも確認）。確認中に判定の不備を発見：GitHub が b6c30da 自体の配信記録を作らなかったため、管理ツールは「配信待ち」のまま（上部に「配信中…」が残る）。修正（ローカル）：docs が同じ版の最新の配信結果を使う・確認打ち切り後は「配信中…」を消す。テスト 204 合格（8h に3件追加）、本物の GitHub API で b6c30da＝ok・実ブラウザで警告なしを確認。push は Producer 承認待ち。
 - 2026-11-26 Claude Code：**AIの感想が公式HPに出ない件の調査・修正**（ローカル）。原因は管理ツールではなく GitHub 側：Producer の公開 3c38033（TRY ANGLE・PIPPOPPER ENTERTAINMENT の AIの感想）の GitHub Pages 配信が「Failed to create deployment (status: 500)」で失敗し、公式サイトは 566a5df の版のまま。track.json の aiImpression・display（表示）・docs の HTML・GitHub 上のファイルはすべて正しい。管理ツールは push 成功で「公開しました」とし、配信結果を見ていなかったため気づけなかった。修正：起動時・公開後に GitHub 公開API（読み取り・鍵なし）で配信結果を確認し、失敗なら上部に警告と「公式サイトへ送り直す」（空の保存点を送る＝内容不変）。テスト：管理ツール 201 合格（8h：配信待ち・配信中・成功・不明・失敗検出・確認なし拒否・送り直しでファイル不変・成功で警告解除）、本物の GitHub API で 3c38033=failure・566a5df=success を判定、実ブラウザ（検証用の送信先と模擬API）で警告表示と送り直しを確認。本番の再配信（送り直し）と push は Producer 承認待ち。
