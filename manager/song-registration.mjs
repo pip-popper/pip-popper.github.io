@@ -4,6 +4,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile, rename, copyFile, rm, access } from 'node:fs/promises';
 import { validReading } from '../private/worker/src/song-order.js';
 import { displayText } from '../private/worker/src/display-text.js';
+import { CATEGORIES, storedCategory } from '../src/track-category.mjs';
 
 const ID=/^new-[a-f0-9]{24}$/;const REV=/^[a-f0-9-]{36}$/;
 const classes=['unknown','general','site','private'], scopes=['public','private','hidden'], states=['draft','ready'];   // 2026-11-24: 登録済み retired (it had no effect); old records are still read
@@ -22,7 +23,8 @@ function fields(input){
   if(!classes.includes(d.classification)||!scopes.includes(d.lyricsScope)||!scopes.includes(d.impressionScope)||!states.includes(d.state))throw new Error('公開区分・公開範囲・準備状態を確認してください。');
   const channels={};for(const a of audiences){if(typeof d.channels?.[a]!=='boolean')throw new Error('掲載先を確認してください。');channels[a]=d.channels[a];}
   if((channels.hp||channels.listen)&&!['general','site'].includes(d.classification))throw new Error('一般公開HP・一般視聴は一般公開またはこのサイトのみの曲に限ります。');
-  return {title,reading:reading.trim(),artist:str(d.artist,100,'アーティスト名',true).trim(),lyrics:str(d.lyrics,100000,'歌詞'),impression:str(d.impression,100000,'AIの感想'),classification:d.classification,lyricsScope:d.lyricsScope,impressionScope:d.impressionScope,channels,state:d.state,links:linksOf(d.urls),memo:str(d.memo,10000,'公開メモ')};
+  const category=d.category??'pip-popper';if(!CATEGORIES.some(c=>c.value===category))throw new Error('カテゴリーは「PIP POPPER」か「ソロ曲」を選んでください。');   // 2026-11-27
+  return {title,reading:reading.trim(),artist:str(d.artist,100,'アーティスト名',true).trim(),category,lyrics:str(d.lyrics,100000,'歌詞'),impression:str(d.impression,100000,'AIの感想'),classification:d.classification,lyricsScope:d.lyricsScope,impressionScope:d.impressionScope,channels,state:d.state,links:linksOf(d.urls),memo:str(d.memo,10000,'公開メモ')};
 }
 // Validate actual image headers and dimensions, never trust the extension or submitted MIME.
 function imageDimensions(b,mime){
@@ -71,7 +73,9 @@ async function adopt(root,input,ctx){
   let listOrder=0;
   for(const e of await readdir(tracksDir(root),{withFileTypes:true})){if(!e.isDirectory())continue;try{const t=await readJson(path.join(tracksDir(root),e.name,'track.json'));if(Number.isInteger(t.listOrder))listOrder=Math.max(listOrder,t.listOrder);}catch{}}
   const {artwork,...rest}=track;
-  const out={title:rest.title,artist:rest.artist,...(rest.reading?{reading:rest.reading}:{}),listOrder:listOrder+1,publicationClass:rest.publicationClass,publicArchiveApproved:true,
+  // the category comes from the saved record (a candidate saved before 2026-11-27 has none = PIP POPPER); only ソロ曲 is written
+  const category=storedCategory(r.category);
+  const out={title:rest.title,artist:rest.artist,...(rest.reading?{reading:rest.reading}:{}),...(category?{category}:{}),listOrder:listOrder+1,publicationClass:rest.publicationClass,publicArchiveApproved:true,
     ...(rest.aiImpression?{impressionScope:rest.impressionScope,aiImpression:rest.aiImpression}:{}),artwork:'cover-web.jpg',audio:null,releaseDate:null,
     ...(rest.lyrics?{lyricsScope:rest.lyricsScope,lyrics:rest.lyrics}:{}),background:null,streamingUrl:null,downloadUrl:null,...(rest.links?.length?{links:rest.links}:{})};
   await mkdir(target);
@@ -97,7 +101,7 @@ async function writeVersion(root,id,expected,data,source,upload,ctx={}){
   // registration directory, and contains only explicitly public information.
   if(r.state==='ready'&&image&&r.channels.hp&&['general','site'].includes(r.classification)){
     const candidate=path.join(base,'public-candidate');await mkdir(candidate);
-    const track={title:r.title,artist:r.artist,reading:r.reading,artwork:'cover-web.jpg',audio:null,publicationClass:r.classification,publicArchiveApproved:true,
+    const track={title:r.title,artist:r.artist,reading:r.reading,...(storedCategory(r.category)?{category:storedCategory(r.category)}:{}),artwork:'cover-web.jpg',audio:null,publicationClass:r.classification,publicArchiveApproved:true,
       ...(r.lyricsScope==='public'?{lyricsScope:'public',lyrics:r.lyrics}:{}),...(r.impressionScope==='public'?{impressionScope:'public',aiImpression:r.impression}:{}),...(r.classification==='general'&&r.links.length?{links:r.links}:{})};
     await writeFile(path.join(candidate,'track.json'),JSON.stringify(track,null,2)+'\n',{flag:'wx'});
     for(const name of ['cover-web.jpg','cover-640.jpg'])await copyFile(path.join(base,name),path.join(candidate,name));

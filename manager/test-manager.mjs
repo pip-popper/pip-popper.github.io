@@ -300,6 +300,7 @@ try {
     const t = JSON.parse(read('tracks/kakuu-test/track.json'));
     ok(r.status === 200 && r.data.publication.state === 'adopted' && existsSync(path.join(WORK, 'tracks/kakuu-test/cover-web.jpg')) && existsSync(path.join(WORK, 'tracks/kakuu-test/cover-640.jpg')), '取り込み：track.json と表示用画像2枚');
     ok(t.title === fields.title && t.lyrics === fields.lyrics && t.aiImpression === fields.impression && t.publicArchiveApproved === true && t.audio === null && !read('tracks/kakuu-test/track.json').includes('MEMO_NOT_PUBLIC'), '取り込んだ内容は承認済みの公開項目だけ（管理メモなし）');
+    ok(!('category' in t), 'カテゴリーを送らない登録（以前の画面・記録）は PIP POPPER（track.json に項目を書かない）');
     ok((await reg('adopt', { id, rev, slug: 'kakuu-test2', confirm: true })).status === 409, '二重の取り込みは拒否');
     let st = (await call('GET', '/api/state')).data;
     ok(st.changes.other.length === 0 && st.changes.items.some(c => c.item === '曲「架空の新曲テスト」' && c.label === 'ジャケット画像'), '公開していない変更に新曲（文字と画像）が並ぶ・管理ツール以外の変更なし');
@@ -538,6 +539,55 @@ try {
     it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
     await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, changes: [], jacket: image });
     ok((await call('POST', '/api/discard', { confirm: true })).status === 200 && bin(`tracks/${T}/cover-web.jpg`).equals(oldWeb) && status() === '', '公開前なら「変更を破棄」で前の画像に戻る');
+  }
+
+  console.log('8j. 曲のカテゴリー（PIP POPPER／ソロ曲）：保存 → プレビュー → 公開 → 戻す、新曲の登録・取り込み');
+  {
+    const T = 'manner', file = `tracks/${T}/track.json`, orig = read(file);
+    const card = html => (html.match(new RegExp(`<li class="work[^>]*>\\s*<a class="work-link" href="tracks/${T}/index.html"`)) ?? [''])[0];
+    let it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    ok(it.category === 'pip-popper' && it.categories.map(c => c.label).join('|') === 'PIP POPPER|ソロ曲', '既存曲の初期値は PIP POPPER・選択肢は2つだけ');
+    ok((await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, changes: [{ path: ['title'], value: '書き換え' }], category: 'member-h' })).status === 400 && read(file) === orig && status() === '', '2つ以外のカテゴリーは保存しない（文字の変更も書かない）');
+    ok((await call('POST', '/api/item', { type: 'album', id: 'pip-popper', rev: (await call('GET', '/api/item?type=album&id=pip-popper')).data.rev, category: 'solo' })).status === 400, 'アルバムにはカテゴリーを付けられない');
+    await call('POST', '/api/preview', { type: 'track', id: T });
+    const pvRead = rel => read(`.manager/preview/${rel}`);
+    const pageBefore = pvRead(`tracks/${T}/index.html`), historyBefore = pvRead('history/index.html'), worksBefore = pvRead('works.json');
+    ok(card(pvRead('index.html')).includes('data-category="pip-popper"') && pvRead('index.html').includes('<div class="works-filter"'), 'プレビュー：一覧に切替ボタン（すべて・PIP POPPER・ソロ曲）、既存曲は PIP POPPER');
+    let r = await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, category: 'solo' });
+    const now = JSON.parse(read(file)), { category, ...rest } = now;
+    ok(r.status === 200 && category === 'solo' && JSON.stringify(rest) === JSON.stringify(JSON.parse(orig)), '保存：track.json に "category": "solo" が加わるだけ（曲名・歌詞・感想・ほかの項目は同じ）');
+    ok(status() === `M ${file}`, '保存だけでは公開されない（変わるのは track.json だけ）');
+    const items = (await call('GET', '/api/state')).data.changes.items.filter(c => c.item === '曲「Manner」');
+    ok(items.length === 1 && items[0].label === 'カテゴリー（公式HPの楽曲一覧）' && items[0].before === 'PIP POPPER' && items[0].after === 'ソロ曲', '公開前の変更一覧に「カテゴリー：PIP POPPER → ソロ曲」だけが出る');
+    it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    ok(it.category === 'solo', '再表示するとソロ曲');
+    await call('POST', '/api/preview', { type: 'track', id: T });
+    ok(card(pvRead('index.html')).includes('data-category="solo"') && pvRead(`tracks/${T}/index.html`) === pageBefore && pvRead('history/index.html') === historyBefore && pvRead('works.json') === worksBefore, 'プレビュー：一覧の分類だけソロ曲、曲ページ・HISTORY・作品一覧は同じ');
+    const remote = rel => g(BARE, 'show', `main:${rel}`);
+    const rPage = remote(`docs/tracks/${T}/index.html`), rWorks = remote('docs/works.json'), rHistory = remote('docs/history/index.html');
+    r = await call('POST', '/api/publish', { confirm: true, summary: 'カテゴリー：Manner' });
+    const inCommit = g(BARE, 'show', '--name-only', '--format=', 'main').split('\n').sort().join('|');
+    ok(r.status === 200 && inCommit === `docs/index.html|${file}`, '公開：変わるのは曲データとトップページだけ');
+    ok(card(remote('docs/index.html')).includes('data-category="solo"') && remote(`docs/tracks/${T}/index.html`) === rPage && remote('docs/works.json') === rWorks && remote('docs/history/index.html') === rHistory, '公開後も曲ページ・URL・HISTORY・作品一覧（PRIVATE・一般視聴が参照）は不変');
+    it = (await call('GET', `/api/item?type=track&id=${T}`)).data;
+    r = await call('POST', '/api/item', { type: 'track', id: T, rev: it.rev, category: 'pip-popper' });
+    ok(r.status === 200 && read(file) === orig, 'PIP POPPER に戻すと track.json は元と1バイトも違わない');
+    r = await call('POST', '/api/publish', { confirm: true, summary: 'カテゴリーを戻す' });
+    ok(r.status === 200 && remote(file) === g(BARE, 'show', `main~2:${file}`) && status() === '', '戻して公開・作業フォルダーに残りなし');
+    // a new song: the category chosen at registration goes into track.json only when it is ソロ曲
+    const b64 = rel => readFileSync(path.join(REPO, rel)).toString('base64');
+    const image = { original: { mime: 'image/png', data: b64('tracks/anniversary/cover.png') }, web: { mime: 'image/jpeg', data: b64('tracks/anniversary/cover-web.jpg') }, thumb: { mime: 'image/jpeg', data: b64('tracks/anniversary/cover-640.jpg') } };
+    const fields = { title: '架空のソロ曲テスト', reading: '', artist: 'H', category: 'solo', lyrics: '', impression: '', classification: 'general',
+      lyricsScope: 'hidden', impressionScope: 'hidden', channels: { hp: true, listen: false, private: false }, state: 'ready', urls: [], memo: '' };
+    const reg = (a, b) => call('POST', `/api/song-registration/${a}`, b);
+    ok((await reg('save', { fields: { ...fields, category: 'member' }, image, confirm: true })).status === 400, '新曲：2つ以外のカテゴリーは保存しない');
+    r = await reg('save', { fields, image, confirm: true });
+    ok(r.status === 200 && r.data.record.category === 'solo', '新曲：カテゴリー（ソロ曲）を登録に保存');
+    r = await reg('adopt', { id: r.data.record.id, rev: r.data.record.rev, slug: 'kakuu-solo', confirm: true });
+    ok(r.status === 200 && JSON.parse(read('tracks/kakuu-solo/track.json')).category === 'solo', '新曲：取り込むと track.json に "category": "solo"');
+    await call('POST', '/api/preview', { type: 'track', id: 'kakuu-solo' });
+    ok(/data-category="solo">\s*<a class="work-link" href="tracks\/kakuu-solo\/index\.html"/.test(pvRead('index.html')), '新曲：プレビューの一覧でソロ曲に分類');
+    ok((await call('POST', '/api/discard', { confirm: true })).status === 200 && !existsSync(path.join(WORK, 'tracks/kakuu-solo')) && status() === '', '公開前なら「変更を破棄」で取り消せる');
   }
 
   console.log('8h. 公式サイトへの配信（GitHub Pages）の失敗を知らせ、内容を変えずに送り直す');

@@ -175,6 +175,17 @@ main { position: relative; z-index: 1; }
 .works-tools { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:0 0 24px; color:var(--ink); font:500 14px/1.5 var(--f-body); }
 .works-tools select { min-height:44px; padding:8px 15px; border:1px solid var(--line); background:#151315; color:var(--ink); font:inherit; }
 .works-tools .more { margin-left:auto; }
+/* 2026-11-27: category switch (すべて / PIP POPPER / ソロ曲); hidden without JavaScript, where every song is listed */
+.works-filter { display:flex; margin-right:12px; }
+.no-js .works-filter { display:none; }
+.works-filter button { min-height:44px; padding:8px 16px; border:1px solid var(--line); background:#151315; color:var(--muted); font:inherit; letter-spacing:.06em; cursor:pointer; }
+.works-filter button + button { border-left:0; }
+.works-filter button:hover { color:var(--ink); }
+.works-filter button[aria-pressed="true"] { background:var(--ink); border-color:var(--ink); color:#000; }
+.works-filter button:focus-visible { outline:2px solid var(--red); outline-offset:2px; }
+.work[hidden] { display:none !important; }
+.works-empty { margin:8px 0 0; color:var(--muted); font:500 14px/1.8 var(--f-body); }
+.works-empty[hidden] { display:none; }
 .work-link { display: grid; gap: 12px; }
 .work-jacket { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: linear-gradient(140deg, #2a1215, #0e1222 70%);
   box-shadow: 0 30px 70px -36px rgba(0,0,0,.95); }
@@ -306,6 +317,8 @@ main { position: relative; z-index: 1; }
   .latest h2 { --t-max: clamp(32px, 9vw, 46px); }
   .works { padding-top: 10svh; }
   .work-grid { gap: 30px 14px; }
+  .works-filter { flex:1 0 100%; margin-right:0; }
+  .works-filter button { flex:1 1 0; padding-inline:6px; }
   .work-title { --t-max: 15px; }
   .work-note { -webkit-line-clamp: 2; font-size: 12px; line-height: 1.75; }
   .track { padding-inline: 18px; padding-top: calc(58px + 2svh); }

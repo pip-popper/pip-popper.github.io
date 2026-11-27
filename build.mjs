@@ -12,6 +12,7 @@ import { sortedSongs } from './private/worker/src/song-order.js';
 import { assertArchiveApproval } from './public-listening/approval.mjs';
 import { displayText } from './private/worker/src/display-text.js';
 import { readDisplay, noticeText } from './src/track-display.mjs';
+import { readCategory, CATEGORIES } from './src/track-category.mjs';
 
 const root = new URL('./', import.meta.url);
 const argv = process.argv.slice(2);
@@ -98,9 +99,11 @@ for (const id of ids) {
   const listedAt = data.releaseDate ?? data.listedAt ?? gitAt ?? await localAt();
   // display (2026-11-25): lyrics / jacket / AI impression can each be left off the site (track.json keeps them all)
   let show; try { show = readDisplay(data.display); } catch (e) { throw new Error(`${e.message}: ${id}`); }
+  // category (2026-11-27): PIP POPPER / ソロ曲, used only by the song list's switch on the top page
+  let category; try { category = readCategory(data.category); } catch (e) { throw new Error(`${e.message}: ${id}`); }
   // aiImpression: shown without ChatGPT's Markdown marks (track.json keeps the original)
   songs.push({ ...data, lyrics: show.lyrics ? data.lyrics : null, lyricsNotice: show.lyrics ? null : noticeText(show.lyricsNotice),
-    aiImpression: show.impression ? displayText(data.aiImpression) : null, hideJacket: !show.jacket, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
+    aiImpression: show.impression ? displayText(data.aiImpression) : null, hideJacket: !show.jacket, category, id, links: cleanLinks(id, linkInput), lyricsLabel: data.lyricsLabel ?? 'Lyrics', listedAt, audioPrivate: audioRelease === 'private' });
 }
 // Newest listing first; listOrder breaks ties (higher = registered later).
 songs.sort((a, b) => (b.listedAt ?? '').localeCompare(a.listedAt ?? '') || (b.listOrder ?? 0) - (a.listOrder ?? 0) || a.id.localeCompare(b.id));
@@ -443,7 +446,7 @@ const listen = (r, song) => {
   const r = '';
   const kanaRank = new Map(sortedSongs(songs).map((s,i)=>[s.id,i]));
   const azRank = new Map(sortedSongs(songs,'az').map((s,i)=>[s.id,i]));
-  const cards = songs.map((s, i) => `<li class="work reveal" style="--i:${i}" data-order-new="${i}" data-order-kana="${kanaRank.get(s.id)}" data-order-az="${azRank.get(s.id)}">
+  const cards = songs.map((s, i) => `<li class="work reveal" style="--i:${i}" data-order-new="${i}" data-order-kana="${kanaRank.get(s.id)}" data-order-az="${azRank.get(s.id)}" data-category="${s.category}">
       <a class="work-link" href="${trackUrl(r, s.id)}">
         <span class="work-jacket">${jacket(r, s, { eager: i < 4, small: true })}</span>
         <span class="work-meta"><span class="work-no">${no(i)}</span>${s === latest ? '<span class="work-new">LATEST</span>' : ''}${s.audioPrivate ? '<span class="work-private">音源非公開</span>' : ''}</span>
@@ -502,10 +505,11 @@ ${topbar(r, true)}
       <p class="section-label"><span class="label-en">Works</span><span class="label-ja" id="works-title">楽曲一覧</span></p>
       <p class="works-count"><span>${songs.length}</span> 作品を掲載中</p>
     </header>
-    <div class="works-tools"><label for="works-order">表示順</label><select id="works-order"><option value="new">新着順（掲載順）</option><option value="kana">あいうえお順</option><option value="az">A〜Z順</option></select>${listeningUrl?`<a class="more" href="${esc(listeningUrl)}">一般視聴ページ <span aria-hidden="true">→</span></a>`:''}</div>
+    <div class="works-tools"><div class="works-filter" role="group" aria-label="カテゴリー"><button type="button" data-category="all" aria-pressed="true">すべて</button>${CATEGORIES.map(c => `<button type="button" data-category="${c.value}" aria-pressed="false">${esc(c.label)}</button>`).join('')}</div><label for="works-order">表示順</label><select id="works-order"><option value="new">新着順（掲載順）</option><option value="kana">あいうえお順</option><option value="az">A〜Z順</option></select>${listeningUrl?`<a class="more" href="${esc(listeningUrl)}">一般視聴ページ <span aria-hidden="true">→</span></a>`:''}</div>
     <ol class="work-grid">
     ${cards}
     </ol>
+    <p class="works-empty" hidden>このカテゴリーの曲はまだありません。</p>
   </section>
 
   <section class="history-teaser" aria-labelledby="history-teaser-title">

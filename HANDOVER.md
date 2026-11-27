@@ -8,7 +8,7 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 | 項目 | 内容 |
 |---|---|
 | 担当AI | Claude Code（Producer承認の担当移管、2026-11-24。前担当 ChatGPT Work は作業終了・成果引渡し済み） |
-| 状態 | 配信判定の修正まで本番反映済み（GitHub 605038d）。曲のジャケット画像の変更をローカル実装・検証済み、push は Producer 承認待ち |
+| 状態 | 曲のジャケット画像の変更まで本番反映済み（GitHub 0a39140）。楽曲カテゴリー切替（すべて／PIP POPPER／ソロ曲）をローカル実装・検証済み、push・本番公開は Producer 承認待ち |
 | 正式パス | `C:\PRODUCER SSD\PRODUCER OFFICE\AI作業\PIP POPPER公式サイト\` |
 | ブランチ | `main` |
 | 開始時HEAD | b2ac275（Work成果を受領したままの形で保存した直後） |
@@ -20,6 +20,8 @@ Claude Code と ChatGPT Work の共通の引継ぎ記録。**書き込むのは�
 
 ## 進捗
 
+- 2026-11-27 Claude Code：**楽曲カテゴリー切替**（ローカル、`build.mjs`・`src/track-category.mjs`（新規）・`src/works-sort.js`・`src/site.css`・`manager/server.mjs`・`manager/song-registration.mjs`・`manager/ui/app.js`）。公式HPの楽曲一覧に「すべて／PIP POPPER／ソロ曲」の切替ボタン（カードと表示順は維持、表示順の切替と組み合わせ可、番号・件数は表示中の曲で数え直し、該当なしは案内文）。管理ツールの曲の編集画面と新曲登録画面に「カテゴリー」（PIP POPPER／ソロ曲の2つ、メンバー別なし）。保存は `track.json` の `category`（ソロ曲のときだけ `"solo"`、項目なし＝PIP POPPER のため既存曲のデータは不変）、反映は「保存」→「プレビュー」→「公開する」、変更一覧には「カテゴリー（公式HPの楽曲一覧）：PIP POPPER → ソロ曲」。テスト：管理ツール 241 合格（8j 追加：初期値・不正値拒否・アルバム拒否・保存は1項目だけ・プレビュー・公開で変わるのは曲データとトップだけ・曲ページ/HISTORY/works.json 不変・戻すと元と同一・新曲登録→取り込み・破棄）、サイト生成は docs と比べてトップ・site.css・works-sort.js の3つだけ変化（曲ページ・HISTORY・works.json・sitemap 不変）、実ブラウザで PC・スマホ幅（検証用の写しで2曲をソロ曲にして確認、横スクロールなし）、管理ツール画面（検証用の写し）で選択→保存→変更一覧。test-song-registration・test-release-status の UI 模擬は変更前と同じ箇所で失敗（既存・未対応）。push・本番公開は Producer 承認待ち。
+- 2026-11-26 Claude Code：**本番反映（Producer 承認、GitHub 0a39140）**。曲のジャケット画像の変更を push。管理ツール一式は Producer の未公開の変更（MENKUI のよみがな）を保持したまま早送り更新（詳細は非公開の引継ぎ記録）。
 - 2026-11-26 Claude Code：**曲のジャケット画像の変更**（ローカル、`manager/server.mjs`・`manager/ui/app.js`・`app.css`）。曲の編集画面に「ジャケット画像」欄（現在の画像・「画像を変更」・選んだ画像のプレビュー・「選択を取り消す」）。画像の変換は新曲登録と同じ `prepareImage`（ブラウザで表示用JPEG 2枚）、検査は同じ `images()`、書き込みはアルバムと共通の `replaceImages`（前の画像は `.manager/backup`）。選んだだけでは何も書かず、「保存」で `tracks/<曲ID>/cover-web.jpg`・`cover-640.jpg` だけ差し替え（track.json・曲名・歌詞・AIの感想・URL は書き換えない）、「プレビュー」→「公開する」で反映。「ジャケットを表示する」が外れていると欄に案内。影響調査：PRIVATE は公式HPの `assets/covers/<ID>-640.jpg` を参照している曲だけ公開後に新しい画像になる（R2 に別画像を登録した曲は不変）、一般視聴は R2 の複製のため不変（反映は一般視聴の管理で保存し直し）、works.json は不変。テスト：管理ツール 222 合格（8i 追加：保存・不正画像拒否・プレビュー・表示オフ・公開・取り消し・破棄）、サイト生成は docs と同一、実ブラウザ（検証用の写し）で選択→取り消し→チェック連動→保存→プレビュー→公開（変わったのは画像2枚＋docs の画像2枚だけ）。test-song-registration・test-release-status の UI 模擬は変更前から失敗（既存の問題、今回は未対応）。push は Producer 承認待ち。
 
 - 2026-11-26 Claude Code：**本番反映（Producer 承認、GitHub b6c30da）**。GitHub Pages の配信は 3c38033 として 01:40 に成功（b6c30da は管理ツールだけの変更で docs は同一）、公式HPの TRY ANGLE・PIPPOPPER ENTERTAINMENT に「AIの感想」が表示され、ページは docs と完全一致（実ブラウザでも確認）。確認中に判定の不備を発見：GitHub が b6c30da 自体の配信記録を作らなかったため、管理ツールは「配信待ち」のまま（上部に「配信中…」が残る）。修正（ローカル）：docs が同じ版の最新の配信結果を使う・確認打ち切り後は「配信中…」を消す。テスト 204 合格（8h に3件追加）、本物の GitHub API で b6c30da＝ok・実ブラウザで警告なしを確認。push は Producer 承認待ち。
