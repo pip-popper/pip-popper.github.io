@@ -1,5 +1,10 @@
 [
  {
+  "id": "your-place",
+  "title": "your place",
+  "cover": "https://pip-popper.github.io/assets/covers/your-place-640.jpg"
+ },
+ {
   "id": "try-angle",
   "title": "TRY ANGLE",
   "cover": "https://pip-popper.github.io/assets/covers/try-angle-640.jpg"
